@@ -1,0 +1,11 @@
+cloud:
+history:
+logbook:
+
+homeassistant:
+  debug: true
+
+logger:
+  default: info
+  logs:
+    custom_components.efteling: debug
