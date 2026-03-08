@@ -1,0 +1,12 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "description": "If you need help with the configuration have a look here: https://github.com/dkempen/ha-efteling"
+      }
+    },
+    "abort": {
+      "already_configured": "This entry is already configured."
+    }
+  }
+}
