@@ -17,7 +17,10 @@ from homeassistant.loader import async_get_loaded_integration
 from custom_components.efteling.const import DOMAIN, LOGGER
 
 from .api import EftelingApiClient
-from .coordinator import EftelingDataUpdateCoordinator
+from .coordinator import (
+    EftelingPoiUpdateCoordinator,
+    EftelingWaitTimesUpdateCoordinator,
+)
 from .data import EftelingData
 
 if TYPE_CHECKING:
@@ -34,20 +37,29 @@ async def async_setup_entry(
     entry: EftelingConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    coordinator = EftelingDataUpdateCoordinator(
+    poi_coordinator = EftelingPoiUpdateCoordinator(
         hass=hass,
         logger=LOGGER,
-        name=DOMAIN,
+        name=f"{DOMAIN}_poi",
+        update_interval=timedelta(days=1),
+    )
+
+    wait_times_coordinator = EftelingWaitTimesUpdateCoordinator(
+        hass=hass,
+        logger=LOGGER,
+        name=f"{DOMAIN}_wait_times",
         update_interval=timedelta(minutes=5),
     )
+
     entry.runtime_data = EftelingData(
         client=EftelingApiClient(session=async_get_clientsession(hass)),
         integration=async_get_loaded_integration(hass, entry.domain),
-        coordinator=coordinator,
+        poi_coordinator=poi_coordinator,
+        wait_times_coordinator=wait_times_coordinator,
     )
 
-    # https://developers.home-assistant.io/docs/integration_fetching_data#coordinated-single-api-poll-for-data-for-all-entities
-    await coordinator.async_config_entry_first_refresh()
+    await poi_coordinator.async_config_entry_first_refresh()
+    await wait_times_coordinator.async_config_entry_first_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))

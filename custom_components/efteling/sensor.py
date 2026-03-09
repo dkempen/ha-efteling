@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -11,21 +11,19 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfTime
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+)
 
 from custom_components.efteling.const import CUSTOM_ICONS, DOMAIN, NAME
+from custom_components.efteling.coordinator import EftelingWaitTimesUpdateCoordinator
+from custom_components.efteling.models import AttractionState
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from custom_components.efteling.data import EftelingConfigEntry
-
-    from .coordinator import EftelingDataUpdateCoordinator
-
-
-from typing import Any
-
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
+    from custom_components.efteling.data import EftelingConfigEntry, EftelingData
 
 ENTITY_DESCRIPTION = SensorEntityDescription(
     key="wait_time",
@@ -41,39 +39,44 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensor entities for each attraction."""
-    coordinator: EftelingDataUpdateCoordinator = entry.runtime_data.coordinator
-    data = coordinator.data or {}
-    attractions = data.get("AttractionInfo", [])
+    runtime_data: EftelingData = entry.runtime_data
+
+    wait_coordinator = runtime_data.wait_times_coordinator
+    poi_coordinator = runtime_data.poi_coordinator
+
+    poi_ids: set[str] = poi_coordinator.data or set()
+
+    attractions = wait_coordinator.data
 
     sensors: list[EftelingAttractionSensor] = []
 
-    for attr in attractions:
-        if attr.get("Type") != "Attracties":
+    for attraction in attractions:
+        # Only create sensors for POI attractions
+        if attraction["Id"] not in poi_ids:
             continue
-
-        attraction_id = attr.get("Id")
-        attraction_name = attr.get("Name") or attraction_id
 
         sensors.append(
             EftelingAttractionSensor(
-                coordinator=coordinator,
+                coordinator=wait_coordinator,
                 description=ENTITY_DESCRIPTION,
-                attraction_id=attraction_id,
-                attraction_name=attraction_name,
+                attraction_id=attraction["Id"],
+                attraction_name=attraction["Name"],
             )
         )
 
     async_add_entities(sensors)
 
 
-class EftelingAttractionSensor(CoordinatorEntity, SensorEntity):
+class EftelingAttractionSensor(
+    CoordinatorEntity[EftelingWaitTimesUpdateCoordinator], SensorEntity
+):
     """Sensor for a single attraction."""
 
     _attr_has_entity_name = True
 
     def __init__(
         self,
-        coordinator: EftelingDataUpdateCoordinator,
+        coordinator: EftelingWaitTimesUpdateCoordinator,
         description: SensorEntityDescription,
         attraction_id: str,
         attraction_name: str,
@@ -88,12 +91,12 @@ class EftelingAttractionSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def icon(self) -> str | None:
-        """Return override icon if defined, otherwise default."""
+        """Return override icon if defined."""
         return CUSTOM_ICONS.get(self._attraction_id, self.entity_description.icon)
 
     @property
     def device_info(self) -> DeviceInfo:
-        """Group all attraction sensors under one Efteling device."""
+        """Group all sensors under one device."""
         return DeviceInfo(
             identifiers={(DOMAIN, DOMAIN)},
             name="Attracties",
@@ -102,28 +105,27 @@ class EftelingAttractionSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def native_value(self) -> int | None:
-        """Return wait time in minutes if attraction is open."""
-        data = self.coordinator.data or {}
-        attractions = data.get("AttractionInfo", [])
+        """Return wait time if attraction is open."""
+        attractions = self.coordinator.data
 
-        for attr in attractions:
-            if attr.get("Id") == self._attraction_id:
-                if attr.get("State") == "open":
-                    waiting_time = attr.get("WaitingTime")
-                    if waiting_time is not None:
-                        return int(waiting_time)
+        for attraction in attractions:
+            if attraction["Id"] == self._attraction_id:
+                if attraction["State"] == "open" and "WaitingTime" in attraction:
+                    return int(attraction["WaitingTime"])
                 return None
 
         return None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose full attraction data as attributes."""
-        data = self.coordinator.data or {}
-        attractions = data.get("AttractionInfo", [])
+        """Expose empire and state as attributes."""
+        attractions = self.coordinator.data
 
-        for attr in attractions:
-            if attr.get("Id") == self._attraction_id:
-                return dict(attr)
+        for attraction in attractions:
+            if attraction["Id"] == self._attraction_id:
+                return {
+                    "empire": attraction["Empire"],
+                    "state": AttractionState[attraction["State"] or "gesloten"].value,
+                }
 
         return None

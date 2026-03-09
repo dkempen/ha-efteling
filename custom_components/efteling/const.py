@@ -8,10 +8,23 @@ DOMAIN = "efteling"
 NAME = "Efteling"
 
 WAIT_TIMES_URL = "https://api.efteling.com/app/wis"
+POINTS_OF_INTEREST_URL = "https://api.efteling.com/app/poi"
+
+APP_HEADERS = {
+    "host": "api.efteling.com",
+    "x-app-id": "nl.efteling.app.Efteling",
+    "accept": "*/*",
+    "x-app-language": "nl",
+    "x-app-name": "Efteling",
+    "x-app-platform": "iOS",
+    "accept-language": "nl",
+    "accept-encoding": "gzip, deflate, br",
+    "x-app-timezone": "Europe/Amsterdam",
+    "user-agent": "Efteling/22805 CFNetwork/3860.400.51 Darwin/25.3.0",
+}
 
 CUSTOM_ICONS: dict[str, str] = {
     "archipel": "mdi:waves",
-    "badhuys": "mdi:pool",
     "baron1898": "mdi:mine",
     "baron1898singlerider": "mdi:mine",
     "carnavalfestival": "mdi:earth",
@@ -20,13 +33,13 @@ CUSTOM_ICONS: dict[str, str] = {
     "dansemacabresinglerider": "mdi:skull",
     "devliegendehollander": "mdi:sail-boat",
     "devliegendehollandersinglerider": "mdi:sail-boat",
-    "dezeszwanenrondvaart": "mdi:duck",
     "diorama": "mdi:train-car-caboose",
     "doudetuffer": "mdi:golf-cart",
     "droomvlucht": "mdi:sleep",
     "eftelingmuseum": "mdi:image-frame",
     "fabula": "mdi:paw",
     "fatamorgana": "mdi:mosque",
+    "gamegallery": "mdi:bullseye-arrow",
     "gondoletta": "mdi:duck",
     "halvemaen": "mdi:sail-boat-sink",
     "jorisendedraak": "mdi:sword",
@@ -38,7 +51,6 @@ CUSTOM_ICONS: dict[str, str] = {
     "maxmoritzsinglerider": "mdi:pretzel",
     "pagode": "mdi:temple-buddhist",
     "pirana": "mdi:waterfall",
-    "poolenspa": "mdi:pool",
     "python": "mdi:snake",
     "pythonsinglerider": "mdi:snake",
     "sirocco": "mdi:sync",
@@ -51,7 +63,6 @@ CUSTOM_ICONS: dict[str, str] = {
     "symbolicasinglerider": "mdi:castle",
     "vermolenmolen": "mdi:horse",
     "villavolta": "mdi:home-variant",
-    "virtueledroomvlucht": "mdi:sleep",
     "vogelrok": "mdi:bird",
     "volkvanlaaf": "mdi:home-group",
     "volkvanlaafmonorail": "mdi:snail",

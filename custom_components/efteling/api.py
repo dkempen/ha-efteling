@@ -3,12 +3,24 @@
 from __future__ import annotations
 
 import socket
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 import async_timeout
 
-from custom_components.efteling.const import WAIT_TIMES_URL
+from custom_components.efteling.const import (
+    APP_HEADERS,
+    POINTS_OF_INTEREST_URL,
+    WAIT_TIMES_URL,
+)
+
+if TYPE_CHECKING:
+    from custom_components.efteling.models import (
+        AttractionInfo,
+        Poi,
+        PoiResponse,
+        WaitTimesResponse,
+    )
 
 
 class EftelingApiClientError(Exception):
@@ -38,18 +50,25 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
 
 
 class EftelingApiClient:
-    """API client for Efteling wait times."""
+    """API client for Efteling POI and wait times."""
 
     def __init__(self, session: aiohttp.ClientSession) -> None:
         """Initialize."""
         self._session = session
 
-    async def async_get_wait_times(self) -> dict[str, Any]:
-        """Return wait times data."""
-        return await self._api_wrapper(
-            method="get",
-            url=WAIT_TIMES_URL,
+    async def async_get_poi_list(self) -> list[Poi]:
+        """Return POI data (points of interest, for example attractions)."""
+        response: PoiResponse = await self._api_wrapper(
+            method="get", url=POINTS_OF_INTEREST_URL, headers=APP_HEADERS
         )
+        return [poi["fields"] for poi in response["hits"]["hit"]]
+
+    async def async_get_wait_times(self) -> list[AttractionInfo]:
+        """Return wait times data."""
+        response: WaitTimesResponse = await self._api_wrapper(
+            method="get", url=WAIT_TIMES_URL, headers=APP_HEADERS
+        )
+        return response["AttractionInfo"]
 
     async def _api_wrapper(
         self,
