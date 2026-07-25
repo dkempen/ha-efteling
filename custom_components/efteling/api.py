@@ -43,9 +43,7 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     if response.status in (401, 403):
         msg = "Invalid credentials"
-        raise EftelingApiClientAuthenticationError(
-            msg,
-        )
+        raise EftelingApiClientAuthenticationError(msg)
     response.raise_for_status()
 
 
@@ -91,16 +89,10 @@ class EftelingApiClient:
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
-            raise EftelingApiClientCommunicationError(
-                msg,
-            ) from exception
+            raise EftelingApiClientCommunicationError(msg) from exception
         except (aiohttp.ClientError, socket.gaierror) as exception:
             msg = f"Error fetching information - {exception}"
-            raise EftelingApiClientCommunicationError(
-                msg,
-            ) from exception
+            raise EftelingApiClientCommunicationError(msg) from exception
         except Exception as exception:
             msg = f"Something really wrong happened! - {exception}"
-            raise EftelingApiClientError(
-                msg,
-            ) from exception
+            raise EftelingApiClientError(msg) from exception

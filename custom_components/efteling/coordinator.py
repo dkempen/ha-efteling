@@ -18,35 +18,38 @@ if TYPE_CHECKING:
     from .data import EftelingConfigEntry
 
 
-class EftelingPoiUpdateCoordinator(DataUpdateCoordinator[set[str]]):
-    """Coordinator that retrieves POI attraction ids."""
+class EftelingPoiUpdateCoordinator(DataUpdateCoordinator[dict[str, Poi]]):
+    """Coordinator that retrieves POI data and returns a mapping id -> poi fields."""
 
     config_entry: EftelingConfigEntry
 
-    async def _async_update_data(self) -> set[str]:
-        """Fetch POI data and return attraction ids."""
+    async def _async_update_data(self) -> dict[str, Poi]:
+        """Fetch POI data and return a mapping of id -> POI fields (dict)."""
         try:
             poi_list: list[
                 Poi
             ] = await self.config_entry.runtime_data.client.async_get_poi_list()
 
-            poi_ids: set[str] = set()
+            poi_map: dict[str, Poi] = {}
 
             for poi in poi_list:
-                if "category" in poi and poi["category"] == "attraction":
-                    poi_ids.add(poi["id"])
+                # poi is a dict; keys may use "id" or "Id"
+                poi_id_raw = poi.get("id") or poi.get("Id")
+                if not poi_id_raw:
+                    continue
+                poi_id = str(poi_id_raw)
+                poi_map[poi_id] = poi
 
-                    # Add alternateid if present (for single-rider variants)
-                    alternate_id = poi.get("alternateid")
-                    if alternate_id:
-                        poi_ids.add(alternate_id)
+                alternate_id_raw = poi.get("alternateid")
+                if alternate_id_raw:
+                    poi_map[str(alternate_id_raw)] = poi
 
         except EftelingApiClientAuthenticationError as exception:
             raise ConfigEntryAuthFailed(exception) from exception
         except EftelingApiClientError as exception:
             raise UpdateFailed(exception) from exception
         else:
-            return poi_ids
+            return poi_map
 
 
 class EftelingWaitTimesUpdateCoordinator(DataUpdateCoordinator[list[AttractionInfo]]):

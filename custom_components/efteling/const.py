@@ -6,6 +6,8 @@ LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "efteling"
 NAME = "Efteling"
+ATTRACTIONS = "attracties"
+SHOWS = "shows"
 
 WAIT_TIMES_URL = "https://api.efteling.com/app/wis"
 POINTS_OF_INTEREST_URL = "https://api.efteling.com/app/poi"
@@ -23,7 +25,7 @@ APP_HEADERS = {
     "user-agent": "Efteling/22805 CFNetwork/3860.400.51 Darwin/25.3.0",
 }
 
-CUSTOM_ICONS: dict[str, str] = {
+CUSTOM_ATTRACTION_ICONS: dict[str, str] = {
     "archipel": "mdi:waves",
     "baron1898": "mdi:mine",
     "baron1898singlerider": "mdi:mine",
@@ -42,6 +44,7 @@ CUSTOM_ICONS: dict[str, str] = {
     "gamegallery": "mdi:bullseye-arrow",
     "gondoletta": "mdi:duck",
     "halvemaen": "mdi:sail-boat-sink",
+    "hooghmoed": "mdi:mine",
     "jorisendedraak": "mdi:sword",
     "jorisendedraaksinglerider": "mdi:sword",
     "kinderspoor": "mdi:train",
@@ -67,3 +70,31 @@ CUSTOM_ICONS: dict[str, str] = {
     "volkvanlaaf": "mdi:home-group",
     "volkvanlaafmonorail": "mdi:snail",
 }
+
+CUSTOM_SHOW_ICONS: dict[str, str] = {
+    "anderbergmusikverein": "mdi:trumpet",
+    "aquanura": "mdi:fountain",
+    "caro": "mdi:horse-human",
+    "dancingwiththedolls": "mdi:dance-ballroom",
+    "dehuyveraars": "mdi:human-queue",
+    "djezel": "mdi:donkey",
+    "djinnfatamorganaplein": "mdi:mosque",
+    "droomvluchtelfjes": "mdi:human-female-female",
+    "drcharlatanscabaretmacabre": "mdi:bottle-tonic-plus",
+    "eenavondmetwolf": "mdi:dog-side",
+    "jokieenjet": "mdi:bird",
+    "magicaluna": "mdi:bed",
+    "maxenmoritz": "mdi:pretzel",
+    "ontmoeteftelingbewoners": "mdi:human-greeting",
+    "pardoesdetovernar": "mdi:magic-staff",
+    "prinsespardijn": "mdi:human-female-dance",
+    "sprookjesboomerwaseens": "mdi:tree",
+    "sprookjessprokkelaar": "mdi:basket-fill",
+    "thebigbadwolfband": "mdi:microphone-variant",
+    "therednoseboogieboys": "mdi:microphone-variant",
+}
+
+USE_ATTRACTION_INFO_NAME: list[str] = [
+    "stoomtreinm",
+    "stoomtreinr",
+]

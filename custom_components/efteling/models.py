@@ -1,37 +1,7 @@
 """Efteling API response models."""
 
 from dataclasses import dataclass
-from enum import Enum
 from typing import NotRequired, TypedDict
-
-
-@dataclass
-class WaitTimesResponse(TypedDict):
-    """Wait times API response."""
-
-    Version: str
-    TimeStamp: str
-    AttractionInfo: list[AttractionInfo]
-
-
-@dataclass
-class AttractionInfo(TypedDict):
-    """Attraction info."""
-
-    Id: str
-    Name: str
-    Type: str
-    Empire: str
-    State: str
-    WaitingTime: NotRequired[int]
-
-
-class AttractionState(Enum):
-    """Attraction state enum."""
-
-    open = "Open"
-    gesloten = "Gesloten"
-    inonderhoud = "In onderhoud"
 
 
 @dataclass
@@ -93,3 +63,48 @@ class Poi(TypedDict):
     alternatelabel: str
     alternatetype: str
     digipass_partner_id: str
+    wis_info: AttractionInfo
+
+
+@dataclass
+class WaitTimesResponse(TypedDict):
+    """Wait times API response."""
+
+    Version: str
+    TimeStamp: str
+    AttractionInfo: list[AttractionInfo]
+
+
+@dataclass
+class AttractionInfo(TypedDict):
+    """Attraction info."""
+
+    Id: str
+    Name: str
+    Type: str
+    Empire: str
+    State: str
+    WaitingTime: NotRequired[int]
+    ShowTimes: NotRequired[list[ShowTimeInfo]]
+    PastShowTimes: NotRequired[list[ShowTimeInfo]]
+
+
+class ShowTimeInfo(TypedDict):
+    """Single showtime entry."""
+
+    ShowDateTime: str
+    StartDateTime: str
+    EndDateTime: str
+    Duration: int
+    Edition: str
+
+
+ATTRACTION_STATE_MAP: dict[str, str] = {
+    "": "Gesloten",
+    "gesloten": "Gesloten",
+    "nognietopen": "Gesloten",
+    "open": "Open",
+    "inonderhoud": "In onderhoud",
+    "buitenbedrijf": "Buiten bedrijf",
+    "tijdelijkbuitenbedrijf": "Tijdelijk buiten bedrijf",
+}
