@@ -1,4 +1,4 @@
-# <img src="custom_components/efteling/brand/icon.png" alt="" height="40" valign="top"> Efteling for Home Assistant
+# [<img src="custom_components/efteling/brand/icon.png" alt="" height="40" valign="top">][repository] Efteling for Home Assistant [<img src="custom_components/efteling/brand/logo.png" alt="" height="40" align="right">][efteling]
 
 [![Marketplace][home-assistant-badge]][home-assistant]
 [![Marketplace][marketplace-badge]][marketplace-install]
@@ -50,6 +50,12 @@ In Home Assistant:
 </details>
 
 ## Configuration
+
+### One-click configuration
+
+[![Open your Home Assistant instance and configure this integration.][configure-badge]][configure]
+
+### Manual configuration
 
 The integration is configured entirely through the Home Assistant UI.
 
@@ -229,6 +235,8 @@ This is a non-commercial, community-developed custom integration for Home Assist
 Efteling and all associated trademarks, names, images, and services remain the property of their respective owners.
 This project is independent and is not affiliated with or endorsed by Efteling.
 
+[repository]: https://github.com/dkempen/ha-efteling
+[efteling]: https://www.efteling.com
 [home-assistant]: https://www.home-assistant.io
 [home-assistant-badge]: https://img.shields.io/badge/Home_Assistant-Integration-18bcf2.svg?logo=homeassistant&logoColor=white
 [marketplace-badge]: https://img.shields.io/badge/Marketplace-Custom-18bcf2.svg?logo=HomeAssistantCommunityStore&logoColor=white
@@ -240,4 +248,5 @@ This project is independent and is not affiliated with or endorsed by Efteling.
 [license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling
 [marketplace-install]: https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkempen&repository=ha-efteling&category=integration
 [marketplace-install-badge]: https://my.home-assistant.io/badges/marketplace_repository.svg
-[repository]: https://github.com/dkempen/ha-efteling
+[configure]: https://my.home-assistant.io/redirect/config_flow_start/?domain=efteling
+[configure-badge]: https://my.home-assistant.io/badges/config_flow_start.svg
