@@ -14,7 +14,7 @@ from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.loader import async_get_loaded_integration
 
-from custom_components.efteling.const import DOMAIN, LOGGER
+from custom_components.efteling.const import CONF_LANGUAGE, DOMAIN, LOGGER
 
 from .api import EftelingApiClient
 from .coordinator import (
@@ -52,7 +52,10 @@ async def async_setup_entry(
     )
 
     entry.runtime_data = EftelingData(
-        client=EftelingApiClient(session=async_get_clientsession(hass)),
+        client=EftelingApiClient(
+            session=async_get_clientsession(hass),
+            language=entry.data.get(CONF_LANGUAGE, "nl"),
+        ),
         integration=async_get_loaded_integration(hass, entry.domain),
         poi_coordinator=poi_coordinator,
         wait_times_coordinator=wait_times_coordinator,

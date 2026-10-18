@@ -50,21 +50,39 @@ def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
 class EftelingApiClient:
     """API client for Efteling POI and wait times."""
 
-    def __init__(self, session: aiohttp.ClientSession) -> None:
+    def __init__(
+        self,
+        session: aiohttp.ClientSession,
+        language: str = "nl",
+    ) -> None:
         """Initialize."""
         self._session = session
+        self._language = language if language in ("nl", "en") else "nl"
+
+    @property
+    def headers(self) -> dict[str, str]:
+        """Return headers for API requests."""
+        return {
+            **APP_HEADERS,
+            "x-app-language": self._language,
+            "accept-language": self._language,
+        }
 
     async def async_get_poi_list(self) -> list[Poi]:
         """Return POI data (points of interest, for example attractions)."""
         response: PoiResponse = await self._api_wrapper(
-            method="get", url=POINTS_OF_INTEREST_URL, headers=APP_HEADERS
+            method="get",
+            url=POINTS_OF_INTEREST_URL,
+            headers=self.headers,
         )
         return [poi["fields"] for poi in response["hits"]["hit"]]
 
     async def async_get_wait_times(self) -> list[AttractionInfo]:
         """Return wait times data."""
         response: WaitTimesResponse = await self._api_wrapper(
-            method="get", url=WAIT_TIMES_URL, headers=APP_HEADERS
+            method="get",
+            url=WAIT_TIMES_URL,
+            headers=self.headers,
         )
         return response["AttractionInfo"]
 

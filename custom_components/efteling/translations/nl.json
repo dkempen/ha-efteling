@@ -1,0 +1,151 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Efteling",
+        "description": "Selecteer de taal die wordt gebruikt om gegevens van Efteling op te halen.",
+        "data": {
+          "language": "Taal"
+        }
+      },
+      "reconfigure": {
+        "title": "Efteling opnieuw configureren",
+        "description": "Selecteer de taal die wordt gebruikt om gegevens van Efteling op te halen.",
+        "data": {
+          "language": "Taal"
+        }
+      }
+    },
+    "abort": {
+      "reconfigure_successful": "De configuratie is succesvol bijgewerkt."
+    }
+  },
+  "selector": {
+    "language": {
+      "options": {
+        "en": "Engels",
+        "nl": "Nederlands"
+      }
+    }
+  },
+  "device": {
+    "efteling_attractions": {
+      "name": "Efteling attracties"
+    },
+    "efteling_shows": {
+      "name": "Efteling shows"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "wait_time": {
+        "state_attributes": {
+          "empire": {
+            "name": "Rijk"
+          },
+          "status": {
+            "name": "Status",
+            "state": {
+              "closed": "Gesloten",
+              "open": "Open",
+              "in_maintenance": "In onderhoud",
+              "out_of_order": "Buiten bedrijf",
+              "temporarily_out_of_order": "Tijdelijk buiten bedrijf"
+            }
+          },
+          "description": {
+            "name": "Beschrijving"
+          },
+          "subtitle": {
+            "name": "Ondertitel"
+          },
+          "latitude": {
+            "name": "Breedtegraad"
+          },
+          "longitude": {
+            "name": "Lengtegraad"
+          },
+          "image": {
+            "name": "Afbeelding"
+          },
+          "image_detail": {
+            "name": "Detailafbeelding"
+          },
+          "properties": {
+            "name": "Eigenschappen"
+          },
+          "entry_requirements": {
+            "name": "Toegangsvoorwaarden"
+          },
+          "stimuli": {
+            "name": "Prikkels"
+          },
+          "targetgroups": {
+            "name": "Doelgroepen"
+          },
+          "type": {
+            "name": "Type"
+          }
+        }
+      },
+      "start_time": {
+        "name": "Starttijd",
+        "state_attributes": {
+          "state": {
+            "name": "Status",
+            "state": {
+              "current": "Momenteel bezig",
+              "upcoming": "Binnenkort",
+              "no_more_shows_today": "Geen voorstellingen meer vandaag"
+            }
+          },
+          "current_show_start": {
+            "name": "Start huidige voorstelling"
+          },
+          "current_show_end": {
+            "name": "Einde huidige voorstelling"
+          },
+          "previous_showtimes": {
+            "name": "Vorige voorstellingen"
+          },
+          "upcoming_showtimes": {
+            "name": "Aankomende voorstellingen"
+          },
+          "duration_minutes": {
+            "name": "Duur"
+          },
+          "edition": {
+            "name": "Editie"
+          },
+          "empire": {
+            "name": "Rijk"
+          },
+          "description": {
+            "name": "Beschrijving"
+          },
+          "subtitle": {
+            "name": "Ondertitel"
+          },
+          "latitude": {
+            "name": "Breedtegraad"
+          },
+          "longitude": {
+            "name": "Lengtegraad"
+          },
+          "image": {
+            "name": "Afbeelding"
+          },
+          "image_detail": {
+            "name": "Detailafbeelding"
+          },
+          "properties": {
+            "name": "Eigenschappen"
+          },
+          "type": {
+            "name": "Type"
+          }
+        }
+      }
+    }
+  }
+}

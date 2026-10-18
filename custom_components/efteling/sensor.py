@@ -10,6 +10,7 @@ from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorStateClass,
 )
 from homeassistant.const import UnitOfTime
 from homeassistant.core import callback
@@ -28,7 +29,7 @@ from custom_components.efteling.const import (
     USE_ATTRACTION_INFO_NAME,
 )
 from custom_components.efteling.coordinator import EftelingWaitTimesUpdateCoordinator
-from custom_components.efteling.models import ATTRACTION_STATE_MAP, Poi
+from custom_components.efteling.models import ATTRACTION_STATUS_MAP, Poi
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -41,12 +42,16 @@ if TYPE_CHECKING:
 
 ENTITY_DESCRIPTION_WAIT = SensorEntityDescription(
     key="wait_time",
+    translation_key="wait_time",
     device_class=SensorDeviceClass.DURATION,
+    state_class=SensorStateClass.MEASUREMENT,
     native_unit_of_measurement=UnitOfTime.MINUTES,
+    suggested_display_precision=0,
 )
 
 ENTITY_DESCRIPTION_SHOW = SensorEntityDescription(
     key="start_time",
+    translation_key="start_time",
     device_class=SensorDeviceClass.TIMESTAMP,
 )
 
@@ -156,7 +161,7 @@ class EftelingAttractionSensor(
         """Group all sensors under one device."""
         return DeviceInfo(
             identifiers={(DOMAIN, ATTRACTIONS)},
-            name=f"{NAME} {ATTRACTIONS}",
+            translation_key="efteling_attractions",
             manufacturer=NAME,
         )
 
@@ -183,16 +188,16 @@ class EftelingAttractionSensor(
 
         for attraction in attractions:
             if attraction["Id"] == self._attraction_id:
-                state = attraction["State"]
-                state_str = str(state) if state is not None else ""
+                status = attraction["State"]
+                status_str = str(status) if status is not None else ""
 
                 return {
                     "empire": self._poi["empire"],
-                    "state": ATTRACTION_STATE_MAP.get(state_str, state_str),
+                    "status": ATTRACTION_STATUS_MAP.get(status_str, status_str),
                     "description": clean_html(self._poi.get("detail_text")),
                     "subtitle": self._poi.get("subtitle"),
-                    "latitude": self._poi["latlon"].split(",")[0],
-                    "longitude": self._poi["latlon"].split(",")[1],
+                    "latitude": float(self._poi["latlon"].split(",")[0]),
+                    "longitude": float(self._poi["latlon"].split(",")[1]),
                     "image": f"https://www.efteling.com{self._poi['image']}",
                     "image_detail": f"https://www.efteling.com{self._poi['image_detailview1']}",
                     "properties": self._poi.get("properties"),
@@ -353,7 +358,7 @@ class EftelingShowSensor(
         """Group show sensors under one device."""
         return DeviceInfo(
             identifiers={(DOMAIN, SHOWS)},
-            name=f"{NAME} {SHOWS}",
+            translation_key="efteling_shows",
             manufacturer=NAME,
         )
 
@@ -403,14 +408,14 @@ class EftelingShowSensor(
         )
 
         if current:
-            state = "Nu bezig"
+            status = "current"
         elif future:
-            state = "Binnenkort"
+            status = "upcoming"
         else:
-            state = "Geen shows meer vandaag"
+            status = "no_more_shows_today"
 
         return {
-            "state": state,
+            "status": status,
             "current_show_start": current["start"] if current else None,
             "current_show_end": current["end"] if current else None,
             "previous_showtimes": [e["start"] for e in past],
@@ -420,8 +425,8 @@ class EftelingShowSensor(
             "empire": self._poi["empire"],
             "description": clean_html(self._poi.get("detail_text")),
             "subtitle": self._poi.get("subtitle"),
-            "latitude": self._poi["latlon"].split(",")[0],
-            "longitude": self._poi["latlon"].split(",")[1],
+            "latitude": float(self._poi["latlon"].split(",")[0]),
+            "longitude": float(self._poi["latlon"].split(",")[1]),
             "image": f"https://www.efteling.com{self._poi['image']}",
             "image_detail": f"https://www.efteling.com{self._poi['image_detailview1']}",
             "properties": self._poi.get("properties"),
@@ -430,8 +435,8 @@ class EftelingShowSensor(
 
 
 def clean_html(text: str) -> str:
-    """Clean HTML tags from string."""
-    text = html.unescape(text)
-    text = re.sub(r"</p>\s*<p>", "\n\n", text)
+    """Remove HTML tags and normalize paragraph spacing."""
+    text = html.unescape(text).replace("\xa0", " ")
+    text = re.sub(r"<br\s*/?>|</p\s*>\s*<p\b[^>]*>", "\n", text, flags=re.IGNORECASE)
     text = re.sub(r"<[^>]+>", "", text)
-    return text.strip()
+    return re.sub(r"\s*\n\s*", "\n", text).strip()

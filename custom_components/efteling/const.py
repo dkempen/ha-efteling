@@ -6,8 +6,10 @@ LOGGER: Logger = getLogger(__package__)
 
 DOMAIN = "efteling"
 NAME = "Efteling"
-ATTRACTIONS = "attracties"
+ATTRACTIONS = "attractions"
 SHOWS = "shows"
+
+CONF_LANGUAGE = "language"
 
 WAIT_TIMES_URL = "https://api.efteling.com/app/wis"
 POINTS_OF_INTEREST_URL = "https://api.efteling.com/app/poi"

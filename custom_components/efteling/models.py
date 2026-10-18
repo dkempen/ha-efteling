@@ -99,12 +99,12 @@ class ShowTimeInfo(TypedDict):
     Edition: str
 
 
-ATTRACTION_STATE_MAP: dict[str, str] = {
-    "": "Gesloten",
-    "gesloten": "Gesloten",
-    "nognietopen": "Gesloten",
-    "open": "Open",
-    "inonderhoud": "In onderhoud",
-    "buitenbedrijf": "Buiten bedrijf",
-    "tijdelijkbuitenbedrijf": "Tijdelijk buiten bedrijf",
+ATTRACTION_STATUS_MAP: dict[str, str] = {
+    "": "closed",
+    "gesloten": "closed",
+    "nognietopen": "closed",
+    "open": "open",
+    "inonderhoud": "in_maintenance",
+    "buitenbedrijf": "out_of_order",
+    "tijdelijkbuitenbedrijf": "temporarily_out_of_order",
 }

@@ -2,11 +2,150 @@
   "config": {
     "step": {
       "user": {
-        "description": "If you need help with the configuration have a look here: https://github.com/dkempen/ha-efteling"
+        "title": "Efteling",
+        "description": "Select the language used when retrieving data from Efteling.",
+        "data": {
+          "language": "Language"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Efteling",
+        "description": "Select the language used when retrieving data from Efteling.",
+        "data": {
+          "language": "Language"
+        }
       }
     },
     "abort": {
-      "already_configured": "This entry is already configured."
+      "reconfigure_successful": "Reconfiguration was successful."
+    }
+  },
+  "selector": {
+    "language": {
+      "options": {
+        "en": "English",
+        "nl": "Dutch"
+      }
+    }
+  },
+  "device": {
+    "efteling_attractions": {
+      "name": "Efteling attractions"
+    },
+    "efteling_shows": {
+      "name": "Efteling shows"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "wait_time": {
+        "state_attributes": {
+          "empire": {
+            "name": "Empire"
+          },
+          "status": {
+            "name": "Status",
+            "state": {
+              "closed": "Closed",
+              "open": "Open",
+              "in_maintenance": "In maintenance",
+              "out_of_order": "Out of order",
+              "temporarily_out_of_order": "Temporarily out of order"
+            }
+          },
+          "description": {
+            "name": "Description"
+          },
+          "subtitle": {
+            "name": "Subtitle"
+          },
+          "latitude": {
+            "name": "Latitude"
+          },
+          "longitude": {
+            "name": "Longitude"
+          },
+          "image": {
+            "name": "Image"
+          },
+          "image_detail": {
+            "name": "Detail image"
+          },
+          "properties": {
+            "name": "Properties"
+          },
+          "entry_requirements": {
+            "name": "Entry requirements"
+          },
+          "stimuli": {
+            "name": "Stimuli"
+          },
+          "targetgroups": {
+            "name": "Target groups"
+          },
+          "type": {
+            "name": "Type"
+          }
+        }
+      },
+      "start_time": {
+        "name": "Start time",
+        "state_attributes": {
+          "state": {
+            "name": "State",
+            "state": {
+              "current": "Currently running",
+              "upcoming": "Upcoming",
+              "no_more_shows_today": "No more shows today"
+            }
+          },
+          "current_show_start": {
+            "name": "Current show start"
+          },
+          "current_show_end": {
+            "name": "Current show end"
+          },
+          "previous_showtimes": {
+            "name": "Previous showtimes"
+          },
+          "upcoming_showtimes": {
+            "name": "Upcoming showtimes"
+          },
+          "duration_minutes": {
+            "name": "Duration"
+          },
+          "edition": {
+            "name": "Edition"
+          },
+          "empire": {
+            "name": "Empire"
+          },
+          "description": {
+            "name": "Description"
+          },
+          "subtitle": {
+            "name": "Subtitle"
+          },
+          "latitude": {
+            "name": "Latitude"
+          },
+          "longitude": {
+            "name": "Longitude"
+          },
+          "image": {
+            "name": "Image"
+          },
+          "image_detail": {
+            "name": "Detail image"
+          },
+          "properties": {
+            "name": "Properties"
+          },
+          "type": {
+            "name": "Type"
+          }
+        }
+      }
     }
   }
 }
