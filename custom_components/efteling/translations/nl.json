@@ -3,16 +3,22 @@
     "step": {
       "user": {
         "title": "Efteling",
-        "description": "Selecteer de taal die wordt gebruikt om gegevens van Efteling op te halen.",
+        "description": "Stel de taal in voor informatie die van de Efteling wordt opgehaald.",
         "data": {
           "language": "Taal"
+        },
+        "data_description": {
+          "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows."
         }
       },
       "reconfigure": {
         "title": "Efteling opnieuw configureren",
-        "description": "Selecteer de taal die wordt gebruikt om gegevens van Efteling op te halen.",
+        "description": "Stel de taal in voor informatie die van de Efteling wordt opgehaald.",
         "data": {
           "language": "Taal"
+        },
+        "data_description": {
+          "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows."
         }
       }
     },

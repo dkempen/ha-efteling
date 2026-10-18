@@ -76,5 +76,5 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id=step_id,
-            data_schema=data_schema,
+            data_schema=data_schema,  # type: ignore[reportArgumentType]  # HA's stub conflicts with voluptuous config flow schemas.
         )

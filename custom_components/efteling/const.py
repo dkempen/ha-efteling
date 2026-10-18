@@ -18,10 +18,8 @@ APP_HEADERS = {
     "host": "api.efteling.com",
     "x-app-id": "nl.efteling.app.Efteling",
     "accept": "*/*",
-    "x-app-language": "nl",
     "x-app-name": "Efteling",
     "x-app-platform": "iOS",
-    "accept-language": "nl",
     "accept-encoding": "gzip, deflate, br",
     "x-app-timezone": "Europe/Amsterdam",
     "user-agent": "Efteling/22805 CFNetwork/3860.400.51 Darwin/25.3.0",
@@ -96,7 +94,9 @@ CUSTOM_SHOW_ICONS: dict[str, str] = {
     "therednoseboogieboys": "mdi:microphone-variant",
 }
 
-USE_ATTRACTION_INFO_NAME: list[str] = [
-    "stoomtreinm",
-    "stoomtreinr",
-]
+USE_ATTRACTION_INFO_NAME: frozenset[str] = frozenset(
+    {
+        "stoomtreinm",
+        "stoomtreinr",
+    }
+)

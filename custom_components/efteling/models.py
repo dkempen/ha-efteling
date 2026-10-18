@@ -94,9 +94,9 @@ class ShowTimeInfo(TypedDict):
 
     ShowDateTime: str
     StartDateTime: str
-    EndDateTime: str
-    Duration: int
-    Edition: str
+    EndDateTime: NotRequired[str]
+    Duration: NotRequired[int]
+    Edition: NotRequired[str]
 
 
 ATTRACTION_STATUS_MAP: dict[str, str] = {

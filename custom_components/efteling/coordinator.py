@@ -4,13 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from custom_components.efteling.models import AttractionInfo, Poi
 
 from .api import (
-    EftelingApiClientAuthenticationError,
     EftelingApiClientError,
 )
 
@@ -44,24 +42,24 @@ class EftelingPoiUpdateCoordinator(DataUpdateCoordinator[dict[str, Poi]]):
                 if alternate_id_raw:
                     poi_map[str(alternate_id_raw)] = poi
 
-        except EftelingApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
         except EftelingApiClientError as exception:
             raise UpdateFailed(exception) from exception
         else:
             return poi_map
 
 
-class EftelingWaitTimesUpdateCoordinator(DataUpdateCoordinator[list[AttractionInfo]]):
+class EftelingWaitTimesUpdateCoordinator(
+    DataUpdateCoordinator[dict[str, AttractionInfo]]
+):
     """Class to manage fetching wait times data from the API."""
 
     config_entry: EftelingConfigEntry
 
-    async def _async_update_data(self) -> list[AttractionInfo]:
-        """Update wait times via library."""
+    async def _async_update_data(self) -> dict[str, AttractionInfo]:
+        """Update wait times and index them by attraction ID."""
         try:
-            return await self.config_entry.runtime_data.client.async_get_wait_times()
-        except EftelingApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
+            client = self.config_entry.runtime_data.client
+            wait_times = await client.async_get_wait_times()
         except EftelingApiClientError as exception:
             raise UpdateFailed(exception) from exception
+        return {str(item["Id"]): item for item in wait_times if item.get("Id")}

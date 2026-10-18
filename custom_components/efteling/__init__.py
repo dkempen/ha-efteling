@@ -40,6 +40,7 @@ async def async_setup_entry(
     poi_coordinator = EftelingPoiUpdateCoordinator(
         hass=hass,
         logger=LOGGER,
+        config_entry=entry,
         name=f"{DOMAIN}_poi",
         update_interval=timedelta(days=1),
     )
@@ -47,6 +48,7 @@ async def async_setup_entry(
     wait_times_coordinator = EftelingWaitTimesUpdateCoordinator(
         hass=hass,
         logger=LOGGER,
+        config_entry=entry,
         name=f"{DOMAIN}_wait_times",
         update_interval=timedelta(minutes=5),
     )

@@ -23,7 +23,7 @@ from custom_components.efteling.const import (
 from custom_components.efteling.coordinator import EftelingWaitTimesUpdateCoordinator
 from custom_components.efteling.models import ATTRACTION_STATUS_MAP, Poi
 
-from .utils import clean_html
+from .utils import parse_poi_metadata
 
 ENTITY_DESCRIPTION_WAIT = SensorEntityDescription(
     key="wait_time",
@@ -56,6 +56,15 @@ class EftelingAttractionSensor(
         self._attr_unique_id = attraction_id
         self._attr_name = attraction_name
         self._poi = poi
+        self._metadata = parse_poi_metadata(poi)
+
+    def update_poi(self, poi: Poi) -> None:
+        """Refresh cached metadata when the POI coordinator updates."""
+        if poi is self._poi:
+            return
+        self._poi = poi
+        self._metadata = parse_poi_metadata(poi)
+        self.async_write_ha_state()
 
     @property
     def native_value(self) -> int | None:
@@ -79,21 +88,21 @@ class EftelingAttractionSensor(
             return None
         status = attraction["State"]
         status_str = str(status) if status is not None else ""
-        latitude, longitude = self._poi["latlon"].split(",", maxsplit=1)
+        metadata = self._metadata
         return {
-            "empire": self._poi["empire"],
+            "empire": metadata.empire,
             "status": ATTRACTION_STATUS_MAP.get(status_str, status_str),
-            "description": clean_html(self._poi.get("detail_text", "")),
-            "subtitle": self._poi.get("subtitle"),
-            "latitude": float(latitude),
-            "longitude": float(longitude),
-            "image": f"https://www.efteling.com{self._poi['image']}",
-            "image_detail": f"https://www.efteling.com{self._poi['image_detailview1']}",
-            "properties": self._poi.get("properties"),
-            "entry_requirements": self._poi.get("properties_entry_requirements"),
-            "stimuli": self._poi.get("properties_stimuli"),
-            "targetgroups": self._poi.get("targetgroups"),
-            "type": self._poi.get("type"),
+            "description": metadata.description,
+            "subtitle": metadata.subtitle,
+            "latitude": metadata.latitude,
+            "longitude": metadata.longitude,
+            "image": metadata.image,
+            "image_detail": metadata.image_detail,
+            "properties": metadata.properties,
+            "entry_requirements": metadata.entry_requirements,
+            "stimuli": metadata.stimuli,
+            "targetgroups": metadata.targetgroups,
+            "type": metadata.type,
         }
 
     @property

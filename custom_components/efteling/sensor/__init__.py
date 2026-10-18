@@ -30,12 +30,18 @@ async def async_setup_entry(
     del hass
     runtime_data = entry.runtime_data
     known_ids: set[str] = set()
+    entities: dict[str, EftelingAttractionSensor | EftelingShowSensor] = {}
 
     @callback
     def add_new_entities() -> None:
         wait_times = runtime_data.wait_times_coordinator.data
         poi_map = runtime_data.poi_coordinator.data
         sensors: list[SensorEntity] = []
+
+        for attraction_id, entity in entities.items():
+            poi = poi_map.get(attraction_id)
+            if poi is not None:
+                entity.update_poi(poi)
 
         for attraction_id, attraction in wait_times.items():
             if attraction_id in known_ids:
@@ -50,27 +56,26 @@ async def async_setup_entry(
                 alternate_id = poi.get("alternateid")
                 if alternate_id and attraction_id == alternate_id:
                     name = f"{name} {poi.get('alternatelabel', '')}".strip()
-                sensors.append(
-                    EftelingAttractionSensor(
-                        coordinator=runtime_data.wait_times_coordinator,
-                        attraction_id=attraction_id,
-                        attraction_name=str(name),
-                        poi=poi,
-                    )
+                entity = EftelingAttractionSensor(
+                    coordinator=runtime_data.wait_times_coordinator,
+                    attraction_id=attraction_id,
+                    attraction_name=str(name),
+                    poi=poi,
                 )
+                sensors.append(entity)
             elif poi["category"] == "show":
                 name = poi["name"] or attraction["Name"] or attraction["Id"]
-                sensors.append(
-                    EftelingShowSensor(
-                        coordinator=runtime_data.wait_times_coordinator,
-                        show_id=attraction_id,
-                        show_name=str(name),
-                        poi=poi,
-                    )
+                entity = EftelingShowSensor(
+                    coordinator=runtime_data.wait_times_coordinator,
+                    show_id=attraction_id,
+                    show_name=str(name),
+                    poi=poi,
                 )
+                sensors.append(entity)
             else:
                 continue
             known_ids.add(attraction_id)
+            entities[attraction_id] = entity
 
         if sensors:
             async_add_entities(sensors)

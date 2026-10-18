@@ -3,16 +3,22 @@
     "step": {
       "user": {
         "title": "Efteling",
-        "description": "Select the language used when retrieving data from Efteling.",
+        "description": "Set the language for information retrieved from Efteling.",
         "data": {
           "language": "Language"
+        },
+        "data_description": {
+          "language": "This affects attraction and show names, descriptions, and other details."
         }
       },
       "reconfigure": {
         "title": "Reconfigure Efteling",
-        "description": "Select the language used when retrieving data from Efteling.",
+        "description": "Set the language for information retrieved from Efteling.",
         "data": {
           "language": "Language"
+        },
+        "data_description": {
+          "language": "This affects attraction and show names, descriptions, and other details."
         }
       }
     },
