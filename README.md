@@ -6,9 +6,9 @@
 [![License][license-badge]][license]
 [![Stars][stars-badge]][stars]
 
-A Home Assistant integration that brings real-time Efteling attraction and show information into Home Assistant.
+Bring real-time Efteling attraction and show information into Home Assistant with this Efteling integration!
 
-This integration retrieves data from the Efteling and exposes attractions and shows as Home Assistant sensor entities, making it possible to build dashboards, notifications, automations, and other Home Assistant functionality around your visit to Efteling.
+Explore live attraction data, build custom dashboards, receive notifications and create automations to make the most of your visit to Efteling.
 
 ## Features
 
@@ -75,9 +75,10 @@ Features coming _Soon™_:
 - [x] Show status
 - [x] Show information
 - [ ] Crowd level forecast
-- [ ] Annual pass validity
 - [ ] Opening times
 - [ ] Special events
+- [ ] Planned maintenance
+- [ ] Annual pass validity
 - [ ] Stable v1 release
 
 ## Entities
@@ -188,7 +189,7 @@ Attraction and show metadata is refreshed every **24 hours**.
 
 The integration groups its entities into two Home Assistant devices:
 
-### Efteling attracties
+### Efteling attractions
 
 Contains all attraction sensors.
 
@@ -196,44 +197,21 @@ Contains all attraction sensors.
 
 Contains all show sensors.
 
-## Dashboard example
-
-A simple dashboard can display attraction queues alongside show times.
-
-## Automations
-
-The sensors or their attributes directly in Home Assistant automations.
-
-- Notify when an attraction's wait time drops below a threshold.
-- Notify when an attraction reopens after being out of order.
-- Receive a reminder shortly before a show starts.
-
 ## Development
 
 The integration can be developed and tested using a Home Assistant development container.
 
 The integration source lives under `custom_components/efteling`.
 
-The main components are:
-
-| File             | Purpose                                             |
-| ---------------- | --------------------------------------------------- |
-| `__init__.py`    | Integration setup, coordinators, and platform setup |
-| `api.py`         | Efteling API client                                 |
-| `config_flow.py` | UI-based configuration flow                         |
-| `const.py`       | Integration constants and custom icons              |
-| `coordinator.py` | Home Assistant data update coordinators             |
-| `data.py`        | Runtime data structures                             |
-| `models.py`      | API response models                                 |
-| `sensor.py`      | Attraction and show entities                        |
-| `manifest.json`  | Home Assistant integration metadata                 |
+Use `scripts/setup` and `scripts/develop` to test the integration in a live Home Assistant enviroment.
 
 ## Credits
 
 This is a non-commercial, community-developed custom integration for Home Assistant that provides data from Efteling.
 
-Efteling and all associated trademarks, names, images, and services remain the property of their respective owners.
 This project is independent and is not affiliated with or endorsed by Efteling.
+
+Efteling and all associated trademarks, names, images, and services remain the property of their respective owners.
 
 [repository]: https://github.com/dkempen/ha-efteling
 [efteling]: https://www.efteling.com
@@ -245,7 +223,7 @@ This project is independent and is not affiliated with or endorsed by Efteling.
 [stars]: https://github.com/dkempen/ha-efteling
 [stars-badge]: https://img.shields.io/github/stars/dkempen/ha-efteling
 [license]: https://github.com/dkempen/ha-efteling?tab=MIT-1-ov-file
-[license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling
+[license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling?label=Licence
 [marketplace-install]: https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkempen&repository=ha-efteling&category=integration
 [marketplace-install-badge]: https://my.home-assistant.io/badges/marketplace_repository.svg
 [configure]: https://my.home-assistant.io/redirect/config_flow_start/?domain=efteling
