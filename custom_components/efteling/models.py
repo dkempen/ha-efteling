@@ -129,7 +129,7 @@ ATTRACTION_STATUS_MAP: dict[str, str] = {
     "nognietopen": "closed",
     "wachtrijgesloten": "closed",
     "open": "open",
-    "inonderhoud": "in_maintenance",
+    "inonderhoud": "under_maintenance",
     "buitenbedrijf": "out_of_order",
     "tijdelijkbuitenbedrijf": "temporarily_out_of_order",
 }

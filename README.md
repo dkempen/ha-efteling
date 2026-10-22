@@ -70,18 +70,18 @@ The integration creates three devices: **Efteling park**, **Efteling attractions
 
 The Efteling park device includes these entities:
 
-| Entity                     | Description                                                  |
-| -------------------------- | ------------------------------------------------------------ |
-| Park status                | Whether the park is currently `Open` or `Closed`             |
-| Attractions in maintenance | Number of attractions listed as being in maintenance today.  |
-| Average wait time          | Average live wait time for open attractions, in minutes.     |
-| Crowd level                | A level calculated from the average live wait time.          |
-| Opening time               | The park opening time today.                                 |
-| Closing time               | The park closing time today.                                 |
-| Crowd forecast             | Efteling's forecast for today: `Quiet`, `Normal`, or `Busy`. |
-| Occupancy forecast         | Efteling's forecast park occupancy percentage for today.     |
-| Business event             | Whether a business event is scheduled for today.             |
-| Winter Efteling            | Whether Winter Efteling is active today.                     |
+| Entity                        | Description                                                    |
+| ----------------------------- | -------------------------------------------------------------- |
+| Park status                   | Whether the park is currently `Open` or `Closed`               |
+| Attractions under maintenance | Number of attractions listed as being under maintenance today. |
+| Average wait time             | Average live wait time for open attractions, in minutes.       |
+| Crowd level                   | A level calculated from the average live wait time.            |
+| Opening time                  | The park opening time today.                                   |
+| Closing time                  | The park closing time today.                                   |
+| Crowd forecast                | Efteling's forecast for today: `Quiet`, `Normal`, or `Busy`.   |
+| Occupancy forecast            | Efteling's forecast park occupancy percentage for today.       |
+| Business event                | Whether a business event is scheduled for today.               |
+| Winter Efteling               | Whether Winter Efteling is active today.                       |
 
 Relevant entities expose additional attributes such as operatring time schedules, daily forecasts, event schedules, and upcoming maintenance information.
 
@@ -114,7 +114,7 @@ Attraction sensors expose additional information useful for dashboards and autom
 | `targetgroups`          | Target audiences.                  |
 | `type`                  | Efteling point-of-interest type.   |
 
-The attraction status is one of `Open`, `Closed`, `In maintenance`, `Out of order`, or `Temporarily out of order` (shown in the Home Assistant language).
+The attraction status is one of `Open`, `Closed`, `Under maintenance`, `Out of order`, or `Temporarily out of order` (shown in the Home Assistant language).
 
 ### Shows
 

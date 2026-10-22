@@ -79,8 +79,8 @@
           "opening_hours_schedule": { "name": "Opening hours schedule" }
         }
       },
-      "attractions_in_maintenance": {
-        "name": "Attractions in maintenance",
+      "attractions_under_maintenance": {
+        "name": "Attractions under maintenance",
         "unit_of_measurement": "attractions",
         "state_attributes": {
           "maintenance_names": { "name": "Maintenance names" },
@@ -109,7 +109,7 @@
             "state": {
               "closed": "Closed",
               "open": "Open",
-              "in_maintenance": "In maintenance",
+              "under_maintenance": "Under maintenance",
               "out_of_order": "Out of order",
               "temporarily_out_of_order": "Temporarily out of order"
             }

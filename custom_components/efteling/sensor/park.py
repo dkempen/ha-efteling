@@ -139,7 +139,7 @@ class EftelingParkSensor(
         elif key in ("opening_time", "closing_time"):
             value = snapshot[key]
 
-        elif key == "attractions_in_maintenance":
+        elif key == "attractions_under_maintenance":
             value = len(snapshot["maintenance_today"])
 
         elif key == "average_wait_time":
@@ -184,7 +184,7 @@ class EftelingParkSensor(
                 response["OpeningHours"]
             )
 
-        elif key == "attractions_in_maintenance":
+        elif key == "attractions_under_maintenance":
             attributes["maintenance_schedule"] = as_records(
                 response["Maintenance"], exclude_keys={"State", "Type", "Url"}
             )
@@ -235,8 +235,8 @@ PARK_SENSOR_DESCRIPTIONS = (
         device_class=SensorDeviceClass.TIMESTAMP,
     ),
     SensorEntityDescription(
-        key="attractions_in_maintenance",
-        translation_key="attractions_in_maintenance",
+        key="attractions_under_maintenance",
+        translation_key="attractions_under_maintenance",
         state_class=SensorStateClass.MEASUREMENT,
     ),
     SensorEntityDescription(

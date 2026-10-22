@@ -85,7 +85,7 @@
           "opening_hours_schedule": { "name": "Openingstijdenschema" }
         }
       },
-      "attractions_in_maintenance": {
+      "attractions_under_maintenance": {
         "name": "Attracties in onderhoud",
         "unit_of_measurement": "attracties",
         "state_attributes": {
@@ -115,7 +115,7 @@
             "state": {
               "closed": "Gesloten",
               "open": "Open",
-              "in_maintenance": "In onderhoud",
+              "under_maintenance": "In onderhoud",
               "out_of_order": "Buiten bedrijf",
               "temporarily_out_of_order": "Tijdelijk buiten bedrijf"
             }

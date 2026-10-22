@@ -13,7 +13,7 @@
       },
       "opening_time": { "default": "mdi:clock-start" },
       "closing_time": { "default": "mdi:clock-end" },
-      "attractions_in_maintenance": { "default": "mdi:wrench-clock" },
+      "attractions_under_maintenance": { "default": "mdi:wrench-clock" },
       "average_wait_time": {
         "default": "mdi:timer-sand",
         "range": {
