@@ -4,9 +4,7 @@
       "user": {
         "title": "Efteling",
         "description": "Set the language for information retrieved from Efteling.",
-        "data": {
-          "language": "Language"
-        },
+        "data": { "language": "Language" },
         "data_description": {
           "language": "This affects attraction and show names, descriptions, and other details."
         }
@@ -14,41 +12,98 @@
       "reconfigure": {
         "title": "Reconfigure Efteling",
         "description": "Set the language for information retrieved from Efteling.",
-        "data": {
-          "language": "Language"
-        },
+        "data": { "language": "Language" },
         "data_description": {
           "language": "This affects attraction and show names, descriptions, and other details."
         }
       }
     },
-    "abort": {
-      "reconfigure_successful": "Reconfiguration was successful."
-    }
+    "abort": { "reconfigure_successful": "Reconfiguration was successful." }
   },
-  "selector": {
-    "language": {
-      "options": {
-        "en": "English",
-        "nl": "Dutch"
-      }
-    }
-  },
+  "selector": { "language": { "options": { "en": "English", "nl": "Dutch" } } },
   "device": {
-    "efteling_attractions": {
-      "name": "Efteling attractions"
-    },
-    "efteling_shows": {
-      "name": "Efteling shows"
-    }
+    "efteling_attractions": { "name": "Efteling attractions" },
+    "efteling_shows": { "name": "Efteling shows" },
+    "efteling_park": { "name": "Efteling park" }
   },
   "entity": {
+    "binary_sensor": {
+      "park_status": {
+        "state": { "on": "Open", "off": "Closed" },
+        "state_attributes": {
+          "opening_hours_today": { "name": "Opening hours today" }
+        }
+      },
+      "winter_efteling": {
+        "name": "Winter Efteling",
+        "state": { "on": "Yes", "off": "No" },
+        "state_attributes": {
+          "current_winter_event": { "name": "Current Winter Efteling event" },
+          "winter_events": { "name": "Winter Efteling events" }
+        }
+      },
+      "business_event": {
+        "name": "Business event",
+        "state": { "on": "Yes", "off": "No" },
+        "state_attributes": {
+          "business_events_today": { "name": "Business events today" },
+          "business_events": { "name": "Business events" }
+        }
+      }
+    },
     "sensor": {
+      "crowd_forecast": {
+        "name": "Crowd forecast",
+        "state": { "quiet": "Quiet", "normal": "Normal", "busy": "Busy" },
+        "state_attributes": {
+          "daily_crowd_forecasts": { "name": "Daily crowd forecasts" }
+        }
+      },
+      "occupancy_forecast": {
+        "name": "Occupancy forecast",
+        "state_attributes": {
+          "daily_occupancy_forecasts": { "name": "Daily occupancy forecasts" }
+        }
+      },
+      "opening_time": {
+        "name": "Opening time",
+        "state_attributes": {
+          "opening_hours_today": { "name": "Opening hours today" },
+          "opening_hours_schedule": { "name": "Opening hours schedule" }
+        }
+      },
+      "closing_time": {
+        "name": "Closing time",
+        "state_attributes": {
+          "opening_hours_today": { "name": "Opening hours today" },
+          "opening_hours_schedule": { "name": "Opening hours schedule" }
+        }
+      },
+      "attractions_in_maintenance": {
+        "name": "Attractions in maintenance",
+        "unit_of_measurement": "attractions",
+        "state_attributes": {
+          "maintenance_names": { "name": "Maintenance names" },
+          "maintenance_today": { "name": "Maintenance today" },
+          "maintenance_schedule": { "name": "Maintenance schedule" }
+        }
+      },
+      "average_wait_time": { "name": "Average wait time" },
+      "crowd_level": {
+        "name": "Crowd level",
+        "state": {
+          "very_quiet": "Very quiet",
+          "quiet": "Quiet",
+          "fairly_quiet": "Fairly quiet",
+          "fairly_busy": "Fairly busy",
+          "busy": "Busy",
+          "very_busy": "Very busy",
+          "extremely_busy": "Extremely busy"
+        }
+      },
       "wait_time": {
         "state_attributes": {
-          "empire": {
-            "name": "Empire"
-          },
+          "empire": { "name": "Empire" },
           "status": {
             "name": "Status",
             "state": {
@@ -59,39 +114,17 @@
               "temporarily_out_of_order": "Temporarily out of order"
             }
           },
-          "description": {
-            "name": "Description"
-          },
-          "subtitle": {
-            "name": "Subtitle"
-          },
-          "latitude": {
-            "name": "Latitude"
-          },
-          "longitude": {
-            "name": "Longitude"
-          },
-          "image": {
-            "name": "Image"
-          },
-          "image_detail": {
-            "name": "Detail image"
-          },
-          "properties": {
-            "name": "Properties"
-          },
-          "entry_requirements": {
-            "name": "Entry requirements"
-          },
-          "stimuli": {
-            "name": "Stimuli"
-          },
-          "targetgroups": {
-            "name": "Target groups"
-          },
-          "type": {
-            "name": "Type"
-          }
+          "description": { "name": "Description" },
+          "subtitle": { "name": "Subtitle" },
+          "latitude": { "name": "Latitude" },
+          "longitude": { "name": "Longitude" },
+          "image": { "name": "Image" },
+          "image_detail": { "name": "Detail image" },
+          "properties": { "name": "Properties" },
+          "entry_requirements": { "name": "Entry requirements" },
+          "stimuli": { "name": "Stimuli" },
+          "targetgroups": { "name": "Target groups" },
+          "type": { "name": "Type" }
         }
       },
       "start_time": {
@@ -105,51 +138,21 @@
               "no_more_shows_today": "No more shows today"
             }
           },
-          "current_show_start": {
-            "name": "Current show start"
-          },
-          "current_show_end": {
-            "name": "Current show end"
-          },
-          "previous_showtimes": {
-            "name": "Previous showtimes"
-          },
-          "upcoming_showtimes": {
-            "name": "Upcoming showtimes"
-          },
-          "duration_minutes": {
-            "name": "Duration"
-          },
-          "edition": {
-            "name": "Edition"
-          },
-          "empire": {
-            "name": "Empire"
-          },
-          "description": {
-            "name": "Description"
-          },
-          "subtitle": {
-            "name": "Subtitle"
-          },
-          "latitude": {
-            "name": "Latitude"
-          },
-          "longitude": {
-            "name": "Longitude"
-          },
-          "image": {
-            "name": "Image"
-          },
-          "image_detail": {
-            "name": "Detail image"
-          },
-          "properties": {
-            "name": "Properties"
-          },
-          "type": {
-            "name": "Type"
-          }
+          "current_show_start": { "name": "Current show start" },
+          "current_show_end": { "name": "Current show end" },
+          "previous_showtimes": { "name": "Previous showtimes" },
+          "upcoming_showtimes": { "name": "Upcoming showtimes" },
+          "duration_minutes": { "name": "Duration" },
+          "edition": { "name": "Edition" },
+          "empire": { "name": "Empire" },
+          "description": { "name": "Description" },
+          "subtitle": { "name": "Subtitle" },
+          "latitude": { "name": "Latitude" },
+          "longitude": { "name": "Longitude" },
+          "image": { "name": "Image" },
+          "image_detail": { "name": "Detail image" },
+          "properties": { "name": "Properties" },
+          "type": { "name": "Type" }
         }
       }
     }

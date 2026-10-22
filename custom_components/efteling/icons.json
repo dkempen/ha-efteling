@@ -1,0 +1,51 @@
+{
+  "entity": {
+    "sensor": {
+      "crowd_forecast": { "default": "mdi:account-group" },
+      "occupancy_forecast": {
+        "default": "mdi:gauge",
+        "range": {
+          "0": "mdi:gauge-empty",
+          "25": "mdi:gauge-low",
+          "50": "mdi:gauge",
+          "75": "mdi:gauge-full"
+        }
+      },
+      "opening_time": { "default": "mdi:clock-start" },
+      "closing_time": { "default": "mdi:clock-end" },
+      "attractions_in_maintenance": { "default": "mdi:wrench-clock" },
+      "average_wait_time": {
+        "default": "mdi:timer-sand",
+        "range": {
+          "0": "mdi:timer-sand-empty",
+          "15": "mdi:timer-sand",
+          "30": "mdi:timer-sand-full"
+        }
+      },
+      "crowd_level": { "default": "mdi:chart-bar" }
+    },
+    "binary_sensor": {
+      "park_status": {
+        "default": "mdi:gate",
+        "state": {
+          "on": "mdi:gate-open",
+          "off": "mdi:gate"
+        }
+      },
+      "winter_efteling": {
+        "default": "mdi:snowflake",
+        "state": {
+          "on": "mdi:snowflake",
+          "off": "mdi:calendar-blank"
+        }
+      },
+      "business_event": {
+        "default": "mdi:briefcase",
+        "state": {
+          "on": "mdi:briefcase",
+          "off": "mdi:calendar-blank"
+        }
+      }
+    }
+  }
+}

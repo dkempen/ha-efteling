@@ -18,7 +18,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from custom_components.efteling.const import CUSTOM_SHOW_ICONS, DOMAIN, NAME, SHOWS
-from custom_components.efteling.coordinator import EftelingWaitTimesUpdateCoordinator
+from custom_components.efteling.coordinator.wait_times import (
+    EftelingWaitTimesUpdateCoordinator,
+)
 
 from .utils import parse_poi_metadata
 
@@ -67,6 +69,7 @@ class EftelingShowSensor(
         self._attr_unique_id = show_id
         self._attr_name = show_name
         self._unsub_timer: Callable[[], None] | None = None
+        self.async_on_remove(self._cancel_timer)
         self._poi = poi
         self._metadata = parse_poi_metadata(poi)
         self._entries: list[ParsedShowTime] = []
@@ -79,10 +82,14 @@ class EftelingShowSensor(
 
     async def async_will_remove_from_hass(self) -> None:
         """Cancel scheduled callbacks when the entity is removed."""
+        self._cancel_timer()
+        await super().async_will_remove_from_hass()
+
+    @callback
+    def _cancel_timer(self) -> None:
         if self._unsub_timer is not None:
             self._unsub_timer()
             self._unsub_timer = None
-        await super().async_will_remove_from_hass()
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -121,6 +128,8 @@ class EftelingShowSensor(
                         duration = None
                 elif end is None:
                     end = start + timedelta(minutes=duration)
+                if end is None:
+                    continue
                 entries.append(
                     ParsedShowTime(
                         start=dt_util.as_utc(start),

@@ -9,6 +9,7 @@ from homeassistant.core import callback
 from custom_components.efteling.const import USE_ATTRACTION_INFO_NAME
 
 from .attraction import EftelingAttractionSensor
+from .park import create_park_sensors
 from .show import EftelingShowSensor
 
 if TYPE_CHECKING:
@@ -81,6 +82,7 @@ async def async_setup_entry(
             async_add_entities(sensors)
 
     add_new_entities()
+    async_add_entities(create_park_sensors(runtime_data))
     entry.async_on_unload(
         runtime_data.wait_times_coordinator.async_add_listener(add_new_entities)
     )

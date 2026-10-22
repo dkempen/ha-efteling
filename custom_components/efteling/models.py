@@ -99,10 +99,59 @@ class ShowTimeInfo(TypedDict):
     Edition: NotRequired[str]
 
 
+class OpeningInterval(TypedDict):
+    """A single opening interval for a park date."""
+
+    Open: NotRequired[str | None]
+    Close: NotRequired[str | None]
+
+
+class OpeningHours(TypedDict):
+    """Park opening hours for a calendar date."""
+
+    Date: str
+    FormattedDate: NotRequired[str | None]
+    OpeningHours: NotRequired[list[OpeningInterval] | None]
+    Crowded: NotRequired[int | str | None]
+    Crowdedness: NotRequired[int | str | None]
+
+
+class Maintenance(TypedDict):
+    """Attraction maintenance schedule record."""
+
+    DateFrom: str
+    DateTo: str
+    Name: NotRequired[str | None]
+    OpenInWeekend: NotRequired[bool | None]
+    State: NotRequired[str | None]
+    Type: NotRequired[str | None]
+    Url: NotRequired[str | None]
+
+
+class Event(TypedDict):
+    """Park event schedule record."""
+
+    DateFrom: str
+    DateTo: str
+    Type: str
+    Name: NotRequired[str | None]
+    Description: NotRequired[str | None]
+    Link: NotRequired[str | None]
+
+
+class ParkInfoResponse(TypedDict):
+    """Park opening, maintenance, and event schedules."""
+
+    OpeningHours: list[OpeningHours]
+    Maintenance: list[Maintenance]
+    Events: list[Event]
+
+
 ATTRACTION_STATUS_MAP: dict[str, str] = {
     "": "closed",
     "gesloten": "closed",
     "nognietopen": "closed",
+    "wachtrijgesloten": "closed",
     "open": "open",
     "inonderhoud": "in_maintenance",
     "buitenbedrijf": "out_of_order",

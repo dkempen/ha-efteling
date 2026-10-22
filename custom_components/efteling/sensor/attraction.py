@@ -20,7 +20,9 @@ from custom_components.efteling.const import (
     DOMAIN,
     NAME,
 )
-from custom_components.efteling.coordinator import EftelingWaitTimesUpdateCoordinator
+from custom_components.efteling.coordinator.wait_times import (
+    EftelingWaitTimesUpdateCoordinator,
+)
 from custom_components.efteling.models import ATTRACTION_STATUS_MAP, Poi
 
 from .utils import parse_poi_metadata

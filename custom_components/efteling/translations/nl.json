@@ -4,9 +4,7 @@
       "user": {
         "title": "Efteling",
         "description": "Stel de taal in voor informatie die van de Efteling wordt opgehaald.",
-        "data": {
-          "language": "Taal"
-        },
+        "data": { "language": "Taal" },
         "data_description": {
           "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows."
         }
@@ -14,9 +12,7 @@
       "reconfigure": {
         "title": "Efteling opnieuw configureren",
         "description": "Stel de taal in voor informatie die van de Efteling wordt opgehaald.",
-        "data": {
-          "language": "Taal"
-        },
+        "data": { "language": "Taal" },
         "data_description": {
           "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows."
         }
@@ -27,28 +23,93 @@
     }
   },
   "selector": {
-    "language": {
-      "options": {
-        "en": "Engels",
-        "nl": "Nederlands"
-      }
-    }
+    "language": { "options": { "en": "Engels", "nl": "Nederlands" } }
   },
   "device": {
-    "efteling_attractions": {
-      "name": "Efteling attracties"
-    },
-    "efteling_shows": {
-      "name": "Efteling shows"
-    }
+    "efteling_attractions": { "name": "Efteling attracties" },
+    "efteling_shows": { "name": "Efteling shows" },
+    "efteling_park": { "name": "Efteling park" }
   },
   "entity": {
+    "binary_sensor": {
+      "park_status": {
+        "state": { "on": "Open", "off": "Gesloten" },
+        "state_attributes": {
+          "opening_hours_today": { "name": "Openingstijden vandaag" }
+        }
+      },
+      "winter_efteling": {
+        "name": "Winter Efteling",
+        "state": { "on": "Ja", "off": "Nee" },
+        "state_attributes": {
+          "current_winter_event": {
+            "name": "Huidig Winter Efteling-evenement"
+          },
+          "winter_events": { "name": "Winter Efteling-evenementen" }
+        }
+      },
+      "business_event": {
+        "name": "Bedrijfsevenement",
+        "state": { "on": "Ja", "off": "Nee" },
+        "state_attributes": {
+          "business_events_today": { "name": "Bedrijfsevenementen vandaag" },
+          "business_events": { "name": "Bedrijfsevenementen" }
+        }
+      }
+    },
     "sensor": {
+      "crowd_forecast": {
+        "name": "Verwachte drukte",
+        "state": { "quiet": "Rustig", "normal": "Normaal", "busy": "Druk" },
+        "state_attributes": {
+          "daily_crowd_forecasts": { "name": "Dagelijkse drukteverwachting" }
+        }
+      },
+      "occupancy_forecast": {
+        "name": "Verwachte parkbezetting",
+        "state_attributes": {
+          "daily_occupancy_forecasts": { "name": "Dagelijkse parkbezetting" }
+        }
+      },
+      "opening_time": {
+        "name": "Openingstijd",
+        "state_attributes": {
+          "opening_hours_today": { "name": "Openingstijden vandaag" },
+          "opening_hours_schedule": { "name": "Openingstijdenschema" }
+        }
+      },
+      "closing_time": {
+        "name": "Sluitingstijd",
+        "state_attributes": {
+          "opening_hours_today": { "name": "Openingstijden vandaag" },
+          "opening_hours_schedule": { "name": "Openingstijdenschema" }
+        }
+      },
+      "attractions_in_maintenance": {
+        "name": "Attracties in onderhoud",
+        "unit_of_measurement": "attracties",
+        "state_attributes": {
+          "maintenance_names": { "name": "Namen van attracties in onderhoud" },
+          "maintenance_today": { "name": "Onderhoud vandaag" },
+          "maintenance_schedule": { "name": "Onderhoudsschema" }
+        }
+      },
+      "average_wait_time": { "name": "Gemiddelde wachttijd" },
+      "crowd_level": {
+        "name": "Drukteniveau",
+        "state": {
+          "very_quiet": "Heel rustig",
+          "quiet": "Rustig",
+          "fairly_quiet": "Best rustig",
+          "fairly_busy": "Best druk",
+          "busy": "Druk",
+          "very_busy": "Heel druk",
+          "extremely_busy": "Stervensdruk"
+        }
+      },
       "wait_time": {
         "state_attributes": {
-          "empire": {
-            "name": "Rijk"
-          },
+          "empire": { "name": "Rijk" },
           "status": {
             "name": "Status",
             "state": {
@@ -59,39 +120,17 @@
               "temporarily_out_of_order": "Tijdelijk buiten bedrijf"
             }
           },
-          "description": {
-            "name": "Beschrijving"
-          },
-          "subtitle": {
-            "name": "Ondertitel"
-          },
-          "latitude": {
-            "name": "Breedtegraad"
-          },
-          "longitude": {
-            "name": "Lengtegraad"
-          },
-          "image": {
-            "name": "Afbeelding"
-          },
-          "image_detail": {
-            "name": "Detailafbeelding"
-          },
-          "properties": {
-            "name": "Eigenschappen"
-          },
-          "entry_requirements": {
-            "name": "Toegangsvoorwaarden"
-          },
-          "stimuli": {
-            "name": "Prikkels"
-          },
-          "targetgroups": {
-            "name": "Doelgroepen"
-          },
-          "type": {
-            "name": "Type"
-          }
+          "description": { "name": "Beschrijving" },
+          "subtitle": { "name": "Ondertitel" },
+          "latitude": { "name": "Breedtegraad" },
+          "longitude": { "name": "Lengtegraad" },
+          "image": { "name": "Afbeelding" },
+          "image_detail": { "name": "Detailafbeelding" },
+          "properties": { "name": "Eigenschappen" },
+          "entry_requirements": { "name": "Toegangsvoorwaarden" },
+          "stimuli": { "name": "Prikkels" },
+          "targetgroups": { "name": "Doelgroepen" },
+          "type": { "name": "Type" }
         }
       },
       "start_time": {
@@ -105,51 +144,21 @@
               "no_more_shows_today": "Geen voorstellingen meer vandaag"
             }
           },
-          "current_show_start": {
-            "name": "Start huidige voorstelling"
-          },
-          "current_show_end": {
-            "name": "Einde huidige voorstelling"
-          },
-          "previous_showtimes": {
-            "name": "Vorige voorstellingen"
-          },
-          "upcoming_showtimes": {
-            "name": "Aankomende voorstellingen"
-          },
-          "duration_minutes": {
-            "name": "Duur"
-          },
-          "edition": {
-            "name": "Editie"
-          },
-          "empire": {
-            "name": "Rijk"
-          },
-          "description": {
-            "name": "Beschrijving"
-          },
-          "subtitle": {
-            "name": "Ondertitel"
-          },
-          "latitude": {
-            "name": "Breedtegraad"
-          },
-          "longitude": {
-            "name": "Lengtegraad"
-          },
-          "image": {
-            "name": "Afbeelding"
-          },
-          "image_detail": {
-            "name": "Detailafbeelding"
-          },
-          "properties": {
-            "name": "Eigenschappen"
-          },
-          "type": {
-            "name": "Type"
-          }
+          "current_show_start": { "name": "Start huidige voorstelling" },
+          "current_show_end": { "name": "Einde huidige voorstelling" },
+          "previous_showtimes": { "name": "Vorige voorstellingen" },
+          "upcoming_showtimes": { "name": "Aankomende voorstellingen" },
+          "duration_minutes": { "name": "Duur" },
+          "edition": { "name": "Editie" },
+          "empire": { "name": "Rijk" },
+          "description": { "name": "Beschrijving" },
+          "subtitle": { "name": "Ondertitel" },
+          "latitude": { "name": "Breedtegraad" },
+          "longitude": { "name": "Lengtegraad" },
+          "image": { "name": "Afbeelding" },
+          "image_detail": { "name": "Detailafbeelding" },
+          "properties": { "name": "Eigenschappen" },
+          "type": { "name": "Type" }
         }
       }
     }

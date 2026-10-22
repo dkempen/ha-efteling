@@ -8,11 +8,13 @@ DOMAIN = "efteling"
 NAME = "Efteling"
 ATTRACTIONS = "attractions"
 SHOWS = "shows"
+PARK = "park"
 
 CONF_LANGUAGE = "language"
 
 WAIT_TIMES_URL = "https://api.efteling.com/app/wis"
 POINTS_OF_INTEREST_URL = "https://api.efteling.com/app/poi"
+PARK_INFO_URL = "https://www.efteling.com/service/cached/getpoiinfo"
 
 APP_HEADERS = {
     "host": "api.efteling.com",

@@ -10,6 +10,7 @@ import aiohttp
 
 from custom_components.efteling.const import (
     APP_HEADERS,
+    PARK_INFO_URL,
     POINTS_OF_INTEREST_URL,
     WAIT_TIMES_URL,
 )
@@ -17,6 +18,7 @@ from custom_components.efteling.const import (
 if TYPE_CHECKING:
     from custom_components.efteling.models import (
         AttractionInfo,
+        ParkInfoResponse,
         Poi,
         PoiResponse,
         WaitTimesResponse,
@@ -33,9 +35,19 @@ class EftelingApiClientCommunicationError(
     """Exception to indicate a communication error."""
 
 
+class EftelingApiClientAuthenticationError(EftelingApiClientError):
+    """Exception to indicate an authentication error."""
+
+
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     response.raise_for_status()
+
+
+def _raise_authentication_error(status: int) -> None:
+    """Raise the integration authentication error for an unauthorized response."""
+    msg = f"Authentication failed with HTTP {status}"
+    raise EftelingApiClientAuthenticationError(msg)
 
 
 class EftelingApiClient:
@@ -83,13 +95,69 @@ class EftelingApiClient:
         )
         return response["AttractionInfo"]
 
+    async def async_get_park_info(self, year: int, month: int) -> ParkInfoResponse:
+        """Return park schedules for the requested month."""
+        response = await self._api_wrapper(
+            method="get",
+            url=f"{PARK_INFO_URL}/{self._language}/{year}/{month:02d}",
+            headers={**self.headers, "host": "www.efteling.com"},
+        )
+        if not isinstance(response, dict):
+            msg = "Invalid park information response: expected an object"
+            raise EftelingApiClientError(msg)
+        schedule_keys = ("OpeningHours", "Maintenance", "Events")
+        if any(
+            response.get(key) is not None and not isinstance(response.get(key), list)
+            for key in schedule_keys
+        ):
+            msg = (
+                "Invalid park information response: expected OpeningHours, "
+                "Maintenance, and Events lists or null"
+            )
+            raise EftelingApiClientError(msg)
+        response = {
+            **response,
+            **{key: response.get(key) or [] for key in schedule_keys},
+        }
+        required_fields = {
+            "OpeningHours": ("Date",),
+            "Maintenance": ("DateFrom", "DateTo"),
+            "Events": ("DateFrom", "DateTo", "Type"),
+        }
+        for key, fields in required_fields.items():
+            records = response[key]
+            if not all(
+                isinstance(record, dict)
+                and all(isinstance(record.get(field), str) for field in fields)
+                for record in records
+            ):
+                msg = f"Invalid park information response: malformed {key} record"
+                raise EftelingApiClientError(msg)
+        park_response = cast("ParkInfoResponse", response)
+        for day in park_response["OpeningHours"]:
+            intervals = day.get("OpeningHours", [])
+            if intervals is None:
+                continue
+            if not isinstance(intervals, list) or any(
+                not isinstance(interval, dict)
+                or any(
+                    interval.get(field) is not None
+                    and not isinstance(interval.get(field), str)
+                    for field in ("Open", "Close")
+                )
+                for interval in intervals
+            ):
+                msg = "Invalid park information response: malformed opening interval"
+                raise EftelingApiClientError(msg)
+        return park_response
+
     async def _api_wrapper(
         self,
         method: str,
         url: str,
         data: dict | None = None,
         headers: dict | None = None,
-    ) -> PoiResponse | WaitTimesResponse:
+    ) -> PoiResponse | WaitTimesResponse | ParkInfoResponse:
         """Get information from the API."""
         try:
             async with asyncio.timeout(10):
@@ -99,14 +167,19 @@ class EftelingApiClient:
                     headers=headers,
                     json=data,
                 ) as response:
+                    if response.status in (401, 403):
+                        _raise_authentication_error(response.status)
                     _verify_response_or_raise(response)
                     return cast(
-                        "PoiResponse | WaitTimesResponse", await response.json()
+                        "PoiResponse | WaitTimesResponse | ParkInfoResponse",
+                        await response.json(),
                     )
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
             raise EftelingApiClientCommunicationError(msg) from exception
+        except EftelingApiClientAuthenticationError:
+            raise
         except (aiohttp.ClientError, json.JSONDecodeError) as exception:
             msg = f"Error fetching information - {exception}"
             raise EftelingApiClientCommunicationError(msg) from exception

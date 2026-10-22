@@ -17,10 +17,9 @@ from homeassistant.loader import async_get_loaded_integration
 from custom_components.efteling.const import CONF_LANGUAGE, DOMAIN, LOGGER
 
 from .api import EftelingApiClient
-from .coordinator import (
-    EftelingPoiUpdateCoordinator,
-    EftelingWaitTimesUpdateCoordinator,
-)
+from .coordinator.park_info import EftelingParkInfoUpdateCoordinator
+from .coordinator.poi import EftelingPoiUpdateCoordinator
+from .coordinator.wait_times import EftelingWaitTimesUpdateCoordinator
 from .data import EftelingData
 
 if TYPE_CHECKING:
@@ -28,7 +27,10 @@ if TYPE_CHECKING:
 
     from .data import EftelingConfigEntry
 
-PLATFORMS: list[Platform] = [Platform.SENSOR]
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.BINARY_SENSOR,
+]
 
 
 # https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
@@ -44,13 +46,19 @@ async def async_setup_entry(
         name=f"{DOMAIN}_poi",
         update_interval=timedelta(days=1),
     )
-
     wait_times_coordinator = EftelingWaitTimesUpdateCoordinator(
         hass=hass,
         logger=LOGGER,
         config_entry=entry,
         name=f"{DOMAIN}_wait_times",
         update_interval=timedelta(minutes=5),
+    )
+    park_info_coordinator = EftelingParkInfoUpdateCoordinator(
+        hass=hass,
+        logger=LOGGER,
+        config_entry=entry,
+        name=f"{DOMAIN}_park_info",
+        update_interval=timedelta(days=1),
     )
 
     entry.runtime_data = EftelingData(
@@ -61,10 +69,12 @@ async def async_setup_entry(
         integration=async_get_loaded_integration(hass, entry.domain),
         poi_coordinator=poi_coordinator,
         wait_times_coordinator=wait_times_coordinator,
+        park_info_coordinator=park_info_coordinator,
     )
 
     await poi_coordinator.async_config_entry_first_refresh()
     await wait_times_coordinator.async_config_entry_first_refresh()
+    await park_info_coordinator.async_config_entry_first_refresh()
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))

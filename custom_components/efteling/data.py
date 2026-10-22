@@ -10,10 +10,9 @@ if TYPE_CHECKING:
     from homeassistant.loader import Integration
 
     from .api import EftelingApiClient
-    from .coordinator import (
-        EftelingPoiUpdateCoordinator,
-        EftelingWaitTimesUpdateCoordinator,
-    )
+    from .coordinator.park_info import EftelingParkInfoUpdateCoordinator
+    from .coordinator.poi import EftelingPoiUpdateCoordinator
+    from .coordinator.wait_times import EftelingWaitTimesUpdateCoordinator
 
 
 type EftelingConfigEntry = ConfigEntry[EftelingData]
@@ -27,3 +26,4 @@ class EftelingData:
     integration: Integration
     poi_coordinator: EftelingPoiUpdateCoordinator
     wait_times_coordinator: EftelingWaitTimesUpdateCoordinator
+    park_info_coordinator: EftelingParkInfoUpdateCoordinator
