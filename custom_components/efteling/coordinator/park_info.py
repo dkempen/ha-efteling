@@ -2,12 +2,10 @@
 
 from typing import TYPE_CHECKING
 
-from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
 from custom_components.efteling.api import (
-    EftelingApiClientAuthenticationError,
     EftelingApiClientError,
 )
 from custom_components.efteling.models import ParkInfoResponse
@@ -30,7 +28,5 @@ class EftelingParkInfoUpdateCoordinator(DataUpdateCoordinator[ParkInfoResponse])
             return await self.config_entry.runtime_data.client.async_get_park_info(
                 now.year, now.month
             )
-        except EftelingApiClientAuthenticationError as exception:
-            raise ConfigEntryAuthFailed(exception) from exception
         except EftelingApiClientError as exception:
             raise UpdateFailed(exception) from exception

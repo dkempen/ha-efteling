@@ -15,7 +15,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import DOMAIN, NAME, PARK
+from custom_components.efteling.const import DOMAIN, NAME, PARK, PARK_TIME_ZONE
 from custom_components.efteling.coordinator.park_info import (
     EftelingParkInfoUpdateCoordinator,
 )
@@ -74,7 +74,9 @@ class EftelingParkEventBinarySensor(
     def _schedule_midnight_update(self) -> None:
         """Schedule a refresh at the next local midnight."""
         self._cancel_timer()
-        midnight = dt_util.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        midnight = dt_util.now(PARK_TIME_ZONE).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
         self._unsub_timer = async_track_point_in_time(
             self.hass, self._handle_midnight, midnight + timedelta(days=1)
         )

@@ -53,10 +53,13 @@ async def async_setup_entry(
             if poi["category"] == "attraction":
                 name = poi["name"] or attraction["Name"] or attraction["Id"]
                 if attraction_id in USE_ATTRACTION_INFO_NAME:
-                    name = poi["wis_info"]["Name"]
+                    wis_info = poi.get("wis_info")
+                    wis_info_name = wis_info.get("Name") if wis_info else None
+                    if wis_info_name and wis_info_name.strip():
+                        name = wis_info_name.strip()
                 alternate_id = poi.get("alternateid")
                 if alternate_id and attraction_id == alternate_id:
-                    name = f"{name} {poi.get('alternatelabel', '')}".strip()
+                    name = f"{name} {poi.get('alternatelabel') or ''}".strip()
                 entity = EftelingAttractionSensor(
                     coordinator=runtime_data.wait_times_coordinator,
                     attraction_id=attraction_id,

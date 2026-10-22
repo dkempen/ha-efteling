@@ -1,10 +1,13 @@
-"""Shared sensor helpers."""
+"""Shared helpers for POI-backed sensors."""
+
+from __future__ import annotations
 
 import html
 import re
 from contextlib import suppress
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
+from urllib.parse import urljoin
 
 if TYPE_CHECKING:
     from custom_components.efteling.models import Poi
@@ -28,44 +31,56 @@ class PoiMetadata:
     type: str
 
 
+def _as_string(value: str | None) -> str:
+    """Return a string value or an empty string when it is absent."""
+    return value or ""
+
+
+def _image_url(value: str | None) -> str:
+    """Return an absolute image URL for a relative or absolute API value."""
+    if not value or not value.strip():
+        return ""
+    return urljoin("https://www.efteling.com", value.strip())
+
+
+def _string_list(value: list[str] | None) -> list[str] | None:
+    """Return the string list, or None when the field is unavailable."""
+    return value
+
+
 def parse_poi_metadata(poi: Poi) -> PoiMetadata:
-    """Normalize API-supplied POI metadata once for an update."""
+    """Normalize API-supplied POI metadata once for an entity update."""
     latitude: float | None = None
     longitude: float | None = None
     coordinates = poi.get("latlon")
-    if isinstance(coordinates, str) and "," in coordinates:
+    if coordinates and "," in coordinates:
         latitude_raw, _, longitude_raw = coordinates.partition(",")
         with suppress(ValueError):
-            latitude, longitude = float(latitude_raw), float(longitude_raw)
-
-    def image_url(value: object) -> str:
-        return f"https://www.efteling.com{value}" if isinstance(value, str) else ""
-
-    def string_list(value: object) -> list[str] | None:
-        if not isinstance(value, list):
-            return None
-        return [item for item in value if isinstance(item, str)]
+            latitude = float(latitude_raw.strip())
+            longitude = float(longitude_raw.strip())
 
     subtitle = poi.get("subtitle")
     return PoiMetadata(
-        empire=str(poi.get("empire", "")),
-        description=clean_html(poi.get("detail_text", "")),
-        subtitle=subtitle if isinstance(subtitle, str) else None,
+        empire=_as_string(poi.get("empire")),
+        description=clean_html(poi.get("detail_text")),
+        subtitle=subtitle,
         latitude=latitude,
         longitude=longitude,
-        image=image_url(poi.get("image")),
-        image_detail=image_url(poi.get("image_detailview1")),
-        properties=string_list(poi.get("properties")),
-        entry_requirements=string_list(poi.get("properties_entry_requirements")),
-        stimuli=string_list(poi.get("properties_stimuli")),
-        targetgroups=string_list(poi.get("targetgroups")),
-        type=str(poi.get("type", "")),
+        image=_image_url(poi.get("image")),
+        image_detail=_image_url(poi.get("image_detailview1")),
+        properties=_string_list(poi.get("properties")),
+        entry_requirements=_string_list(poi.get("properties_entry_requirements")),
+        stimuli=_string_list(poi.get("properties_stimuli")),
+        targetgroups=_string_list(poi.get("targetgroups")),
+        type=_as_string(poi.get("type")),
     )
 
 
-def clean_html(text: str) -> str:
+def clean_html(value: str | None) -> str:
     """Remove HTML tags and normalize paragraph spacing."""
-    text = html.unescape(text).replace("\xa0", " ")
+    if not value:
+        return ""
+    text = html.unescape(value).replace("\xa0", " ")
     text = re.sub(
         r"<br\s*/?>|</p\s*>\s*<p\b[^>]*>",
         "\n",

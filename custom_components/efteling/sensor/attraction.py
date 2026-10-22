@@ -72,15 +72,9 @@ class EftelingAttractionSensor(
     def native_value(self) -> int | None:
         """Return wait time if attraction is open."""
         attraction = self.coordinator.data.get(self._attraction_id)
-        if attraction is None or attraction["State"] != "open":
+        if attraction is None or attraction.get("State") != "open":
             return None
-        wait_time = attraction.get("WaitingTime")
-        if wait_time is None:
-            return None
-        try:
-            return int(wait_time)
-        except TypeError, ValueError:
-            return None
+        return attraction.get("WaitingTime")
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
@@ -89,11 +83,10 @@ class EftelingAttractionSensor(
         if attraction is None:
             return None
         status = attraction["State"]
-        status_str = str(status) if status is not None else ""
         metadata = self._metadata
         return {
             "empire": metadata.empire,
-            "status": ATTRACTION_STATUS_MAP.get(status_str, status_str),
+            "status": ATTRACTION_STATUS_MAP.get(status, status),
             "description": metadata.description,
             "subtitle": metadata.subtitle,
             "latitude": metadata.latitude,

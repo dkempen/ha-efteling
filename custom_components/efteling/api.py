@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import aiohttp
+
+try:
+    import probatio as vol
+except ImportError:
+    import voluptuous as vol
 
 from custom_components.efteling.const import (
     APP_HEADERS,
@@ -16,13 +21,110 @@ from custom_components.efteling.const import (
 )
 
 if TYPE_CHECKING:
-    from custom_components.efteling.models import (
-        AttractionInfo,
-        ParkInfoResponse,
-        Poi,
-        PoiResponse,
-        WaitTimesResponse,
-    )
+    from collections.abc import Callable
+
+    from custom_components.efteling.models import AttractionInfo, ParkInfoResponse, Poi
+
+
+_POI_RESPONSE_SCHEMA = vol.Schema(
+    {
+        vol.Required("hits"): {
+            vol.Required("hit"): [
+                {
+                    vol.Required("fields"): {
+                        vol.Required("id"): str,
+                        vol.Required("name"): str,
+                        vol.Required("category"): str,
+                        vol.Optional("alternateid"): vol.Any(str, None),
+                    },
+                }
+            ],
+        },
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+_WAIT_TIME_RESPONSE_SCHEMA = vol.Schema(
+    {
+        vol.Required("AttractionInfo"): [
+            {
+                vol.Required("Id"): vol.Any(str),
+                vol.Required("Name"): str,
+                vol.Required("State"): str,
+                vol.Optional("WaitingTime"): vol.Any(int, None),
+                vol.Optional("ShowTimes"): vol.Any(
+                    [
+                        {
+                            vol.Required("StartDateTime"): str,
+                            vol.Optional("ShowDateTime"): vol.Any(str, None),
+                            vol.Optional("EndDateTime"): vol.Any(str, None),
+                            vol.Optional("Duration"): vol.Any(int, None),
+                            vol.Optional("Edition"): vol.Any(str, None),
+                        }
+                    ],
+                    None,
+                ),
+                vol.Optional("PastShowTimes"): vol.Any(
+                    [
+                        {
+                            vol.Required("StartDateTime"): str,
+                            vol.Optional("ShowDateTime"): vol.Any(str, None),
+                            vol.Optional("EndDateTime"): vol.Any(str, None),
+                            vol.Optional("Duration"): vol.Any(int, None),
+                            vol.Optional("Edition"): vol.Any(str, None),
+                        }
+                    ],
+                    None,
+                ),
+            }
+        ],
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+_PARK_INFO_RESPONSE_SCHEMA = vol.Schema(
+    {
+        vol.Optional("OpeningHours", default=[]): vol.Any(
+            [
+                {
+                    vol.Required("Date"): str,
+                    vol.Optional("OpeningHours"): vol.Any(
+                        [
+                            {
+                                vol.Optional("Open"): vol.Any(str, None),
+                                vol.Optional("Close"): vol.Any(str, None),
+                            }
+                        ],
+                        None,
+                    ),
+                    vol.Optional("Crowded"): vol.Any(int, None),
+                    vol.Optional("Crowdedness"): vol.Any(int, None),
+                }
+            ],
+            None,
+        ),
+        vol.Optional("Maintenance", default=[]): vol.Any(
+            [
+                {
+                    vol.Required("DateFrom"): str,
+                    vol.Required("DateTo"): str,
+                }
+            ],
+            None,
+        ),
+        vol.Optional("Events", default=[]): vol.Any(
+            [
+                {
+                    vol.Required("DateFrom"): str,
+                    vol.Required("DateTo"): str,
+                    vol.Required("Type"): str,
+                }
+            ],
+            None,
+        ),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
 
 
 class EftelingApiClientError(Exception):
@@ -35,19 +137,22 @@ class EftelingApiClientCommunicationError(
     """Exception to indicate a communication error."""
 
 
-class EftelingApiClientAuthenticationError(EftelingApiClientError):
-    """Exception to indicate an authentication error."""
-
-
 def _verify_response_or_raise(response: aiohttp.ClientResponse) -> None:
     """Verify that the response is valid."""
     response.raise_for_status()
 
 
-def _raise_authentication_error(status: int) -> None:
-    """Raise the integration authentication error for an unauthorized response."""
-    msg = f"Authentication failed with HTTP {status}"
-    raise EftelingApiClientAuthenticationError(msg)
+def _validate_response(
+    response: dict[str, Any],
+    schema: Callable[[dict[str, Any]], Any],
+    description: str,
+) -> dict[str, Any]:
+    """Validate an API response."""
+    try:
+        return cast("dict[str, Any]", schema(response))
+    except vol.Invalid as exception:
+        msg = f"Invalid {description} response: {exception}"
+        raise EftelingApiClientError(msg) from exception
 
 
 class EftelingApiClient:
@@ -73,83 +178,34 @@ class EftelingApiClient:
 
     async def async_get_poi_list(self) -> list[Poi]:
         """Return POI data (points of interest, for example attractions)."""
-        response = cast(
-            "PoiResponse",
-            await self._api_wrapper(
-                method="get",
-                url=POINTS_OF_INTEREST_URL,
-                headers=self.headers,
-            ),
-        )
-        return [poi["fields"] for poi in response["hits"]["hit"]]
+        response = await self._async_get_json(POINTS_OF_INTEREST_URL, self.headers)
+        parsed = _validate_response(response, _POI_RESPONSE_SCHEMA, "POI")
+        return [cast("Poi", item["fields"]) for item in parsed["hits"]["hit"]]
 
     async def async_get_wait_times(self) -> list[AttractionInfo]:
         """Return wait times data."""
-        response = cast(
-            "WaitTimesResponse",
-            await self._api_wrapper(
-                method="get",
-                url=WAIT_TIMES_URL,
-                headers=self.headers,
-            ),
-        )
-        return response["AttractionInfo"]
+        response = await self._async_get_json(WAIT_TIMES_URL, self.headers)
+        parsed = _validate_response(response, _WAIT_TIME_RESPONSE_SCHEMA, "wait-times")
+        return cast("list[AttractionInfo]", parsed["AttractionInfo"])
 
     async def async_get_park_info(self, year: int, month: int) -> ParkInfoResponse:
         """Return park schedules for the requested month."""
-        response = await self._api_wrapper(
-            method="get",
-            url=f"{PARK_INFO_URL}/{self._language}/{year}/{month:02d}",
-            headers={**self.headers, "host": "www.efteling.com"},
+        response = await self._async_get_json(
+            f"{PARK_INFO_URL}/{self._language}/{year}/{month:02d}",
+            {**self.headers, "host": "www.efteling.com"},
         )
-        if not isinstance(response, dict):
-            msg = "Invalid park information response: expected an object"
-            raise EftelingApiClientError(msg)
-        schedule_keys = ("OpeningHours", "Maintenance", "Events")
-        if any(
-            response.get(key) is not None and not isinstance(response.get(key), list)
-            for key in schedule_keys
-        ):
-            msg = (
-                "Invalid park information response: expected OpeningHours, "
-                "Maintenance, and Events lists or null"
-            )
-            raise EftelingApiClientError(msg)
-        response = {
-            **response,
-            **{key: response.get(key) or [] for key in schedule_keys},
-        }
-        required_fields = {
-            "OpeningHours": ("Date",),
-            "Maintenance": ("DateFrom", "DateTo"),
-            "Events": ("DateFrom", "DateTo", "Type"),
-        }
-        for key, fields in required_fields.items():
-            records = response[key]
-            if not all(
-                isinstance(record, dict)
-                and all(isinstance(record.get(field), str) for field in fields)
-                for record in records
-            ):
-                msg = f"Invalid park information response: malformed {key} record"
-                raise EftelingApiClientError(msg)
-        park_response = cast("ParkInfoResponse", response)
-        for day in park_response["OpeningHours"]:
-            intervals = day.get("OpeningHours", [])
-            if intervals is None:
-                continue
-            if not isinstance(intervals, list) or any(
-                not isinstance(interval, dict)
-                or any(
-                    interval.get(field) is not None
-                    and not isinstance(interval.get(field), str)
-                    for field in ("Open", "Close")
-                )
-                for interval in intervals
-            ):
-                msg = "Invalid park information response: malformed opening interval"
-                raise EftelingApiClientError(msg)
-        return park_response
+        parsed = _validate_response(
+            response, _PARK_INFO_RESPONSE_SCHEMA, "park information"
+        )
+        for key in ("OpeningHours", "Maintenance", "Events"):
+            parsed[key] = parsed.get(key) or []
+        return cast("ParkInfoResponse", parsed)
+
+    async def _async_get_json(
+        self, url: str, headers: dict[str, str]
+    ) -> dict[str, object]:
+        """Fetch a JSON object from an Efteling endpoint."""
+        return await self._api_wrapper("get", url, headers=headers)
 
     async def _api_wrapper(
         self,
@@ -157,7 +213,7 @@ class EftelingApiClient:
         url: str,
         data: dict | None = None,
         headers: dict | None = None,
-    ) -> PoiResponse | WaitTimesResponse | ParkInfoResponse:
+    ) -> dict[str, object]:
         """Get information from the API."""
         try:
             async with asyncio.timeout(10):
@@ -168,18 +224,18 @@ class EftelingApiClient:
                     json=data,
                 ) as response:
                     if response.status in (401, 403):
-                        _raise_authentication_error(response.status)
+                        msg = f"Efteling API access denied with HTTP {response.status}"
+                        raise EftelingApiClientError(msg)
                     _verify_response_or_raise(response)
-                    return cast(
-                        "PoiResponse | WaitTimesResponse | ParkInfoResponse",
-                        await response.json(),
-                    )
+                    payload = await response.json()
+                    if not isinstance(payload, dict):
+                        msg = "Invalid API response: expected a JSON object"
+                        raise EftelingApiClientError(msg)
+                    return cast("dict[str, object]", payload)
 
         except TimeoutError as exception:
             msg = f"Timeout error fetching information - {exception}"
             raise EftelingApiClientCommunicationError(msg) from exception
-        except EftelingApiClientAuthenticationError:
-            raise
         except (aiohttp.ClientError, json.JSONDecodeError) as exception:
             msg = f"Error fetching information - {exception}"
             raise EftelingApiClientCommunicationError(msg) from exception

@@ -136,7 +136,7 @@
       "start_time": {
         "name": "Starttijd",
         "state_attributes": {
-          "state": {
+          "status": {
             "name": "Status",
             "state": {
               "current": "Momenteel bezig",
@@ -144,7 +144,6 @@
               "no_more_shows_today": "Geen voorstellingen meer vandaag"
             }
           },
-          "current_show_start": { "name": "Start huidige voorstelling" },
           "current_show_end": { "name": "Einde huidige voorstelling" },
           "previous_showtimes": { "name": "Vorige voorstellingen" },
           "upcoming_showtimes": { "name": "Aankomende voorstellingen" },

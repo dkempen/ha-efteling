@@ -15,7 +15,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import DOMAIN, NAME, PARK
+from custom_components.efteling.const import DOMAIN, NAME, PARK, PARK_TIME_ZONE
 from custom_components.efteling.coordinator.park_info import (
     EftelingParkInfoUpdateCoordinator,
 )
@@ -54,19 +54,15 @@ class EftelingParkStatusBinarySensor(
         self.async_on_remove(self._cancel_timer)
 
     async def async_added_to_hass(self) -> None:
-        """Subscribe to source coordinator and opening-boundary updates."""
+        """Subscribe to park schedule updates and opening-boundary updates."""
         await super().async_added_to_hass()
-        for source in (
-            self._data.poi_coordinator,
-            self._data.wait_times_coordinator,
-        ):
-            self.async_on_remove(source.async_add_listener(self._handle_source_update))
         self._schedule_update()
 
     @callback
-    def _handle_source_update(self) -> None:
-        """Refresh when source data changes."""
-        self.async_write_ha_state()
+    def _handle_coordinator_update(self) -> None:
+        """Reschedule boundaries when the park schedule changes."""
+        super()._handle_coordinator_update()
+        self._schedule_update()
 
     @callback
     def _cancel_timer(self) -> None:
@@ -77,7 +73,7 @@ class EftelingParkStatusBinarySensor(
     def _schedule_update(self) -> None:
         """Schedule a refresh at midnight or an opening-hours boundary."""
         self._cancel_timer()
-        now = dt_util.now()
+        now = dt_util.now(PARK_TIME_ZONE)
         boundaries = [
             now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         ]
@@ -106,7 +102,7 @@ class EftelingParkStatusBinarySensor(
     @property
     def is_on(self) -> bool:
         """Return whether the Park is currently open."""
-        now = dt_util.now()
+        now = dt_util.now(PARK_TIME_ZONE)
         today = build_snapshot(self._data)["today"]
         return today is not None and any(
             (opened := opening_datetime(today, interval.get("Open"))) is not None
@@ -116,7 +112,9 @@ class EftelingParkStatusBinarySensor(
         )
 
     @property
-    def extra_state_attributes(self) -> dict[str, object]:
+    def extra_state_attributes(
+        self,
+    ) -> dict[str, list[dict[str, str | None]]]:
         """Expose today's opening intervals."""
         today = build_snapshot(self._data)["today"]
         return {

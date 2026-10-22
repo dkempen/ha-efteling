@@ -18,7 +18,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import DOMAIN, NAME, PARK
+from custom_components.efteling.const import DOMAIN, NAME, PARK, PARK_TIME_ZONE
 from custom_components.efteling.coordinator.park_info import (
     EftelingParkInfoUpdateCoordinator,
 )
@@ -26,8 +26,10 @@ from custom_components.efteling.sensor.park_snapshot import (
     ParkSnapshot,
     as_records,
     build_snapshot,
+    crowd_forecast_value,
     daily_crowd_forecasts,
     daily_occupancy_forecasts,
+    occupancy_forecast_value,
     opening_hours_records,
 )
 
@@ -46,7 +48,6 @@ CROWD_LEVELS = (
     (30, "very_busy"),
     (float("inf"), "extremely_busy"),
 )
-MAX_OCCUPANCY_PERCENTAGE = 100
 
 
 class EftelingParkSensor(
@@ -74,16 +75,17 @@ class EftelingParkSensor(
         """Subscribe to source coordinator and local-date updates."""
         await super().async_added_to_hass()
 
-        for source in (
-            self._data.poi_coordinator,
-            self._data.wait_times_coordinator,
-        ):
-            remove_listener: Callable[[], None] = source.async_add_listener(
-                self._handle_source_update
-            )
-            self.async_on_remove(remove_listener)
+        if self.entity_description.key in {"average_wait_time", "crowd_level"}:
+            for source in (
+                self._data.poi_coordinator,
+                self._data.wait_times_coordinator,
+            ):
+                remove_listener: Callable[[], None] = source.async_add_listener(
+                    self._handle_source_update
+                )
+                self.async_on_remove(remove_listener)
 
-        self._schedule_park_update()
+        self._schedule_midnight_update()
 
     @callback
     def _handle_source_update(self) -> None:
@@ -96,15 +98,15 @@ class EftelingParkSensor(
             self._unsub_timer()
             self._unsub_timer = None
 
-    def _schedule_park_update(self) -> None:
-        """Schedule a refresh at midnight or a Park opening boundary."""
+    def _schedule_midnight_update(self) -> None:
+        """Schedule a refresh at the next Efteling-local midnight."""
         self._cancel_timer()
-        now = dt_util.now()
-        boundaries = [
-            now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        ]
+        now = dt_util.now(PARK_TIME_ZONE)
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
         self._unsub_timer = async_track_point_in_time(
-            self.hass, self._handle_scheduled_update, min(boundaries)
+            self.hass,
+            self._handle_scheduled_update,
+            midnight + timedelta(days=1),
         )
 
     @callback
@@ -112,7 +114,7 @@ class EftelingParkSensor(
         """Refresh the sensor and schedule its next time-based update."""
         self._unsub_timer = None
         self.async_write_ha_state()
-        self._schedule_park_update()
+        self._schedule_midnight_update()
 
     def _snapshot(self) -> ParkSnapshot:
         """Return the current derived Park snapshot."""
@@ -128,20 +130,11 @@ class EftelingParkSensor(
 
         if key == "crowd_forecast":
             crowded = today_record.get("Crowded") if today_record else None
-            value = {"1": "quiet", "2": "normal", "3": "busy"}.get(str(crowded))
+            value = crowd_forecast_value(crowded)
 
         elif key == "occupancy_forecast":
             occupancy = today_record.get("Crowdedness") if today_record else None
-            try:
-                number = (
-                    int(occupancy)
-                    if isinstance(occupancy, (str, int))
-                    and not isinstance(occupancy, bool)
-                    else -1
-                )
-            except TypeError, ValueError:
-                number = -1
-            value = number if 0 <= number <= MAX_OCCUPANCY_PERCENTAGE else None
+            value = occupancy_forecast_value(occupancy)
 
         elif key in ("opening_time", "closing_time"):
             value = snapshot[key]
@@ -202,7 +195,7 @@ class EftelingParkSensor(
             attributes["maintenance_names"] = [
                 name
                 for item in snapshot["maintenance_today"]
-                if isinstance((name := item.get("Name")), str) and name
+                if (name := item.get("Name"))
             ]
 
         return attributes

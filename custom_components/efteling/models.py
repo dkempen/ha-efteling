@@ -1,102 +1,78 @@
 """Efteling API response models."""
 
-from dataclasses import dataclass
 from typing import NotRequired, TypedDict
 
 
-@dataclass
-class PoiResponse(TypedDict):
-    """POI (points of interest) response."""
+class ShowTimeInfo(TypedDict):
+    """Single showtime entry."""
 
-    hits: Pois
+    StartDateTime: str
+    ShowDateTime: NotRequired[str | None]
+    EndDateTime: NotRequired[str | None]
+    Duration: NotRequired[int | None]
+    Edition: NotRequired[str | None]
 
 
-@dataclass
+class AttractionInfo(TypedDict):
+    """Attraction or show entry returned by the live endpoint."""
+
+    Id: str
+    Name: str
+    State: str
+    Type: NotRequired[str | None]
+    Empire: NotRequired[str | None]
+    WaitingTime: NotRequired[int | None]
+    ShowTimes: NotRequired[list[ShowTimeInfo] | None]
+    PastShowTimes: NotRequired[list[ShowTimeInfo] | None]
+
+
+class Poi(TypedDict):
+    """POI fields consumed by the integration."""
+
+    category: str
+    id: str
+    name: str
+    alternateid: NotRequired[str | None]
+    alternatelabel: NotRequired[str | None]
+    wis_info: NotRequired[AttractionInfo | None]
+    detail_text: NotRequired[str | None]
+    empire: NotRequired[str | None]
+    image: NotRequired[str | None]
+    image_detailview1: NotRequired[str | None]
+    latlon: NotRequired[str | None]
+    properties: NotRequired[list[str] | None]
+    properties_entry_requirements: NotRequired[list[str] | None]
+    properties_stimuli: NotRequired[list[str] | None]
+    subtitle: NotRequired[str | None]
+    targetgroups: NotRequired[list[str] | None]
+    type: NotRequired[str | None]
+
+
+class PoiObject(TypedDict):
+    """POI wrapper object."""
+
+    id: NotRequired[str]
+    fields: Poi
+
+
 class Pois(TypedDict):
     """POI list."""
 
     hit: list[PoiObject]
 
 
-@dataclass
-class PoiObject(TypedDict):
-    """POI wrapper object."""
+class PoiResponse(TypedDict):
+    """POI (points of interest) response."""
 
-    id: str
-    fields: Poi
+    hits: Pois
 
 
-@dataclass
-class Poi(TypedDict):
-    """POI."""
-
-    area_id: str
-    can_order: bool
-    category: str
-    detail_text: str
-    empire: str
-    has_assortment: bool
-    hide_in_app: bool
-    id: str
-    image: str
-    image_detailview1: str
-    image_detailview2: str
-    image_detailview3: str
-    language: str
-    latlon: str
-    minimum_length: str
-    name: str
-    properties: list[str]
-    properties_entry_requirements: list[str]
-    properties_practical_information: list[str]
-    properties_stimuli: list[str]
-    search_keywords: str
-    showduration: str
-    subtitle: str
-    text: str
-    type: str
-    targetgroups: list[str]
-    accessibility_description: str
-    accessibility_group_size: str
-    accessibility_video_url: str
-    alternateid: NotRequired[str]
-    alternatelabel: str
-    alternatetype: str
-    digipass_partner_id: str
-    wis_info: AttractionInfo
-
-
-@dataclass
 class WaitTimesResponse(TypedDict):
     """Wait times API response."""
 
-    Version: str
-    TimeStamp: str
+    Version: NotRequired[str]
+    TimeStamp: NotRequired[str]
     AttractionInfo: list[AttractionInfo]
-
-
-@dataclass
-class AttractionInfo(TypedDict):
-    """Attraction info."""
-
-    Id: str
-    Name: str
-    Type: str
-    Empire: str
-    State: str
-    WaitingTime: NotRequired[int]
-    ShowTimes: NotRequired[list[ShowTimeInfo]]
-    PastShowTimes: NotRequired[list[ShowTimeInfo]]
-
-
-class ShowTimeInfo(TypedDict):
-    """Single showtime entry."""
-
-    ShowDateTime: str
-    StartDateTime: str
-    EndDateTime: NotRequired[str]
-    Duration: NotRequired[int]
-    Edition: NotRequired[str]
 
 
 class OpeningInterval(TypedDict):
@@ -112,8 +88,8 @@ class OpeningHours(TypedDict):
     Date: str
     FormattedDate: NotRequired[str | None]
     OpeningHours: NotRequired[list[OpeningInterval] | None]
-    Crowded: NotRequired[int | str | None]
-    Crowdedness: NotRequired[int | str | None]
+    Crowded: NotRequired[int | None]
+    Crowdedness: NotRequired[int | None]
 
 
 class Maintenance(TypedDict):

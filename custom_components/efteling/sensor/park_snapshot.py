@@ -5,10 +5,11 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime, time
-from math import isfinite
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, TypedDict, cast
 
 from homeassistant.util import dt as dt_util
+
+from custom_components.efteling.const import PARK_TIME_ZONE
 
 if TYPE_CHECKING:
     from custom_components.efteling.data import EftelingData
@@ -40,9 +41,14 @@ class ParkSnapshot(TypedDict):
     average_wait_time: int | None
 
 
-def calendar_date(value: object) -> date | None:
+type AttributeValue = (
+    str | int | bool | Mapping[str, AttributeValue] | list[AttributeValue] | None
+)
+
+
+def calendar_date(value: str | None) -> date | None:
     """Parse an ISO calendar date, ignoring a time suffix if present."""
-    if not isinstance(value, str):
+    if value is None:
         return None
     try:
         return date.fromisoformat(value[:10])
@@ -61,17 +67,17 @@ def normalize_key(value: str) -> str:
     return re.sub(r"[^a-zA-Z0-9]+", "_", value).strip("_").lower()
 
 
-def normalize_attribute_value(value: object, *, key: str | None = None) -> object:
+def normalize_attribute_value(
+    value: AttributeValue, *, key: str | None = None
+) -> AttributeValue:
     """Normalize API record keys and date-only values recursively."""
     normalized_key = normalize_key(key) if key is not None else None
     if isinstance(value, Mapping):
         return {
-            normalize_key(str(item_key)): normalize_attribute_value(
-                item_value, key=str(item_key)
-            )
+            normalize_key(item_key): normalize_attribute_value(item_value, key=item_key)
             for item_key, item_value in value.items()
         }
-    if isinstance(value, (list, tuple)):
+    if isinstance(value, list):
         return [normalize_attribute_value(item, key=normalized_key) for item in value]
     if normalized_key in _DATE_ONLY_KEYS and isinstance(value, str):
         parsed_date = calendar_date(value)
@@ -87,21 +93,14 @@ def normalize_attribute_value(value: object, *, key: str | None = None) -> objec
     return value
 
 
-def opening_hours_records(
-    days: Sequence[Mapping[str, object]],
-) -> list[dict[str, str | None]]:
+def opening_hours_records(days: Sequence[OpeningHours]) -> list[dict[str, str | None]]:
     """Return flat opening-interval records using ISO dates and datetimes."""
     records: list[dict[str, str | None]] = []
     for day in days:
         parsed_date = calendar_date(day.get("Date"))
         if parsed_date is None:
             continue
-        raw_intervals = day.get("OpeningHours") or []
-        intervals = (
-            [interval for interval in raw_intervals if isinstance(interval, Mapping)]
-            if isinstance(raw_intervals, Sequence)
-            else []
-        )
+        intervals = day.get("OpeningHours") or []
         if not intervals:
             records.append(
                 {"date": parsed_date.isoformat(), "open": None, "close": None}
@@ -120,25 +119,19 @@ def opening_hours_records(
     return records
 
 
-def crowd_forecast_value(value: object) -> str | None:
+def crowd_forecast_value(value: int | None) -> str | None:
     """Convert the Efteling crowd forecast code to its stable enum value."""
     return {"1": "quiet", "2": "normal", "3": "busy"}.get(str(value))
 
 
-def occupancy_forecast_value(value: object) -> int | None:
+def occupancy_forecast_value(value: int | None) -> int | None:
     """Return a valid occupancy percentage from the API value."""
-    if isinstance(value, bool) or not isinstance(value, (str, int)):
+    if value is None:
         return None
-    try:
-        number = int(value)
-    except TypeError, ValueError:
-        return None
-    return number if 0 <= number <= MAX_OCCUPANCY else None
+    return value if 0 <= value <= MAX_OCCUPANCY else None
 
 
-def daily_crowd_forecasts(
-    days: Sequence[Mapping[str, object]],
-) -> list[dict[str, str | None]]:
+def daily_crowd_forecasts(days: Sequence[OpeningHours]) -> list[dict[str, str | None]]:
     """Return normalized crowd forecast rows with valid dates."""
     return [
         {
@@ -151,7 +144,7 @@ def daily_crowd_forecasts(
 
 
 def daily_occupancy_forecasts(
-    days: Sequence[Mapping[str, object]],
+    days: Sequence[OpeningHours],
 ) -> list[dict[str, str | int | None]]:
     """Return normalized occupancy forecast rows with valid dates."""
     return [
@@ -165,7 +158,7 @@ def daily_occupancy_forecasts(
 
 
 def active_period(
-    item: Mapping[str, object], today: date, *, inclusive_end: bool
+    item: Maintenance | Event, today: date, *, inclusive_end: bool
 ) -> bool:
     """Return whether today falls within the item's date range."""
     start = calendar_date(item.get("DateFrom"))
@@ -178,30 +171,30 @@ def active_period(
     )
 
 
-def opening_datetime(day: Mapping[str, object], value: object) -> datetime | None:
+def opening_datetime(day: OpeningHours, value: str | None) -> datetime | None:
     """Combine an opening-hours date and time in the local timezone."""
     date_value = day.get("Date")
-    if not isinstance(value, str) or not isinstance(date_value, str):
+    if value is None:
         return None
     try:
         parsed_date = date.fromisoformat(date_value[:10])
         parsed_time = time.fromisoformat(value)
     except ValueError:
         return None
-    return datetime.combine(parsed_date, parsed_time, tzinfo=dt_util.now().tzinfo)
+    return datetime.combine(parsed_date, parsed_time, tzinfo=PARK_TIME_ZONE)
 
 
-def valid_wait(value: object) -> int | float | None:
+def valid_wait(value: int | None) -> int | None:
     """Return a valid nonnegative wait-time value."""
-    if isinstance(value, bool) or not isinstance(value, (int, float)):
+    if value is None:
         return None
-    return value if value >= 0 and isfinite(value) else None
+    return value if value >= 0 else None
 
 
 def build_snapshot(data: EftelingData) -> ParkSnapshot:
     """Derive today's Park state and qualifying live attraction samples."""
     response: ParkInfoResponse = data.park_info_coordinator.data
-    today = dt_util.now().date()
+    today = dt_util.now(PARK_TIME_ZONE).date()
     today_record = next(
         (
             item
@@ -267,16 +260,16 @@ def build_snapshot(data: EftelingData) -> ParkSnapshot:
 
 
 def as_records(
-    items: Sequence[Mapping[str, object]],
+    items: Sequence[Event] | Sequence[Maintenance],
     *,
     exclude_keys: frozenset[str] | set[str] = frozenset(),
-) -> list[dict[str, object]]:
+) -> list[dict[str, AttributeValue]]:
     """Return API records with recursively normalized keys and date values."""
     return [
         {
-            normalize_key(str(key)): normalize_attribute_value(value, key=str(key))
-            for key, value in item.items()
-            if str(key) not in exclude_keys
+            normalize_key(key): normalize_attribute_value(value, key=key)
+            for key, value in cast("Mapping[str, AttributeValue]", item).items()
+            if key not in exclude_keys
         }
         for item in items
     ]

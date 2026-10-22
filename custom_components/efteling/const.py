@@ -1,6 +1,7 @@
 """Constants for Efteling."""
 
 from logging import Logger, getLogger
+from zoneinfo import ZoneInfo
 
 LOGGER: Logger = getLogger(__package__)
 
@@ -11,6 +12,7 @@ SHOWS = "shows"
 PARK = "park"
 
 CONF_LANGUAGE = "language"
+PARK_TIME_ZONE = ZoneInfo("Europe/Amsterdam")
 
 WAIT_TIMES_URL = "https://api.efteling.com/app/wis"
 POINTS_OF_INTEREST_URL = "https://api.efteling.com/app/poi"
@@ -23,7 +25,7 @@ APP_HEADERS = {
     "x-app-name": "Efteling",
     "x-app-platform": "iOS",
     "accept-encoding": "gzip, deflate, br",
-    "x-app-timezone": "Europe/Amsterdam",
+    "x-app-timezone": PARK_TIME_ZONE.key,
     "user-agent": "Efteling/22805 CFNetwork/3860.400.51 Darwin/25.3.0",
 }
 

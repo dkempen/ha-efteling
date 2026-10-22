@@ -5,7 +5,6 @@ from __future__ import annotations
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.selector import (
-    SelectOptionDict,
     SelectSelector,
     SelectSelectorConfig,
     SelectSelectorMode,
@@ -63,10 +62,7 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     default=default_language,
                 ): SelectSelector(
                     SelectSelectorConfig(
-                        options=[
-                            SelectOptionDict(value="nl", label="Nederlands"),
-                            SelectOptionDict(value="en", label="English"),
-                        ],
+                        options=["nl", "en"],
                         mode=SelectSelectorMode.DROPDOWN,
                         translation_key="language",
                     )

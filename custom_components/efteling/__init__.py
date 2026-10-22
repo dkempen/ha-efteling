@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.loader import async_get_loaded_integration
 
 from custom_components.efteling.const import CONF_LANGUAGE, DOMAIN, LOGGER
 
@@ -66,7 +65,6 @@ async def async_setup_entry(
             session=async_get_clientsession(hass),
             language=entry.data.get(CONF_LANGUAGE, "nl"),
         ),
-        integration=async_get_loaded_integration(hass, entry.domain),
         poi_coordinator=poi_coordinator,
         wait_times_coordinator=wait_times_coordinator,
         park_info_coordinator=park_info_coordinator,

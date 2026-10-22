@@ -130,7 +130,7 @@
       "start_time": {
         "name": "Start time",
         "state_attributes": {
-          "state": {
+          "status": {
             "name": "State",
             "state": {
               "current": "Currently running",
@@ -138,7 +138,6 @@
               "no_more_shows_today": "No more shows today"
             }
           },
-          "current_show_start": { "name": "Current show start" },
           "current_show_end": { "name": "Current show end" },
           "previous_showtimes": { "name": "Previous showtimes" },
           "upcoming_showtimes": { "name": "Upcoming showtimes" },
