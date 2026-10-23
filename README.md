@@ -7,21 +7,22 @@
 [![License][license-badge]][license]
 [![GitHub stars][stars-badge]][stars]
 
-Bring Efteling's live attraction, show, and park information into Home Assistant with this Efteling integration. Use it to build dashboards, receive notifications, and create automations around wait times, opening hours, shows, special events, and more to make the most of your visit to Efteling!
+Bring Efteling's live attraction, show, and park information into Home Assistant with this integration. Build dashboards, receive notifications, and create automations around wait times, opening hours, shows, special events, and more to make the most of your visit to Efteling!
 
 ## Features
 
-- **Attractions** - Live wait times, operating status, descriptions, images, locations, and visitor information
+- **Attractions** - Live wait times, operating status, images, locations, and attraction details
 - **Shows** - Current and upcoming show times, previous show times, status, and show information
-- **Park information** - Opening and closing times, opening-hours schedule, crowd forecast, occupancy forecast, and average wait time
-- **Crowd level** - A level calculated from the average live attraction wait time
+- **Park information** - Park status, opening and closing times, and opening-hours schedules
+- **Crowd levels** - Live crowd levels based on average attraction wait times, and crowd and occupancy forecasts
 - **Events and maintenance** - Winter Efteling, business events, and planned attraction maintenance
-- **Home Assistant integration** - Dedicated devices, translated entity names and states, custom attraction and show icons, and data for dashboards and automations
-- **Language selection** - Choose Dutch or English for information retrieved from Efteling
+- **Devices and entities** - Dedicated devices, custom icons, and data for dashboards and automations
+- **Localization** - Dutch or English information, with translated entity names and states
+- **Easy setup** - One-click installation and configuration through the Home Assistant UI
 
 ## Dashboard
 
-The screenshot below shows one example of a dashboard built with the integration. The data can also be used in your own cards, scripts, notifications, and automations.
+The screenshot below shows an example of a dashboard built with this integration. You can also use the data in your own cards, scripts, notifications, and automations.
 
 ![Example Efteling Home Assistant dashboard](https://raw.githubusercontent.com/dkempen/ha-efteling/master/images/dashboard.jpg)
 
@@ -36,7 +37,7 @@ The screenshot below shows one example of a dashboard built with the integration
 1. Open **Marketplace** in Home Assistant.
 2. Select **Add from link**.
 3. Paste the [repository URL][repository] into the GitHub link field.
-4. Choose **Integration** as the category.
+4. Select **Integration** as the category.
 5. Install **Efteling** and restart Home Assistant.
 
 <details>
@@ -60,8 +61,8 @@ The integration is configured through the Home Assistant UI. No account credenti
 
 1. Go to **Settings → Devices & services → Add integration**.
 2. Search for **Efteling**.
-3. Select the language used for information retrieved from Efteling: **Dutch** or **English**. Dutch is the default.
-4. Finish the setup.
+3. Select the language for information retrieved from Efteling: **Dutch** or **English**. Dutch is the default.
+4. Complete the setup.
 
 The integration creates three devices: **Efteling park**, **Efteling attractions**, and **Efteling shows**.
 
@@ -69,28 +70,28 @@ The integration creates three devices: **Efteling park**, **Efteling attractions
 
 ### Park
 
-The Efteling park device includes these entities:
+The Efteling park device includes the following entities:
 
-| Entity                        | Description                                                    |
-| ----------------------------- | -------------------------------------------------------------- |
-| Park status                   | Whether the park is currently `Open` or `Closed`               |
-| Attractions under maintenance | Number of attractions listed as being under maintenance today. |
-| Average wait time             | Average live wait time for open attractions, in minutes.       |
-| Crowd level                   | A level calculated from the average live wait time.            |
-| Opening time                  | The park opening time today.                                   |
-| Closing time                  | The park closing time today.                                   |
-| Crowd forecast                | Efteling's forecast for today: `Quiet`, `Normal`, or `Busy`.   |
-| Occupancy forecast            | Efteling's forecast park occupancy percentage for today.       |
-| Business event                | Whether a business event is scheduled for today.               |
-| Winter Efteling               | Whether Winter Efteling is active today.                       |
+| Entity                        | Description                                                        |
+| ----------------------------- | ------------------------------------------------------------------ |
+| Park status                   | Whether the park is currently `Open` or `Closed`.                  |
+| Attractions under maintenance | Number of attractions listed as being under maintenance today.     |
+| Average wait time             | Average live wait time, in minutes, for open attractions.          |
+| Crowd level                   | A level calculated from the average live wait time.                |
+| Opening time                  | The park's opening time today.                                     |
+| Closing time                  | The park's closing time today.                                     |
+| Crowd forecast                | Efteling's crowd forecast for today: `Quiet`, `Normal`, or `Busy`. |
+| Occupancy forecast            | Efteling's forecast park occupancy percentage for today.           |
+| Business event                | Whether a business event is scheduled for today.                   |
+| Winter Efteling               | Whether Winter Efteling is active today.                           |
 
-Relevant entities expose additional attributes such as operatring time schedules, daily forecasts, event schedules, and upcoming maintenance information.
+Most entities expose additional attributes, including operating schedules, daily forecasts, event schedules, and upcoming maintenance information.
 
-**Crowd forecast** and **crowd level** are different measurements: the forecast comes from Efteling's park information, while crowd level is calculated by the integration from current attraction wait times. The average only includes attractions that are reported as open and have a valid wait time.
+**Crowd forecast** and **crowd level** are different measurements. The forecast comes from Efteling's park information, while the integration calculates the crowd level from current attraction wait times. The average only includes attractions reported as open with a valid wait time.
 
 ### Attractions
 
-Each attraction has a sensor whose value is its current wait time in minutes. When the attraction is not open, or no valid wait time is available, the sensor state is `unknown`.
+Each attraction has a sensor whose value represents the current wait time in minutes. When an attraction is not open or no valid wait time is available, the sensor state is `unknown`.
 
 For example:
 
@@ -99,33 +100,27 @@ sensor.efteling_attractions_python
 State: 20 min
 ```
 
-Attraction sensors expose additional information useful for dashboards and automations:
+Attraction sensors expose additional attributes for dashboards and automations:
 
-| Attribute               | Description                        |
-| ----------------------- | ---------------------------------- |
-| `status`                | Current attraction status.         |
-| `empire`                | Efteling area or realm.            |
-| `description`           | Attraction description.            |
-| `subtitle`              | Attraction subtitle.               |
-| `latitude`, `longitude` | Attraction coordinates.            |
-| `image`, `image_detail` | Main and detail image URLs.        |
-| `properties`            | Attraction properties.             |
-| `entry_requirements`    | Entry requirements.                |
-| `stimuli`               | Known sensory stimuli information. |
-| `targetgroups`          | Target audiences.                  |
-| `type`                  | Efteling point-of-interest type.   |
+| Attribute               | Description                      |
+| ----------------------- | -------------------------------- |
+| `status`                | Current attraction status.       |
+| `empire`                | Efteling area or realm.          |
+| `description`           | Attraction description.          |
+| `subtitle`              | Attraction subtitle.             |
+| `latitude`, `longitude` | Attraction coordinates.          |
+| `image`, `image_detail` | Main and detail image URLs.      |
+| `properties`            | Attraction properties.           |
+| `entry_requirements`    | Entry requirements.              |
+| `stimuli`               | Known sensory stimuli.           |
+| `targetgroups`          | Target audiences.                |
+| `type`                  | Efteling point-of-interest type. |
 
-The attraction status is one of `Open`, `Closed`, `Under maintenance`, `Out of order`, or `Temporarily out of order` (shown in the Home Assistant language).
-
-### Shows
-
-Each show has a timestamp sensor. Its value is the start time of the currently running show, or the next upcoming show when none is running. If there is no current or upcoming show, the state is `unknown`.
-
-Show sensors expose attributes for the show status, end time of the current show, previous and upcoming show times, duration, edition, location, description, images, and other show information. Show status is one of `Currently running`, `Upcoming`, or `No more shows today`.
+The attraction status is one of `Open`, `Closed`, `Under maintenance`, `Out of order`, or `Temporarily out of order`. Status labels follow the Home Assistant language setting.
 
 ### Shows
 
-Each show has a timestamp sensor containing the start time of the currently running show, or the next upcoming show when no show is currently running. When no current or upcoming show is available, the sensor state is `unknown`.
+Each show has a timestamp sensor that provides the start time of the currently running show or, if no show is running, the next upcoming show. If no current or upcoming show is available, the sensor state is `unknown`.
 
 For example:
 
@@ -134,7 +129,7 @@ sensor.efteling_aquanura
 State: 2026-10-21 21:00:00
 ```
 
-Show sensors also expose additional attributes:
+Show sensors also expose the following attributes:
 
 | Attribute               | Description                             |
 | ----------------------- | --------------------------------------- |
@@ -142,7 +137,7 @@ Show sensors also expose additional attributes:
 | `current_show_end`      | End time of the currently running show. |
 | `previous_showtimes`    | Start times of previous shows.          |
 | `upcoming_showtimes`    | Start times of upcoming shows.          |
-| `duration_minutes`      | Duration of the show, in minutes.       |
+| `duration_minutes`      | Show duration, in minutes.              |
 | `edition`               | Show edition, when available.           |
 | `empire`                | Efteling area or realm.                 |
 | `description`           | Show description.                       |
@@ -152,21 +147,21 @@ Show sensors also expose additional attributes:
 | `properties`            | Show properties.                        |
 | `type`                  | Efteling point-of-interest type.        |
 
-The show status is one of `Currently running`, `Upcoming`, or `No more shows today` (shown in the Home Assistant language).
+The show status is one of `Currently running`, `Upcoming`, or `No more shows today`. Status labels follow the Home Assistant language setting.
 
 ## Update intervals
 
 | Data                                     | Refresh interval    | Examples                                                                      |
 | ---------------------------------------- | ------------------- | ----------------------------------------------------------------------------- |
-| Attraction wait times and show schedules | Every **5 minutes** | Wait times, show start/end information, and show status                       |
+| Attraction wait times and show schedules | Every **5 minutes** | Wait times, show start and end times, and show status                         |
 | Attraction and show metadata             | Every **24 hours**  | Names, descriptions, images, locations, and visitor information               |
 | Park schedule information                | Every **24 hours**  | Opening hours, crowd and occupancy forecasts, events, and planned maintenance |
 
-Time-sensitive entity states are also updated at relevant boundaries, such as park opening/closing times, local midnight, and show transitions, rather than relying only on the next data refresh.
+Time-sensitive entity states are also updated at relevant times, such as park opening and closing, local midnight, and show transitions, rather than relying solely on the next scheduled data refresh.
 
 ## Development
 
-The integration source is in `custom_components/efteling/`. Development can be done using the Home Assistant development container; use `scripts/setup` and `scripts/develop` to set up and run a local Home Assistant environment.
+The integration's source code is located in `custom_components/efteling/`. You can use the Home Assistant development container to work on the integration. Run `scripts/setup` and `scripts/develop` to set up and launch a local Home Assistant environment.
 
 ## Credits
 
