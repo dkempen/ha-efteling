@@ -4,17 +4,24 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-# Create config dir if not present
-if [[ ! -d "${PWD}/config" ]]; then
-    mkdir -p "${PWD}/config"
-    hass --config "${PWD}/config" --script ensure_config
+ROOT="${PWD}"
+CONFIG="${ROOT}/config"
+DEV_COMPONENTS="${ROOT}/custom_components"
+CONFIG_COMPONENTS="${CONFIG}/custom_components"
+
+# Create config directory if not present
+if [[ ! -d "${CONFIG}" ]]; then
+    mkdir -p "${CONFIG}"
+    hass --config "${CONFIG}" --script ensure_config
 fi
 
-# Set the path to custom_components
-## This let's us have the structure we want <root>/custom_components/efteling
-## while at the same time have Home Assistant configuration inside <root>/config
-## without resulting to symlinks.
-export PYTHONPATH="${PYTHONPATH}:${PWD}/custom_components"
+# Keep the development integration and installed integrations discoverable.
+mkdir -p "${CONFIG_COMPONENTS}"
+
+# Link the development integration into Home Assistant's expected directory.
+if [[ ! -e "${CONFIG_COMPONENTS}/efteling" ]]; then
+    ln -s "${DEV_COMPONENTS}/efteling" "${CONFIG_COMPONENTS}/efteling"
+fi
 
 # Start Home Assistant
-hass --config "${PWD}/config" --debug
+hass --config "${CONFIG}" --debug
