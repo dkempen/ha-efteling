@@ -104,3 +104,10 @@ USE_ATTRACTION_INFO_NAME: frozenset[str] = frozenset(
         "stoomtreinr",
     }
 )
+
+AVERAGE_WAIT_TIME_EXCLUDED_ATTRACTIONS: frozenset[str] = frozenset(
+    {
+        "stoomtreinm",
+        "stoomtreinr",
+    }
+)

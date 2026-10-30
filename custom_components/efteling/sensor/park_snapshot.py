@@ -9,7 +9,10 @@ from typing import TYPE_CHECKING, TypedDict, cast
 
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import PARK_TIME_ZONE
+from custom_components.efteling.const import (
+    AVERAGE_WAIT_TIME_EXCLUDED_ATTRACTIONS,
+    PARK_TIME_ZONE,
+)
 
 if TYPE_CHECKING:
     from custom_components.efteling.data import EftelingData
@@ -237,6 +240,7 @@ def build_snapshot(data: EftelingData) -> ParkSnapshot:
         if (
             poi is None
             or poi.get("category") != "attraction"
+            or attraction_id in AVERAGE_WAIT_TIME_EXCLUDED_ATTRACTIONS
             or attraction.get("State") != "open"
             or minutes is None
         ):

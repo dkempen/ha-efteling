@@ -228,6 +228,16 @@ def test_build_snapshot_uses_only_qualifying_open_attractions(
             "1": {"id": "1", "name": "Python", "category": "attraction"},
             "2": {"id": "2", "name": "Aquanura", "category": "show"},
             "4": {"id": "4", "name": "Unnamed", "category": "attraction"},
+            "stoomtreinm": {
+                "id": "stoomtreinm",
+                "name": "Stoomtrein Marerijk",
+                "category": "attraction",
+            },
+            "stoomtreinr": {
+                "id": "stoomtreinr",
+                "name": "Stoomtrein Reizenrijk",
+                "category": "attraction",
+            },
         },
         wait_times={
             "1": {"Id": "1", "Name": "Python", "State": "open", "WaitingTime": 20},
@@ -236,6 +246,18 @@ def test_build_snapshot_uses_only_qualifying_open_attractions(
             "4": {"Id": "4", "Name": "Fallback", "State": "open", "WaitingTime": 1},
             "5": {"Id": "5", "Name": "Closed", "State": "closed", "WaitingTime": 2},
             "6": {"Id": "6", "Name": "Negative", "State": "open", "WaitingTime": -1},
+            "stoomtreinm": {
+                "Id": "stoomtreinm",
+                "Name": "Stoomtrein Marerijk",
+                "State": "open",
+                "WaitingTime": 60,
+            },
+            "stoomtreinr": {
+                "Id": "stoomtreinr",
+                "Name": "Stoomtrein Reizenrijk",
+                "State": "open",
+                "WaitingTime": 90,
+            },
         },
     )
 
