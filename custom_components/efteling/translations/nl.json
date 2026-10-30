@@ -20,6 +20,10 @@
     },
     "abort": {
       "reconfigure_successful": "De configuratie is succesvol bijgewerkt."
+    },
+    "error": {
+      "cannot_connect": "Kan geen verbinding maken met de Efteling. Probeer het opnieuw.",
+      "invalid_response": "De Efteling API heeft een ongeldig antwoord teruggegeven."
     }
   },
   "selector": {

@@ -1,0 +1,96 @@
+{
+  "Version": "9.0.0",
+  "TimeStamp": "2026-10-23T16:25:08+02:00",
+  "OpeningHours": {
+    "Date": "2026-10-23T00:00:00+02:00",
+    "Crowdedness": 53,
+    "HourFrom": "2026-10-23T10:00:00+02:00",
+    "HourTo": "2026-10-23T20:00:00+02:00",
+    "BusyIndication": "gezelligebedrijvigheid",
+    "Category": "regular",
+    "SpecialEvent": false,
+    "OpeningTimes": [
+      {
+        "Crowdedness": 53,
+        "HourFrom": "2026-10-23T10:00:00+02:00",
+        "HourTo": "2026-10-23T20:00:00+02:00",
+        "BusyIndication": "gezelligebedrijvigheid",
+        "Category": "regular",
+        "SpecialEvent": false
+      }
+    ],
+    "Resort": {
+      "HourFrom": "2026-10-23T09:30:00+02:00",
+      "HourTo": "2026-10-23T20:00:00+02:00"
+    }
+  },
+  "AttractionInfo": [
+    {
+      "Id": "aquanura",
+      "Name": "Aquanura",
+      "Type": "Shows en Entertainment",
+      "Empire": "Fantasierijk",
+      "State": "open",
+      "IsTheaterShow": false,
+      "ShowTimes": [
+        {
+          "ShowDateTime": "2026-10-23T19:15:00+02:00",
+          "StartDateTime": "2026-10-23T19:15:00+02:00",
+          "EndDateTime": "2026-10-23T19:27:00+02:00",
+          "Duration": 12,
+          "Edition": "Aquanura, met een zachte G",
+          "Title": {
+            "NL": "Aquanura, met een zachte G",
+            "EN": "Aquanura, met een zachte G",
+            "DE": "Aquanura, met een zachte G",
+            "FR": "Aquanura, met een zachte G"
+          }
+        },
+        {
+          "ShowDateTime": "2026-10-23T20:15:00+02:00",
+          "StartDateTime": "2026-10-23T20:15:00+02:00",
+          "EndDateTime": "2026-10-23T20:27:00+02:00",
+          "Duration": 12,
+          "Edition": "Efteling Symphonica",
+          "Title": {
+            "NL": "Efteling Symphonica",
+            "EN": "Efteling Symphonica",
+            "DE": "Efteling Symphonica",
+            "FR": "Efteling Symphonica"
+          }
+        }
+      ],
+      "PastShowTimes": []
+    },
+    {
+      "Id": "diorama",
+      "Name": "Diorama",
+      "Type": "Attracties",
+      "Empire": "Marerijk",
+      "State": "open"
+    },
+    {
+      "Id": "python",
+      "Name": "Python",
+      "Type": "Attracties",
+      "Empire": "Ruigrijk",
+      "State": "open",
+      "WaitingTime": 5
+    },
+    {
+      "Id": "pythonsinglerider",
+      "Name": "Python Single-rider",
+      "Type": "Attracties",
+      "Empire": "Ruigrijk",
+      "State": "gesloten"
+    }
+  ],
+  "MaintenanceInfo": [
+    {
+      "AttractionId": "baron1898",
+      "DateFrom": "2026-10-23T00:00:00+01:00",
+      "DateTo": "2026-10-24T00:00:00+01:00",
+      "OpenInWeekend": false
+    }
+  ]
+}

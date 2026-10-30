@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
@@ -13,15 +13,14 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import PERCENTAGE, UnitOfTime
 from homeassistant.core import callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_point_in_time
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import DOMAIN, NAME, PARK, PARK_TIME_ZONE
-from custom_components.efteling.coordinator.park_info import (
+from custom_components.efteling.const import PARK, PARK_TIME_ZONE
+from custom_components.efteling.coordinator import (
     EftelingParkInfoUpdateCoordinator,
 )
+from custom_components.efteling.entity import EftelingEntity
 from custom_components.efteling.sensor.park_snapshot import (
     ParkSnapshot,
     as_records,
@@ -35,7 +34,6 @@ from custom_components.efteling.sensor.park_snapshot import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from datetime import datetime
 
     from custom_components.efteling.data import EftelingData
 
@@ -48,14 +46,17 @@ CROWD_LEVELS = (
     (30, "very_busy"),
     (float("inf"), "extremely_busy"),
 )
+LIVE_DATA_KEYS = frozenset({"average_wait_time", "crowd_level"})
+TODAY_DATA_KEYS = frozenset(
+    {"crowd_forecast", "occupancy_forecast", "opening_time", "closing_time"}
+)
 
 
 class EftelingParkSensor(
-    CoordinatorEntity[EftelingParkInfoUpdateCoordinator], SensorEntity
+    EftelingEntity[EftelingParkInfoUpdateCoordinator],
+    SensorEntity,
 ):
     """One sensor on the shared Efteling park device."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -64,7 +65,11 @@ class EftelingParkSensor(
         description: SensorEntityDescription,
     ) -> None:
         """Initialize a sensor for one Park metric."""
-        super().__init__(coordinator)
+        super().__init__(
+            coordinator,
+            device_key=PARK,
+            device_translation_key="efteling_park",
+        )
         self.entity_description = description
         self._data = data
         self._attr_unique_id = f"park_{description.key}"
@@ -75,14 +80,12 @@ class EftelingParkSensor(
         """Subscribe to source coordinator and local-date updates."""
         await super().async_added_to_hass()
 
-        if self.entity_description.key in {"average_wait_time", "crowd_level"}:
+        if self.entity_description.key in LIVE_DATA_KEYS:
             for source in (
                 self._data.poi_coordinator,
                 self._data.wait_times_coordinator,
             ):
-                remove_listener: Callable[[], None] = source.async_add_listener(
-                    self._handle_source_update
-                )
+                remove_listener = source.async_add_listener(self._handle_source_update)
                 self.async_on_remove(remove_listener)
 
         self._schedule_midnight_update()
@@ -98,6 +101,7 @@ class EftelingParkSensor(
             self._unsub_timer()
             self._unsub_timer = None
 
+    @callback
     def _schedule_midnight_update(self) -> None:
         """Schedule a refresh at the next Efteling-local midnight."""
         self._cancel_timer()
@@ -119,6 +123,21 @@ class EftelingParkSensor(
     def _snapshot(self) -> ParkSnapshot:
         """Return the current derived Park snapshot."""
         return build_snapshot(self._data)
+
+    @property
+    def available(self) -> bool:
+        """Return whether all source data needed by this entity is available."""
+        if not super().available:
+            return False
+
+        key = self.entity_description.key
+        if key in LIVE_DATA_KEYS and not (
+            self._data.poi_coordinator.last_update_success
+            and self._data.wait_times_coordinator.last_update_success
+        ):
+            return False
+
+        return key not in TODAY_DATA_KEYS or self._snapshot()["today"] is not None
 
     @property
     def native_value(self) -> str | int | float | datetime | None:
@@ -200,15 +219,6 @@ class EftelingParkSensor(
 
         return attributes
 
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the shared Park device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, PARK)},
-            translation_key="efteling_park",
-            manufacturer=NAME,
-        )
-
 
 PARK_SENSOR_DESCRIPTIONS = (
     SensorEntityDescription(
@@ -238,6 +248,7 @@ PARK_SENSOR_DESCRIPTIONS = (
         key="attractions_under_maintenance",
         translation_key="attractions_under_maintenance",
         state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
     ),
     SensorEntityDescription(
         key="average_wait_time",

@@ -10,15 +10,14 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_point_in_time
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import DOMAIN, NAME, PARK, PARK_TIME_ZONE
-from custom_components.efteling.coordinator.park_info import (
+from custom_components.efteling.const import PARK, PARK_TIME_ZONE
+from custom_components.efteling.coordinator import (
     EftelingParkInfoUpdateCoordinator,
 )
+from custom_components.efteling.entity import EftelingEntity
 from custom_components.efteling.sensor.park_snapshot import as_records, build_snapshot
 
 if TYPE_CHECKING:
@@ -40,11 +39,10 @@ PARK_EVENT_BINARY_SENSOR_DESCRIPTIONS = (
 
 
 class EftelingParkEventBinarySensor(
-    CoordinatorEntity[EftelingParkInfoUpdateCoordinator], BinarySensorEntity
+    EftelingEntity[EftelingParkInfoUpdateCoordinator],
+    BinarySensorEntity,
 ):
     """Represent whether a special event is active today."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -53,7 +51,11 @@ class EftelingParkEventBinarySensor(
         description: BinarySensorEntityDescription,
     ) -> None:
         """Initialize an event binary sensor."""
-        super().__init__(coordinator)
+        super().__init__(
+            coordinator,
+            device_key=PARK,
+            device_translation_key="efteling_park",
+        )
         self.entity_description = description
         self._data = data
         self._attr_unique_id = f"park_{description.key}"
@@ -126,15 +128,6 @@ class EftelingParkEventBinarySensor(
             "current_winter_event": normalized_today[0] if normalized_today else None,
             "winter_events": normalized_events,
         }
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Return the shared Park device information."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, PARK)},
-            translation_key="efteling_park",
-            manufacturer=NAME,
-        )
 
 
 def create_park_event_binary_sensors(

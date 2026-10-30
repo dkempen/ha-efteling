@@ -1,0 +1,92 @@
+{
+  "OpeningHours": [
+    {
+      "Date": "2026-11-01",
+      "FormattedDate": "zondag 1 november 2026",
+      "OpeningHours": [
+        {
+          "Open": "10:00",
+          "Close": "20:00"
+        }
+      ],
+      "Crowded": 3,
+      "Crowdedness": 83
+    },
+    {
+      "Date": "2026-11-02",
+      "FormattedDate": "maandag 2 november 2026",
+      "OpeningHours": [
+        {
+          "Open": "10:00",
+          "Close": "20:00"
+        }
+      ],
+      "Crowded": 2,
+      "Crowdedness": 74
+    }
+  ],
+  "Maintenance": [
+    {
+      "DateFrom": "2026-10-26T00:00:00",
+      "DateTo": "2026-11-06T00:00:00",
+      "OpenInWeekend": false,
+      "State": null,
+      "Type": "attraction",
+      "Url": "/nl/park/attracties/danse-macabre",
+      "Name": "Danse Macabre"
+    },
+    {
+      "DateFrom": "2026-11-09T00:00:00",
+      "DateTo": "2026-12-04T00:00:00",
+      "OpenInWeekend": false,
+      "State": null,
+      "Type": "attraction",
+      "Url": "/nl/park/attracties/droomvlucht",
+      "Name": "Droomvlucht"
+    }
+  ],
+  "Shows": [
+    {
+      "Name": "Aquanura",
+      "Url": "/nl/park/shows/aquanura",
+      "Duration": 12,
+      "ShowDates": [
+        "2026-11-01T19:15:00+01:00",
+        "2026-11-01T20:15:00+01:00",
+        "2026-11-02T19:15:00+01:00",
+        "2026-11-02T20:15:00+01:00",
+        "2026-11-03T19:15:00+01:00"
+      ]
+    },
+    {
+      "Name": "Pardoes de Tovernar",
+      "Url": "/nl/park/shows/pardoes",
+      "Duration": 20,
+      "ShowDates": [
+        "2026-11-01T09:00:00+01:00",
+        "2026-11-01T09:45:00+01:00",
+        "2026-11-01T10:45:00+01:00",
+        "2026-11-01T11:45:00+01:00",
+        "2026-11-01T13:00:00+01:00"
+      ]
+    }
+  ],
+  "Events": [
+    {
+      "Name": "Winter Efteling",
+      "Description": "",
+      "Link": "",
+      "Type": "winter",
+      "DateFrom": "2026-11-16 01:00",
+      "DateTo": "2027-02-01 01:00"
+    },
+    {
+      "Name": "(Bedrijfs)evenement",
+      "Description": "<p>Op deze datum vindt er een (bedrijfs)evenement plaats en wordt er grote drukte verwacht in het Park.</p>",
+      "Link": "",
+      "Type": "business",
+      "DateFrom": "2026-11-22 01:00",
+      "DateTo": "2026-11-22 01:00"
+    }
+  ]
+}

@@ -9,9 +9,11 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
     from .api import EftelingApiClient
-    from .coordinator.park_info import EftelingParkInfoUpdateCoordinator
-    from .coordinator.poi import EftelingPoiUpdateCoordinator
-    from .coordinator.wait_times import EftelingWaitTimesUpdateCoordinator
+    from .coordinator import (
+        EftelingParkInfoUpdateCoordinator,
+        EftelingPoiUpdateCoordinator,
+        EftelingWaitTimesUpdateCoordinator,
+    )
 
 
 type EftelingConfigEntry = ConfigEntry[EftelingData]

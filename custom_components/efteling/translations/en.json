@@ -18,7 +18,11 @@
         }
       }
     },
-    "abort": { "reconfigure_successful": "Reconfiguration was successful." }
+    "abort": { "reconfigure_successful": "Reconfiguration was successful." },
+    "error": {
+      "cannot_connect": "Unable to connect to Efteling. Please try again.",
+      "invalid_response": "The Efteling API returned an invalid response."
+    }
   },
   "selector": { "language": { "options": { "en": "English", "nl": "Dutch" } } },
   "device": {

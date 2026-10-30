@@ -1,0 +1,199 @@
+{
+  "status": {
+    "rid": "4s4U6swzupVIDtQ4uQ==",
+    "time-ms": 0
+  },
+  "hits": {
+    "found": 256,
+    "start": 0,
+    "hit": [
+      {
+        "id": "python-nl",
+        "fields": {
+          "accessibility_description": "<p>De rolstoelingang is bereikbaar via de uitgang van deze attractie.</p>",
+          "accessibility_group_size": "3",
+          "accessibility_video_url": "https://player.vimeo.com/external/1100590157.m3u8?s=47afa604e434eca8d4c599288988786780a5df03&logging=false",
+          "alternateid": "pythonsinglerider",
+          "alternatelabel": "Single rider",
+          "alternatetype": "singlerider",
+          "area_id": "efteling-park",
+          "can_order": false,
+          "category": "attraction",
+          "detail_text": "<p>Zet je wereld twee keer op de kop gevolgd door een duizelingwekkende kurkentrekker. Alleen voor waaghalzen die minimaal 1.20 meter groot zijn. De Python is geopend als de weersomstandigheden het toelaten. Duur: 2 minuten. </p> <p>Single rider wachtrij: wanneer je alleen of de enige in de groep bent kun je aansluiten in deze wachtrij.</p>",
+          "digipass_partner_id": "PY",
+          "empire": "Ruigrijk",
+          "has_assortment": false,
+          "hide_in_app": false,
+          "id": "python",
+          "image": "/nl/-/media/images/app/quickview/attracties/260x400-python-karretje-in-looping.jpg",
+          "image_detailview1": "/nl/-/media/images/app/detailview/attracties/python/1024x576-pyhton-karretje-in-looping.jpg",
+          "image_detailview2": "/nl/-/media/images/app/detailview/attracties/python/1024x576-python-overzicht-baan.jpg",
+          "image_detailview3": "/nl/-/media/images/app/detailview/attracties/python/gallery-3.jpg",
+          "image_detailview4": "/nl/-/media/images/app/detailview/attracties/python/gallery-5.jpg",
+          "language": "nl",
+          "latlon": "51.647575,5.053534",
+          "minimum_length": "120",
+          "name": "Python",
+          "name_in_context": "de Python",
+          "properties": [
+            "transfernecessary",
+            "minimum120",
+            "injuries",
+            "medicalconditions",
+            "pregnantwomen",
+            "cameras-or-selfiestick-not-allowed",
+            "dizzy",
+            "closedduringshow",
+            "babyswitch",
+            "outdoorattraction"
+          ],
+          "properties_entry_requirements": [
+            "transfernecessary",
+            "minimum120",
+            "pregnantwomen",
+            "injuries",
+            "medicalconditions",
+            "cameras-or-selfiestick-not-allowed"
+          ],
+          "properties_practical_information": [
+            "closedduringshow",
+            "babyswitch",
+            "outdoorattraction"
+          ],
+          "properties_stimuli": [
+            "loud-noises",
+            "dizzy",
+            "g-forces",
+            "attraction-reaches-heights"
+          ],
+          "search_keywords": "wachttijd, wachttijden, actuele wachttijden, verwachtte wachttijden, drukte, wachten",
+          "showduration": "0",
+          "subtitle": "Woooooooh! Er komt iets aan…",
+          "targetgroups": ["thrillseekers"],
+          "text": "Achtbaan met loopings",
+          "type": "Stalen achtbaan",
+          "wis_info": {
+            "Id": "python",
+            "Name": "Python",
+            "Type": "Attracties",
+            "Empire": "Ruigrijk",
+            "State": "open",
+            "WaitingTime": 5
+          }
+        }
+      },
+      {
+        "id": "aquanura-nl",
+        "fields": {
+          "area_id": "efteling-park",
+          "can_order": false,
+          "category": "show",
+          "detail_text": "<p>Sluit je dag in de Efteling af met Efteling Symphonica. Deze spectaculaire Aquanura-show voert je in veertien minuten mee op een muzikale tijdreis, terwijl de imposante Bakens van Licht prachtige beelden laten verschijnen op het Meer van Fantasie.</p>",
+          "empire": "Fantasierijk",
+          "has_assortment": false,
+          "hide_in_app": false,
+          "id": "aquanura",
+          "image": "/nl/-/media/images/app/quickview/shows/aquanura/260x400-aquanura-symphonica-verschillende-kleuren.jpg",
+          "image_detailview1": "/nl/-/media/images/app/detailview/shows/aquanura/1024x576-aquanura-symphonica-baken-van-licht.jpg",
+          "image_detailview2": "/nl/-/media/images/app/detailview/shows/aquanura/1024x576-aquanura-symphonica-verschillende-kleuren.jpg",
+          "image_detailview3": "/nl/-/media/images/app/detailview/shows/aquanura/1024x576-aquanura-symphonica-twinkels.jpg",
+          "image_detailview4": "/nl/-/media/images/app/detailview/shows/aquanura/1024x576-aquanura-symphonica-paddenstoel.jpg",
+          "language": "nl",
+          "latlon": "51.648014,5.045388",
+          "minimum_length": "0",
+          "name": "Aquanura",
+          "properties": [
+            "attractionforfamiliy",
+            "outdoorattraction",
+            "easilyaccessiblewheelchairs",
+            "assistancedogs"
+          ],
+          "showduration": "14",
+          "subtitle": "Laat je verwonderen door dit muzikale spektakel",
+          "text": "Watershow",
+          "type": "Watershow",
+          "wis_info": {
+            "Id": "aquanura",
+            "Name": "Aquanura",
+            "Type": "Shows en Entertainment",
+            "Empire": "Fantasierijk",
+            "State": "open",
+            "IsTheaterShow": false,
+            "ShowTimes": [
+              {
+                "ShowDateTime": "2026-10-23T19:15:00+02:00",
+                "StartDateTime": "2026-10-23T19:15:00+02:00",
+                "EndDateTime": "2026-10-23T19:27:00+02:00",
+                "Duration": 12,
+                "Edition": "Aquanura, met een zachte G",
+                "Title": {
+                  "NL": "Aquanura, met een zachte G",
+                  "EN": "Aquanura, met een zachte G",
+                  "DE": "Aquanura, met een zachte G",
+                  "FR": "Aquanura, met een zachte G"
+                }
+              },
+              {
+                "ShowDateTime": "2026-10-23T20:15:00+02:00",
+                "StartDateTime": "2026-10-23T20:15:00+02:00",
+                "EndDateTime": "2026-10-23T20:27:00+02:00",
+                "Duration": 12,
+                "Edition": "Efteling Symphonica",
+                "Title": {
+                  "NL": "Efteling Symphonica",
+                  "EN": "Efteling Symphonica",
+                  "DE": "Efteling Symphonica",
+                  "FR": "Efteling Symphonica"
+                }
+              }
+            ],
+            "PastShowTimes": []
+          }
+        }
+      },
+      {
+        "id": "diorama-nl",
+        "fields": {
+          "area_id": "efteling-park",
+          "can_order": false,
+          "category": "attraction",
+          "detail_text": "<p>Kijk je ogen uit in de kleinste wereld binnen de Efteling. Je ziet hier treintjes rijden door landschappen waar dorpen tot leven komen. Iedereen is welkom</p>",
+          "empire": "Marerijk",
+          "has_assortment": false,
+          "hide_in_app": false,
+          "id": "diorama",
+          "image": "/nl/-/media/images/app/quickview/attracties/diorama-quickview2x.jpg",
+          "image_detailview1": "/nl/-/media/images/app/detailview/attracties/diorama/gallery-1.jpg",
+          "image_detailview2": "/nl/-/media/images/app/detailview/attracties/diorama/1024x576-diorama2.jpg",
+          "language": "nl",
+          "latlon": "51.650894,5.048583",
+          "minimum_length": "0",
+          "name": "Diorama",
+          "properties": [
+            "indoorattraction",
+            "easilyaccessiblewheelchairs",
+            "assistancedogs"
+          ],
+          "properties_entry_requirements": [
+            "easilyaccessiblewheelchairs",
+            "assistancedogs"
+          ],
+          "properties_practical_information": ["indoorattraction"],
+          "search_keywords": "wachttijd, wachttijden, actuele wachttijden, verwachtte wachttijden, drukte, wachten",
+          "showduration": "0",
+          "subtitle": "Bezoek een wereld van miniatuur",
+          "targetgroups": ["whole-family"],
+          "text": "Miniatuurwereld",
+          "type": "Miniatuurwereld",
+          "wis_info": {
+            "Id": "diorama",
+            "Name": "Diorama",
+            "Type": "Attracties",
+            "Empire": "Marerijk",
+            "State": "open"
+          }
+        }
+      }
+    ]
+  }
+}

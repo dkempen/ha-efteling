@@ -12,21 +12,18 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
 )
 from homeassistant.core import callback
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.event import async_track_point_in_time
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from custom_components.efteling.const import (
     CUSTOM_SHOW_ICONS,
-    DOMAIN,
-    NAME,
     PARK_TIME_ZONE,
     SHOWS,
 )
-from custom_components.efteling.coordinator.wait_times import (
+from custom_components.efteling.coordinator import (
     EftelingWaitTimesUpdateCoordinator,
 )
+from custom_components.efteling.entity import EftelingEntity
 
 from .utils import parse_poi_metadata
 
@@ -54,11 +51,10 @@ ENTITY_DESCRIPTION_SHOW = SensorEntityDescription(
 
 
 class EftelingShowSensor(
-    CoordinatorEntity[EftelingWaitTimesUpdateCoordinator], SensorEntity
+    EftelingEntity[EftelingWaitTimesUpdateCoordinator],
+    SensorEntity,
 ):
     """Sensor for a single show. Native value is the active or next show start time."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -68,7 +64,11 @@ class EftelingShowSensor(
         poi: Poi,
     ) -> None:
         """Initialize show sensor."""
-        super().__init__(coordinator)
+        super().__init__(
+            coordinator,
+            device_key=SHOWS,
+            device_translation_key="efteling_shows",
+        )
         self.entity_description = ENTITY_DESCRIPTION_SHOW
         self._show_id = show_id
         self._attr_unique_id = show_id
@@ -186,15 +186,6 @@ class EftelingShowSensor(
     def icon(self) -> str | None:
         """Return a show-specific icon when configured."""
         return CUSTOM_SHOW_ICONS.get(self._show_id)
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Group all show sensors under one device."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, SHOWS)},
-            translation_key="efteling_shows",
-            manufacturer=NAME,
-        )
 
     @property
     def native_value(self) -> datetime | None:

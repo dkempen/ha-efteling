@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TEST_PYTHON="${PYTHON:-python3}"
+INTEGRATION_PATH="custom_components.efteling"
+
+cd "$ROOT"
+
+if ! "$TEST_PYTHON" -c "import pytest; import pytest_cov; import pytest_homeassistant_custom_component" 2>/dev/null; then
+	"$TEST_PYTHON" -m pip install --requirement "${ROOT}/requirements_test.txt"
+fi
+
+COVERAGE_ARGS=()
+PYTEST_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+		--cov)
+			COVERAGE_ARGS+=("--cov=${INTEGRATION_PATH}" "--cov-report=term-missing")
+			shift
+			;;
+		--cov-html)
+			COVERAGE_ARGS+=("--cov=${INTEGRATION_PATH}" "--cov-report=html")
+			shift
+			;;
+		*)
+			PYTEST_ARGS+=("$1")
+			shift
+			;;
+	esac
+done
+
+exec "$TEST_PYTHON" -m pytest \
+	--override-ini "asyncio_mode=auto" \
+	--override-ini "testpaths=tests" \
+	"${COVERAGE_ARGS[@]}" \
+	"${PYTEST_ARGS[@]}"

@@ -11,18 +11,15 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.const import UnitOfTime
-from homeassistant.helpers.device_registry import DeviceInfo
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from custom_components.efteling.const import (
     ATTRACTIONS,
     CUSTOM_ATTRACTION_ICONS,
-    DOMAIN,
-    NAME,
 )
-from custom_components.efteling.coordinator.wait_times import (
+from custom_components.efteling.coordinator import (
     EftelingWaitTimesUpdateCoordinator,
 )
+from custom_components.efteling.entity import EftelingEntity
 from custom_components.efteling.models import ATTRACTION_STATUS_MAP, Poi
 
 from .utils import parse_poi_metadata
@@ -38,11 +35,10 @@ ENTITY_DESCRIPTION_WAIT = SensorEntityDescription(
 
 
 class EftelingAttractionSensor(
-    CoordinatorEntity[EftelingWaitTimesUpdateCoordinator], SensorEntity
+    EftelingEntity[EftelingWaitTimesUpdateCoordinator],
+    SensorEntity,
 ):
     """Sensor for a single attraction."""
-
-    _attr_has_entity_name = True
 
     def __init__(
         self,
@@ -52,7 +48,11 @@ class EftelingAttractionSensor(
         poi: Poi,
     ) -> None:
         """Initialize sensor."""
-        super().__init__(coordinator)
+        super().__init__(
+            coordinator,
+            device_key=ATTRACTIONS,
+            device_translation_key="efteling_attractions",
+        )
         self.entity_description = ENTITY_DESCRIPTION_WAIT
         self._attraction_id = attraction_id
         self._attr_unique_id = attraction_id
@@ -104,12 +104,3 @@ class EftelingAttractionSensor(
     def icon(self) -> str | None:
         """Return an attraction-specific icon when configured."""
         return CUSTOM_ATTRACTION_ICONS.get(self._attraction_id)
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Group all attraction sensors under one device."""
-        return DeviceInfo(
-            identifiers={(DOMAIN, ATTRACTIONS)},
-            translation_key="efteling_attractions",
-            manufacturer=NAME,
-        )

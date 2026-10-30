@@ -42,7 +42,13 @@ class ParkSnapshot(TypedDict):
 
 
 type AttributeValue = (
-    str | int | bool | Mapping[str, AttributeValue] | list[AttributeValue] | None
+    str
+    | int
+    | float
+    | bool
+    | Mapping[str, AttributeValue]
+    | list[AttributeValue]
+    | None
 )
 
 

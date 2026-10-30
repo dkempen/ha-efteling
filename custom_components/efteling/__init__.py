@@ -13,12 +13,14 @@ from typing import TYPE_CHECKING
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.efteling.const import CONF_LANGUAGE, DOMAIN, LOGGER
+from custom_components.efteling.const import CONF_LANGUAGE
+from custom_components.efteling.coordinator import (
+    EftelingParkInfoUpdateCoordinator,
+    EftelingPoiUpdateCoordinator,
+    EftelingWaitTimesUpdateCoordinator,
+)
 
 from .api import EftelingApiClient
-from .coordinator.park_info import EftelingParkInfoUpdateCoordinator
-from .coordinator.poi import EftelingPoiUpdateCoordinator
-from .coordinator.wait_times import EftelingWaitTimesUpdateCoordinator
 from .data import EftelingData
 
 if TYPE_CHECKING:
@@ -38,33 +40,34 @@ async def async_setup_entry(
     entry: EftelingConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
+    client = EftelingApiClient(
+        session=async_get_clientsession(hass),
+        language=entry.data.get(CONF_LANGUAGE, "nl"),
+    )
     poi_coordinator = EftelingPoiUpdateCoordinator(
         hass=hass,
-        logger=LOGGER,
+        client=client,
         config_entry=entry,
-        name=f"{DOMAIN}_poi",
+        name="poi",
         update_interval=timedelta(days=1),
     )
     wait_times_coordinator = EftelingWaitTimesUpdateCoordinator(
         hass=hass,
-        logger=LOGGER,
+        client=client,
         config_entry=entry,
-        name=f"{DOMAIN}_wait_times",
+        name="wait_times",
         update_interval=timedelta(minutes=5),
     )
     park_info_coordinator = EftelingParkInfoUpdateCoordinator(
         hass=hass,
-        logger=LOGGER,
+        client=client,
         config_entry=entry,
-        name=f"{DOMAIN}_park_info",
+        name="park_info",
         update_interval=timedelta(days=1),
     )
 
     entry.runtime_data = EftelingData(
-        client=EftelingApiClient(
-            session=async_get_clientsession(hass),
-            language=entry.data.get(CONF_LANGUAGE, "nl"),
-        ),
+        client=client,
         poi_coordinator=poi_coordinator,
         wait_times_coordinator=wait_times_coordinator,
         park_info_coordinator=park_info_coordinator,
@@ -74,8 +77,9 @@ async def async_setup_entry(
     await wait_times_coordinator.async_config_entry_first_refresh()
     await park_info_coordinator.async_config_entry_first_refresh()
 
+    entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
+
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    entry.async_on_unload(entry.add_update_listener(async_reload_entry))
 
     return True
 
@@ -86,11 +90,3 @@ async def async_unload_entry(
 ) -> bool:
     """Handle removal of an entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-
-
-async def async_reload_entry(
-    hass: HomeAssistant,
-    entry: EftelingConfigEntry,
-) -> None:
-    """Reload config entry."""
-    await hass.config_entries.async_reload(entry.entry_id)

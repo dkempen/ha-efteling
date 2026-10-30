@@ -153,11 +153,20 @@ The show status is one of `Currently running`, `Upcoming`, or `No more shows tod
 
 | Data                                     | Refresh interval    | Examples                                                                      |
 | ---------------------------------------- | ------------------- | ----------------------------------------------------------------------------- |
-| Attraction wait times and show schedules | Every **5 minutes** | Wait times, show start and end times, and show status                         |
+| Attraction wait times and show schedules | Every **5 minutes** | Wait times, show start and end times, and show status                         |
 | Attraction and show metadata             | Every **24 hours**  | Names, descriptions, images, locations, and visitor information               |
 | Park schedule information                | Every **24 hours**  | Opening hours, crowd and occupancy forecasts, events, and planned maintenance |
 
 Time-sensitive entity states are also updated at relevant times, such as park opening and closing, local midnight, and show transitions, rather than relying solely on the next scheduled data refresh.
+
+## Removal
+
+1. Open **Settings → Devices & services** in Home Assistant.
+2. Select the **Efteling** integration.
+3. Open the integration menu and select **Delete**.
+4. Confirm removal.
+
+If the integration was installed through the Marketplace, remove it from there if you no longer want to keep the integration files. If it was installed manually, remove `custom_components/efteling/` from your Home Assistant configuration after deleting the integration and restart Home Assistant.
 
 ## Development
 
