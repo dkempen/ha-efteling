@@ -1,7 +1,7 @@
 # [<img src="https://raw.githubusercontent.com/dkempen/ha-efteling/master/custom_components/efteling_park/brand/icon.png" alt="" height="40" valign="top">][repository] Efteling for Home Assistant [<img src="https://raw.githubusercontent.com/dkempen/ha-efteling/master/custom_components/efteling_park/brand/logo.png" alt="" height="40" align="right">][efteling]
 
 [![Home Assistant integration][home-assistant-badge]][home-assistant]
-[![Marketplace install][marketplace-badge]][marketplace-install]
+[![Marketplace install][marketplace-badge]][install]
 [![Latest release][version-badge]][version]
 [![Validation][validation-badge]][validation]
 [![License][license-badge]][license]
@@ -16,7 +16,7 @@ Bring Efteling's live attraction, show, and park information into Home Assistant
 - **Park information** - Park status, opening and closing times, and opening-hours schedules
 - **Crowd levels** - Live crowd levels based on average attraction wait times, and crowd and occupancy forecasts
 - **Events and maintenance** - Winter Efteling, business events, and planned attraction maintenance
-- **Annual passes** - Annual passes validity information for Classic, Plus, and Premium
+- **Annual passes** - Annual pass validity information for Classic, Plus, and Premium
 - **Devices and entities** - Dedicated devices, custom icons, and data for dashboards and automations
 - **Localization** - Dutch or English information, with translated entity names and states
 - **Easy setup** - One-click installation and configuration through the Home Assistant UI
@@ -27,28 +27,43 @@ The screenshot below shows an example of a dashboard built with this integration
 
 ![Example Efteling Home Assistant dashboard](https://raw.githubusercontent.com/dkempen/ha-efteling/master/images/dashboard.jpg)
 
+<!-- ha-marketplace:exclude-start -->
+
 ## Installation
 
 ### One-click installation
 
-[![Add Efteling to Home Assistant][marketplace-install-badge]][marketplace-install]
+[![Add Efteling to Home Assistant][install-badge]][install]
 
-### Manual installation
+### Home Assistant Marketplace (2026.11 and newer)
 
-1. Open **Marketplace** in Home Assistant.
-2. Select **Add from link**.
-3. Paste the [repository URL][repository] into the GitHub link field.
-4. Select **Integration** as the category.
-5. Install **Efteling** and restart Home Assistant.
+1. Open **Settings → Marketplace** in Home Assistant.
+2. Search for **Efteling**.
+3. Select **Efteling** to open its integration page.
+4. Select **Install**.
+5. Follow the configuration flow and complete the setup.
+
+The Marketplace installs the integration and starts its configuration flow automatically. No restart is required.
+
+### HACS (older Home Assistant versions)
+
+1. Open **HACS → Integrations**.
+2. Select **Explore & Download Repositories**.
+3. Search for **Efteling** and open the integration.
+4. Select **Download**.
+5. Restart Home Assistant.
+6. Go to **Settings → Devices & services → Add integration** and search for **Efteling**.
 
 <details>
-<summary>Manual installation without the Marketplace</summary>
+<summary>Manual installation without the Marketplace or HACS</summary>
 
 1. Download the `custom_components/efteling_park/` directory from this repository.
 2. Copy it into the `custom_components/` directory of your Home Assistant configuration.
 3. Restart Home Assistant.
 
 </details>
+
+<!-- ha-marketplace:exclude-end -->
 
 ## Configuration
 
@@ -70,8 +85,8 @@ The integration creates three devices: **Efteling park**, **Efteling attractions
 ## Entities
 
 The integration supports Efteling's public attraction, show, park-information, and annual-pass data.
-Attraction and show entities are created from the live points-of-interest and wait-time feeds. Park entities share the
-Efteling park device. The integration is read-only and does not access personal account information.
+Attraction and show entities are created from the live points-of-interest and wait-time feeds.
+Park entities share the Efteling park device. The integration is read-only and does not access personal account information.
 
 ### Park
 
@@ -201,14 +216,11 @@ Time-sensitive entity states are also updated at relevant times, such as park op
 
 ## Troubleshooting
 
-- **Entities are unavailable:** Check Home Assistant's logs and confirm the host can reach Efteling's public service.
-  Home Assistant retries temporary endpoint failures automatically.
-- **An attraction or show is missing:** It must appear in both Efteling's feed.
+- **Entities are unavailable:** Check Home Assistant's logs and confirm the host can reach Efteling's public service. Home Assistant retries temporary endpoint failures automatically.
+- **An attraction or show is missing:** It must appear in the relevant Efteling feeds.
   Reload the integration after confirming the upstream listing has returned.
-- **Names or descriptions use the wrong language:** Reconfigure the integration, choose Dutch or English, and allow the
-  entry to reload.
-- **Schedules are incomplete:** Efteling controls the available date range and schedule content; the integration cannot
-  supply dates that the endpoint has not published.
+- **Names or descriptions use the wrong language:** Reconfigure the integration, choose Dutch or English, and allow the entry to reload.
+- **Schedules are incomplete:** Efteling controls the available date range and schedule content; the integration cannot supply dates that the endpoint has not published.
 
 ## Removal
 
@@ -217,7 +229,11 @@ Time-sensitive entity states are also updated at relevant times, such as park op
 3. Open the integration menu and select **Delete**.
 4. Confirm removal.
 
-If the integration was installed through the Marketplace, remove it from there if you no longer want to keep the integration files. If it was installed manually, remove `custom_components/efteling_park/` from your Home Assistant configuration after deleting the integration and restart Home Assistant.
+To also remove the integration files:
+
+- **Marketplace:** Uninstall Efteling from **Settings → Marketplace**.
+- **HACS:** Uninstall Efteling from **HACS → Integrations**.
+- **Manual installation:** Remove `custom_components/efteling_park/` from your Home Assistant configuration and restart Home Assistant.
 
 ## Development
 
@@ -233,7 +249,7 @@ Efteling and all associated trademarks, names, images, and services remain the p
 [efteling]: https://www.efteling.com
 [home-assistant]: https://www.home-assistant.io
 [home-assistant-badge]: https://img.shields.io/badge/Home_Assistant-Integration-18bcf2.svg?logo=homeassistant&logoColor=white
-[marketplace-badge]: https://img.shields.io/badge/Marketplace-Custom-18bcf2.svg?logo=HomeAssistantCommunityStore&logoColor=white
+[marketplace-badge]: https://img.shields.io/badge/Marketplace-Default-18bcf2.svg?logo=homeassistant&logoColor=white
 [version]: https://github.com/dkempen/ha-efteling/releases
 [version-badge]: https://img.shields.io/github/v/release/dkempen/ha-efteling?label=Version
 [stars]: https://github.com/dkempen/ha-efteling
@@ -242,7 +258,7 @@ Efteling and all associated trademarks, names, images, and services remain the p
 [validation-badge]: https://img.shields.io/github/actions/workflow/status/dkempen/ha-efteling/hassfest.yaml?logo=github&logoColor=fff&label=Validation
 [license]: https://github.com/dkempen/ha-efteling?tab=MIT-1-ov-file
 [license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling?label=License
-[marketplace-install]: https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkempen&repository=ha-efteling&category=integration
-[marketplace-install-badge]: https://my.home-assistant.io/badges/marketplace_repository.svg
+[install]: https://my.home-assistant.io/redirect/hacs_repository/?owner=dkempen&repository=ha-efteling
+[install-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
 [configure]: https://my.home-assistant.io/redirect/config_flow_start/?domain=efteling_park
 [configure-badge]: https://my.home-assistant.io/badges/config_flow_start.svg
