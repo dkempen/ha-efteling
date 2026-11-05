@@ -1,4 +1,4 @@
-# [<img src="https://raw.githubusercontent.com/dkempen/ha-efteling/master/custom_components/efteling/brand/icon.png" alt="" height="40" valign="top">][repository] Efteling for Home Assistant [<img src="https://raw.githubusercontent.com/dkempen/ha-efteling/master/custom_components/efteling/brand/logo.png" alt="" height="40" align="right">][efteling]
+# [<img src="https://raw.githubusercontent.com/dkempen/ha-efteling/master/custom_components/efteling_park/brand/icon.png" alt="" height="40" valign="top">][repository] Efteling for Home Assistant [<img src="https://raw.githubusercontent.com/dkempen/ha-efteling/master/custom_components/efteling_park/brand/logo.png" alt="" height="40" align="right">][efteling]
 
 [![Home Assistant integration][home-assistant-badge]][home-assistant]
 [![Marketplace install][marketplace-badge]][marketplace-install]
@@ -44,7 +44,7 @@ The screenshot below shows an example of a dashboard built with this integration
 <details>
 <summary>Manual installation without the Marketplace</summary>
 
-1. Download the `custom_components/efteling/` directory from this repository.
+1. Download the `custom_components/efteling_park/` directory from this repository.
 2. Copy it into the `custom_components/` directory of your Home Assistant configuration.
 3. Restart Home Assistant.
 
@@ -217,11 +217,11 @@ Time-sensitive entity states are also updated at relevant times, such as park op
 3. Open the integration menu and select **Delete**.
 4. Confirm removal.
 
-If the integration was installed through the Marketplace, remove it from there if you no longer want to keep the integration files. If it was installed manually, remove `custom_components/efteling/` from your Home Assistant configuration after deleting the integration and restart Home Assistant.
+If the integration was installed through the Marketplace, remove it from there if you no longer want to keep the integration files. If it was installed manually, remove `custom_components/efteling_park/` from your Home Assistant configuration after deleting the integration and restart Home Assistant.
 
 ## Development
 
-The integration's source code is located in `custom_components/efteling/`. You can use the Home Assistant development container to work on the integration. Run `scripts/setup` and `scripts/develop` to set up and launch a local Home Assistant environment.
+The integration's source code is located in `custom_components/efteling_park/`. You can use the Home Assistant development container to work on the integration. Run `scripts/setup` and `scripts/develop` to set up and launch a local Home Assistant environment.
 
 ## Credits
 
