@@ -117,7 +117,7 @@ class EftelingAnnualPassBinarySensor(
     def extra_state_attributes(self) -> dict[str, dict[str, bool]]:
         """Expose all annual-pass data for this tier."""
         schedule = {
-            date: availability[self.entity_description.key.title()]
+            date: availability.get(self.entity_description.key.title())
             for date, availability in self.coordinator.data.items()
         }
         return {"annual_passes": schedule}
