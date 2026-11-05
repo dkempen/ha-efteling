@@ -69,6 +69,10 @@ The integration creates three devices: **Efteling park**, **Efteling attractions
 
 ## Entities
 
+The integration supports Efteling's public attraction, show, park-information, and annual-pass data.
+Attraction and show entities are created from the live points-of-interest and wait-time feeds. Park entities share the
+Efteling park device. The integration is read-only and does not access personal account information.
+
 ### Park
 
 The Efteling park device includes the following entities:
@@ -122,6 +126,27 @@ Attraction sensors expose additional attributes for dashboards and automations:
 
 The attraction status is one of `Open`, `Closed`, `Under maintenance`, `Out of order`, or `Temporarily out of order`. Status labels follow the Home Assistant language setting.
 
+## Use cases
+
+- Show today's opening hours, crowd forecast, and attraction wait times on a visit-planning dashboard.
+- Notify household members when an attraction's wait time falls below a chosen threshold.
+- Use the park status and business-event sensors in automations while the park is closed or reserved.
+
+For example, notify when Python's wait time is 15 minutes or less:
+
+```yaml
+automation:
+  - alias: Notify when Python has a short wait
+    triggers:
+      - trigger: numeric_state
+        entity_id: sensor.efteling_attractions_python
+        below: 16
+    actions:
+      - action: notify.mobile_app_phone
+        data:
+          message: Python's wait time is {{ states('sensor.efteling_attractions_python') }} minutes.
+```
+
 ### Shows
 
 Each show has a timestamp sensor that provides the start time of the currently running show or, if no show is running, the next upcoming show. If no current or upcoming show is available, the sensor state is `unknown`.
@@ -166,6 +191,24 @@ It refreshes feeds at the intervals below.
 | Annual passes                            | Every **24 hours**  | Classic, Plus, and Premium validity by date                                   |
 
 Time-sensitive entity states are also updated at relevant times, such as park opening and closing, local midnight, and show transitions, rather than relying solely on the next scheduled data refresh.
+
+## Known limitations
+
+- Data availability and accuracy depend on Efteling's public endpoints and can change without notice.
+- Attraction and show entities are available only while those items appear in upstream feeds.
+- This integration cannot manage tickets, reservations, annual passes, or customer accounts.
+- Updates depend on network access and the availability of Efteling's service.
+
+## Troubleshooting
+
+- **Entities are unavailable:** Check Home Assistant's logs and confirm the host can reach Efteling's public service.
+  Home Assistant retries temporary endpoint failures automatically.
+- **An attraction or show is missing:** It must appear in both Efteling's feed.
+  Reload the integration after confirming the upstream listing has returned.
+- **Names or descriptions use the wrong language:** Reconfigure the integration, choose Dutch or English, and allow the
+  entry to reload.
+- **Schedules are incomplete:** Efteling controls the available date range and schedule content; the integration cannot
+  supply dates that the endpoint has not published.
 
 ## Removal
 
