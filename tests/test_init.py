@@ -9,7 +9,7 @@ from homeassistant.config_entries import SOURCE_RECONFIGURE, ConfigEntryState
 from homeassistant.const import CONF_LANGUAGE
 from homeassistant.data_entry_flow import FlowResultType
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
 )
@@ -54,11 +54,11 @@ async def test_reconfigure_reloads_loaded_entry_with_new_language(
     """Recreate the API client with the language selected during reconfiguration."""
     with (
         patch(
-            "custom_components.efteling.EftelingApiClient",
+            "custom_components.efteling_park.EftelingApiClient",
             wraps=EftelingApiClient,
         ) as setup_client,
         patch(
-            "custom_components.efteling.config_flow.EftelingApiClient",
+            "custom_components.efteling_park.config_flow.EftelingApiClient",
             wraps=EftelingApiClient,
         ) as validation_client,
     ):

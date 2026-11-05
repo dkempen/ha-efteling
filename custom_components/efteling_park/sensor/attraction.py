@@ -12,15 +12,15 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfTime
 
-from custom_components.efteling.const import (
+from custom_components.efteling_park.const import (
     ATTRACTIONS,
     CUSTOM_ATTRACTION_ICONS,
 )
-from custom_components.efteling.coordinator import (
+from custom_components.efteling_park.coordinator import (
     EftelingWaitTimesUpdateCoordinator,
 )
-from custom_components.efteling.entity import EftelingEntity
-from custom_components.efteling.models import ATTRACTION_STATUS_MAP, Poi
+from custom_components.efteling_park.entity import EftelingEntity
+from custom_components.efteling_park.models import ATTRACTION_STATUS_MAP, Poi
 
 from .utils import parse_poi_metadata
 

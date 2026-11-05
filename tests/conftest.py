@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from homeassistant.core import HomeAssistant
 
-    from custom_components.efteling.models import (
+    from custom_components.efteling_park.models import (
         AnnualPasses,
         ParkInfoResponse,
         PoiResponse,
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.efteling.api import EftelingApiClient
-from custom_components.efteling.const import DOMAIN, PARK_TIME_ZONE
+from custom_components.efteling_park.api import EftelingApiClient
+from custom_components.efteling_park.const import DOMAIN, PARK_TIME_ZONE
 
 
 @pytest.fixture(autouse=True)

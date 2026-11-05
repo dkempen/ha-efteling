@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-INTEGRATION_ROOT = ROOT / "custom_components" / "efteling"
+INTEGRATION_ROOT = ROOT / "custom_components" / "efteling_park"
 COVERAGE_REPORT = ROOT / "coverage.json"
 MINIMUM_COVERAGE = 95.0
 

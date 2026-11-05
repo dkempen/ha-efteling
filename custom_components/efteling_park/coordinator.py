@@ -13,12 +13,12 @@ from homeassistant.helpers.update_coordinator import (
 )
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientError,
 )
-from custom_components.efteling.const import DOMAIN, LOGGER, PARK_TIME_ZONE
-from custom_components.efteling.models import (
+from custom_components.efteling_park.const import DOMAIN, LOGGER, PARK_TIME_ZONE
+from custom_components.efteling_park.models import (
     AnnualPasses,
     AttractionInfo,
     ParkInfoResponse,
@@ -28,7 +28,7 @@ from custom_components.efteling.models import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from custom_components.efteling.data import EftelingConfigEntry
+    from custom_components.efteling_park.data import EftelingConfigEntry
 
 
 MONTHS_PER_YEAR = 12

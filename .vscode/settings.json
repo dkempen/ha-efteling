@@ -1,0 +1,8 @@
+{
+  "python.testing.pytestArgs": [
+    "tests",
+    "--cov=custom_components.efteling_park"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
+}

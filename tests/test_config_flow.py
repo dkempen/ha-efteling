@@ -15,13 +15,13 @@ from homeassistant.const import CONF_LANGUAGE
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
     EftelingApiClientError,
 )
-from custom_components.efteling.config_flow import EftelingFlowHandler
-from custom_components.efteling.const import DOMAIN
+from custom_components.efteling_park.config_flow import EftelingFlowHandler
+from custom_components.efteling_park.const import DOMAIN
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

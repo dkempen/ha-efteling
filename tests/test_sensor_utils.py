@@ -1,6 +1,6 @@
 """Tests for POI metadata normalization."""
 
-from custom_components.efteling.sensor.utils import clean_html, parse_poi_metadata
+from custom_components.efteling_park.sensor.utils import clean_html, parse_poi_metadata
 
 
 def test_parse_poi_metadata_normalizes_coordinates_and_urls() -> None:

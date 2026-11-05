@@ -19,8 +19,8 @@ fi
 mkdir -p "${CONFIG_COMPONENTS}"
 
 # Link the development integration into Home Assistant's expected directory.
-if [[ ! -e "${CONFIG_COMPONENTS}/efteling" ]]; then
-    ln -s "${DEV_COMPONENTS}/efteling" "${CONFIG_COMPONENTS}/efteling"
+if [[ ! -e "${CONFIG_COMPONENTS}/efteling_park" ]]; then
+    ln -s "${DEV_COMPONENTS}/efteling_park" "${CONFIG_COMPONENTS}/efteling_park"
 fi
 
 # Start Home Assistant

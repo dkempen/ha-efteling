@@ -10,12 +10,12 @@ from zoneinfo import ZoneInfo
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
 )
-from custom_components.efteling.const import DOMAIN
-from custom_components.efteling.coordinator import (
+from custom_components.efteling_park.const import DOMAIN
+from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
     EftelingCoordinator,
     EftelingParkInfoUpdateCoordinator,
@@ -159,11 +159,11 @@ async def test_park_month_refresh_uses_local_month_and_cleans_timer(
     scheduled_at = datetime(2026, 10, 31, 12, 0, tzinfo=ZoneInfo("Europe/Amsterdam"))
     with (
         patch(
-            "custom_components.efteling.coordinator.dt_util.now",
+            "custom_components.efteling_park.coordinator.dt_util.now",
             return_value=scheduled_at,
         ),
         patch(
-            "custom_components.efteling.coordinator.async_track_point_in_time",
+            "custom_components.efteling_park.coordinator.async_track_point_in_time",
             return_value=unsubscribe,
         ) as track,
     ):
@@ -198,11 +198,11 @@ async def test_park_month_refresh_rolls_over_year_and_refreshes(
     )
     with (
         patch(
-            "custom_components.efteling.coordinator.dt_util.now",
+            "custom_components.efteling_park.coordinator.dt_util.now",
             side_effect=lambda _tz=None: next(times, january),
         ),
         patch(
-            "custom_components.efteling.coordinator.async_track_point_in_time",
+            "custom_components.efteling_park.coordinator.async_track_point_in_time",
             return_value=unsubscribe,
         ) as track,
     ):

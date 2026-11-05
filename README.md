@@ -244,5 +244,5 @@ Efteling and all associated trademarks, names, images, and services remain the p
 [license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling?label=License
 [marketplace-install]: https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkempen&repository=ha-efteling&category=integration
 [marketplace-install-badge]: https://my.home-assistant.io/badges/marketplace_repository.svg
-[configure]: https://my.home-assistant.io/redirect/config_flow_start/?domain=efteling
+[configure]: https://my.home-assistant.io/redirect/config_flow_start/?domain=efteling_park
 [configure-badge]: https://my.home-assistant.io/badges/config_flow_start.svg

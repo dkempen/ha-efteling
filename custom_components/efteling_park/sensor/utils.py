@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from urllib.parse import urljoin
 
 if TYPE_CHECKING:
-    from custom_components.efteling.models import Poi
+    from custom_components.efteling_park.models import Poi
 
 
 @dataclass(frozen=True)

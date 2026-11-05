@@ -15,22 +15,22 @@ from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import (
+from custom_components.efteling_park.const import (
     CUSTOM_SHOW_ICONS,
     PARK_TIME_ZONE,
     SHOWS,
 )
-from custom_components.efteling.coordinator import (
+from custom_components.efteling_park.coordinator import (
     EftelingWaitTimesUpdateCoordinator,
 )
-from custom_components.efteling.entity import EftelingEntity
+from custom_components.efteling_park.entity import EftelingEntity
 
 from .utils import parse_poi_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from custom_components.efteling.models import Poi
+    from custom_components.efteling_park.models import Poi
 
 
 @dataclass(frozen=True)

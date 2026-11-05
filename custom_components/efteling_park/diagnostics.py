@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
-    from custom_components.efteling.data import EftelingConfigEntry
+    from custom_components.efteling_park.data import EftelingConfigEntry
 
 
 async def async_get_config_entry_diagnostics(

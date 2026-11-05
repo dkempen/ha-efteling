@@ -19,12 +19,12 @@ from homeassistant.helpers.selector import (
 )
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
     EftelingApiClientError,
 )
-from custom_components.efteling.const import (
+from custom_components.efteling_park.const import (
     CONF_LANGUAGE,
     DOMAIN,
     NAME,

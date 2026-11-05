@@ -12,18 +12,18 @@ from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
 )
-from custom_components.efteling.const import (
+from custom_components.efteling_park.const import (
     ATTRACTIONS,
     DOMAIN,
     PARK,
     PARK_TIME_ZONE,
     SHOWS,
 )
-from custom_components.efteling.sensor.park import PARK_SENSOR_DESCRIPTIONS
+from custom_components.efteling_park.sensor.park import PARK_SENSOR_DESCRIPTIONS
 
 if TYPE_CHECKING:
     import pytest
@@ -253,7 +253,7 @@ async def test_park_sensor_unknown_metric_is_unknown(
         SensorEntityDescription(key="unsupported", translation_key="crowd_level"),
     )
     with patch(
-        "custom_components.efteling.sensor.park.PARK_SENSOR_DESCRIPTIONS",
+        "custom_components.efteling_park.sensor.park.PARK_SENSOR_DESCRIPTIONS",
         descriptions,
     ):
         config_entry.add_to_hass(hass)
@@ -328,14 +328,14 @@ async def test_showtime_transitions_and_metadata_updates(
     park_timezone = ZoneInfo("Europe/Amsterdam")
     now = datetime(2026, 10, 23, 12, 0, tzinfo=park_timezone)
     monkeypatch.setattr(
-        "custom_components.efteling.sensor.show.dt_util.now",
+        "custom_components.efteling_park.sensor.show.dt_util.now",
         lambda _tz=None: now,
     )
     show = _entity_for_unique_id(hass, loaded_entry, "aquanura")
     future_unsubscribe = AsyncMock()
     timer_unsubscribe = MagicMock()
     with patch(
-        "custom_components.efteling.sensor.show.async_track_point_in_time",
+        "custom_components.efteling_park.sensor.show.async_track_point_in_time",
         return_value=timer_unsubscribe,
     ) as track:
         loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(

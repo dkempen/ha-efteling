@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 else:
     import voluptuous as vol
 
-from custom_components.efteling.const import (
+from custom_components.efteling_park.const import (
     ANNUAL_PASS_URL,
     APP_HEADERS,
     PARK_INFO_URL,
@@ -24,7 +24,7 @@ from custom_components.efteling.const import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from custom_components.efteling.models import (
+    from custom_components.efteling_park.models import (
         AnnualPasses,
         AttractionInfo,
         ParkInfoResponse,

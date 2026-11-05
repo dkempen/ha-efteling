@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.efteling.const import CONF_LANGUAGE
-from custom_components.efteling.coordinator import (
+from custom_components.efteling_park.const import CONF_LANGUAGE
+from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
     EftelingParkInfoUpdateCoordinator,
     EftelingPoiUpdateCoordinator,

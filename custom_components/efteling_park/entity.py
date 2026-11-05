@@ -10,7 +10,7 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
 )
 
-from custom_components.efteling.const import DOMAIN, NAME
+from custom_components.efteling_park.const import DOMAIN, NAME
 
 
 class EftelingEntity[CoordinatorT: DataUpdateCoordinator[Any]](

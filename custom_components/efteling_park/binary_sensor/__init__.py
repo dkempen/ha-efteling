@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from custom_components.efteling.data import EftelingConfigEntry
+    from custom_components.efteling_park.data import EftelingConfigEntry
 
 PARALLEL_UPDATES = 0
 

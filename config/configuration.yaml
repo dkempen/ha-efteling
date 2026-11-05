@@ -8,4 +8,4 @@ homeassistant:
 logger:
   default: info
   logs:
-    custom_components.efteling: debug
+    custom_components.efteling_park: debug

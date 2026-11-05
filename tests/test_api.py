@@ -9,7 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 
-from custom_components.efteling.api import (
+from custom_components.efteling_park.api import (
     _ANNUAL_PASSES_SCHEMA,
     _PARK_INFO_RESPONSE_SCHEMA,
     _POI_RESPONSE_SCHEMA,
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
     from typing import Any
 
-    from custom_components.efteling.models import (
+    from custom_components.efteling_park.models import (
         ParkInfoResponse,
         PoiResponse,
         WaitTimesResponse,

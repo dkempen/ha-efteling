@@ -9,11 +9,11 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from custom_components.efteling.sensor import park_snapshot
+from custom_components.efteling_park.sensor import park_snapshot
 
 if TYPE_CHECKING:
-    from custom_components.efteling.data import EftelingData
-    from custom_components.efteling.models import Event, Maintenance, OpeningHours
+    from custom_components.efteling_park.data import EftelingData
+    from custom_components.efteling_park.models import Event, Maintenance, OpeningHours
 
 
 PARK_TZ = ZoneInfo("Europe/Amsterdam")

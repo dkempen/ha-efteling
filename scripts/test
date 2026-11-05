@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 TEST_PYTHON="${PYTHON:-python3}"
-INTEGRATION_PATH="custom_components.efteling"
+INTEGRATION_PATH="custom_components.efteling_park"
 
 cd "$ROOT"
 

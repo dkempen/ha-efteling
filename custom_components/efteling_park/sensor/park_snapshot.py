@@ -9,14 +9,14 @@ from typing import TYPE_CHECKING, TypedDict, cast
 
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import (
+from custom_components.efteling_park.const import (
     AVERAGE_WAIT_TIME_EXCLUDED_ATTRACTIONS,
     PARK_TIME_ZONE,
 )
 
 if TYPE_CHECKING:
-    from custom_components.efteling.data import EftelingData
-    from custom_components.efteling.models import (
+    from custom_components.efteling_park.data import EftelingData
+    from custom_components.efteling_park.models import (
         Event,
         Maintenance,
         OpeningHours,

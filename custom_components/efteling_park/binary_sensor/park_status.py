@@ -13,12 +13,12 @@ from homeassistant.core import callback
 from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.const import PARK, PARK_TIME_ZONE
-from custom_components.efteling.coordinator import (
+from custom_components.efteling_park.const import PARK, PARK_TIME_ZONE
+from custom_components.efteling_park.coordinator import (
     EftelingParkInfoUpdateCoordinator,
 )
-from custom_components.efteling.entity import EftelingEntity
-from custom_components.efteling.sensor.park_snapshot import (
+from custom_components.efteling_park.entity import EftelingEntity
+from custom_components.efteling_park.sensor.park_snapshot import (
     build_snapshot,
     opening_datetime,
     opening_hours_records,
@@ -27,7 +27,7 @@ from custom_components.efteling.sensor.park_snapshot import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from custom_components.efteling.data import EftelingData
+    from custom_components.efteling_park.data import EftelingData
 
 PARK_STATUS_BINARY_SENSOR_DESCRIPTION = BinarySensorEntityDescription(
     key="park_status",

@@ -10,8 +10,8 @@ from zoneinfo import ZoneInfo
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling.api import EftelingApiClient
-from custom_components.efteling.sensor import park_snapshot
+from custom_components.efteling_park.api import EftelingApiClient
+from custom_components.efteling_park.sensor import park_snapshot
 
 if TYPE_CHECKING:
     import pytest
@@ -183,27 +183,27 @@ async def test_timer_callbacks_are_removed_when_entry_unloads(
             ],
         ),
         patch(
-            "custom_components.efteling.coordinator.async_track_point_in_time",
+            "custom_components.efteling_park.coordinator.async_track_point_in_time",
             return_value=timer_removers["coordinator"],
         ),
         patch(
-            "custom_components.efteling.binary_sensor.annual_passes.async_track_point_in_time",
+            "custom_components.efteling_park.binary_sensor.annual_passes.async_track_point_in_time",
             return_value=timer_removers["annual_passes"],
         ) as annual_pass_tracker,
         patch(
-            "custom_components.efteling.binary_sensor.park_status.async_track_point_in_time",
+            "custom_components.efteling_park.binary_sensor.park_status.async_track_point_in_time",
             return_value=timer_removers["park_status"],
         ) as status_tracker,
         patch(
-            "custom_components.efteling.binary_sensor.park_event.async_track_point_in_time",
+            "custom_components.efteling_park.binary_sensor.park_event.async_track_point_in_time",
             return_value=timer_removers["park_event"],
         ) as event_tracker,
         patch(
-            "custom_components.efteling.sensor.show.async_track_point_in_time",
+            "custom_components.efteling_park.sensor.show.async_track_point_in_time",
             return_value=timer_removers["show"],
         ) as show_tracker,
         patch(
-            "custom_components.efteling.sensor.park.async_track_point_in_time",
+            "custom_components.efteling_park.sensor.park.async_track_point_in_time",
             return_value=timer_removers["park_sensor"],
         ) as park_tracker,
     ):

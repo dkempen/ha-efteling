@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 LOGGER: Logger = getLogger(__package__)
 
-DOMAIN = "efteling"
+DOMAIN = "efteling_park"
 NAME = "Efteling"
 ATTRACTIONS = "attractions"
 SHOWS = "shows"

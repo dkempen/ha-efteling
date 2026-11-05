@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from homeassistant.core import callback
 
-from custom_components.efteling.const import USE_ATTRACTION_INFO_NAME
+from custom_components.efteling_park.const import USE_ATTRACTION_INFO_NAME
 
 from .attraction import EftelingAttractionSensor
 from .park import create_park_sensors
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from custom_components.efteling.data import EftelingConfigEntry
+    from custom_components.efteling_park.data import EftelingConfigEntry
 
 PARALLEL_UPDATES = 0
 
