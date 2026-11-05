@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .annual_passes import create_annual_pass_binary_sensors
 from .park_event import create_park_event_binary_sensors
 from .park_status import create_park_status_binary_sensor
 
@@ -27,6 +28,7 @@ async def async_setup_entry(
     async_add_entities(
         [
             create_park_status_binary_sensor(data),
+            *create_annual_pass_binary_sensors(data),
             *create_park_event_binary_sensors(data),
         ]
     )

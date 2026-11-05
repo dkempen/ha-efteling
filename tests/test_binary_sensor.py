@@ -154,6 +154,7 @@ async def test_timer_callbacks_are_removed_when_entry_unloads(
         name: MagicMock()
         for name in (
             "coordinator",
+            "annual_passes",
             "park_status",
             "park_event",
             "show",
@@ -186,6 +187,10 @@ async def test_timer_callbacks_are_removed_when_entry_unloads(
             return_value=timer_removers["coordinator"],
         ),
         patch(
+            "custom_components.efteling.binary_sensor.annual_passes.async_track_point_in_time",
+            return_value=timer_removers["annual_passes"],
+        ) as annual_pass_tracker,
+        patch(
             "custom_components.efteling.binary_sensor.park_status.async_track_point_in_time",
             return_value=timer_removers["park_status"],
         ) as status_tracker,
@@ -207,6 +212,7 @@ async def test_timer_callbacks_are_removed_when_entry_unloads(
         await hass.async_block_till_done()
 
         for tracker in (
+            annual_pass_tracker,
             status_tracker,
             event_tracker,
             show_tracker,

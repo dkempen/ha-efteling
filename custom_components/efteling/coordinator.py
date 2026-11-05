@@ -19,6 +19,7 @@ from custom_components.efteling.api import (
 )
 from custom_components.efteling.const import DOMAIN, LOGGER, PARK_TIME_ZONE
 from custom_components.efteling.models import (
+    AnnualPasses,
     AttractionInfo,
     ParkInfoResponse,
     Poi,
@@ -150,3 +151,16 @@ class EftelingParkInfoUpdateCoordinator(
         if self._unsub_monthly_refresh is not None:
             self._unsub_monthly_refresh()
             self._unsub_monthly_refresh = None
+
+
+class EftelingAnnualPassesCoordinator(
+    EftelingCoordinator[AnnualPasses],
+):
+    """Retrieve annual-pass schedules."""
+
+    async def _async_update_data(self) -> AnnualPasses:
+        """Fetch schedules for all pass tiers and dates."""
+        try:
+            return await self.client.async_get_annual_passes()
+        except EftelingApiClientError as exception:
+            raise UpdateFailed(exception) from exception

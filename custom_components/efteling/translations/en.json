@@ -53,6 +53,27 @@
           "business_events_today": { "name": "Business events today" },
           "business_events": { "name": "Business events" }
         }
+      },
+      "annual_pass_classic": {
+        "name": "Annual pass Classic",
+        "state": { "on": "Valid", "off": "Not valid" },
+        "state_attributes": {
+          "annual_passes": { "name": "Annual passes" }
+        }
+      },
+      "annual_pass_plus": {
+        "name": "Annual pass Plus",
+        "state": { "on": "Valid", "off": "Not valid" },
+        "state_attributes": {
+          "annual_passes": { "name": "Annual passes" }
+        }
+      },
+      "annual_pass_premium": {
+        "name": "Annual pass Premium",
+        "state": { "on": "Valid", "off": "Not valid" },
+        "state_attributes": {
+          "annual_passes": { "name": "Annual passes" }
+        }
       }
     },
     "sensor": {

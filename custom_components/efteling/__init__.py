@@ -15,6 +15,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from custom_components.efteling.const import CONF_LANGUAGE
 from custom_components.efteling.coordinator import (
+    EftelingAnnualPassesCoordinator,
     EftelingParkInfoUpdateCoordinator,
     EftelingPoiUpdateCoordinator,
     EftelingWaitTimesUpdateCoordinator,
@@ -65,17 +66,26 @@ async def async_setup_entry(
         name="park_info",
         update_interval=timedelta(days=1),
     )
+    annual_passes_coordinator = EftelingAnnualPassesCoordinator(
+        hass=hass,
+        client=client,
+        config_entry=entry,
+        name="annual_passes",
+        update_interval=timedelta(days=1),
+    )
 
     entry.runtime_data = EftelingData(
         client=client,
         poi_coordinator=poi_coordinator,
         wait_times_coordinator=wait_times_coordinator,
         park_info_coordinator=park_info_coordinator,
+        annual_passes_coordinator=annual_passes_coordinator,
     )
 
     await poi_coordinator.async_config_entry_first_refresh()
     await wait_times_coordinator.async_config_entry_first_refresh()
     await park_info_coordinator.async_config_entry_first_refresh()
+    await annual_passes_coordinator.async_config_entry_first_refresh()
 
     entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
 

@@ -16,6 +16,7 @@ from custom_components.efteling.api import (
 )
 from custom_components.efteling.const import DOMAIN
 from custom_components.efteling.coordinator import (
+    EftelingAnnualPassesCoordinator,
     EftelingCoordinator,
     EftelingParkInfoUpdateCoordinator,
     EftelingPoiUpdateCoordinator,
@@ -88,6 +89,10 @@ async def test_coordinator_indexes_api_records(
         (EftelingPoiUpdateCoordinator, "async_get_poi_list"),
         (EftelingWaitTimesUpdateCoordinator, "async_get_wait_times"),
         (EftelingParkInfoUpdateCoordinator, "async_get_park_info"),
+        (
+            EftelingAnnualPassesCoordinator,
+            "async_get_annual_passes",
+        ),
     ],
 )
 async def test_coordinator_translates_api_errors_to_update_failed(

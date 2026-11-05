@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
@@ -87,6 +87,58 @@ async def test_sensor_setup_preserves_entity_and_device_identity(
     assert (DOMAIN, ATTRACTIONS) in identifiers
     assert (DOMAIN, SHOWS) in identifiers
     assert (DOMAIN, PARK) in identifiers
+
+
+async def test_annual_pass_sensors_expose_all_dates(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Expose each pass tier's current permission and every supplied date."""
+    today = dt_util.now(PARK_TIME_ZONE).date().isoformat()
+    coordinator = loaded_entry.runtime_data.annual_passes_coordinator
+    schedule = {
+        today: {"Classic": False, "Plus": True, "Premium": True},
+        (dt_util.now(PARK_TIME_ZONE).date() + timedelta(days=1)).isoformat(): {
+            "Classic": True,
+            "Plus": True,
+            "Premium": False,
+        },
+        (dt_util.now(PARK_TIME_ZONE).date() + timedelta(days=30)).isoformat(): {
+            "Classic": True,
+            "Plus": True,
+            "Premium": True,
+        },
+        (dt_util.now(PARK_TIME_ZONE).date() + timedelta(days=365)).isoformat(): {
+            "Classic": False,
+            "Plus": True,
+            "Premium": False,
+        },
+    }
+    coordinator.async_set_updated_data(schedule)
+    await hass.async_block_till_done()
+
+    for tier, pass_name, expected in (
+        ("classic", "Classic", False),
+        ("plus", "Plus", True),
+        ("premium", "Premium", True),
+    ):
+        entity = _entity_for_unique_id(hass, loaded_entry, f"park_{tier}")
+        state = _state(hass, entity.entity_id)
+        assert state.state == ("on" if expected else "off")
+        assert state.attributes["annual_passes"] == {
+            date: availability[pass_name] for date, availability in schedule.items()
+        }
+
+
+async def test_annual_pass_sensor_is_unavailable_without_today_data(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Mark today's pass availability unavailable when Efteling omits its date."""
+    entity = _entity_for_unique_id(hass, loaded_entry, "park_classic")
+    loaded_entry.runtime_data.annual_passes_coordinator.async_set_updated_data({})
+    await hass.async_block_till_done()
+    assert _state(hass, entity.entity_id).state == "unavailable"
 
 
 async def test_attraction_state_metadata_and_wait_failure_recovery(
@@ -422,6 +474,12 @@ async def test_dynamic_sensor_creation_uses_names_and_ignores_unknown_pois(
             new_callable=AsyncMock,
             return_value={"OpeningHours": [], "Maintenance": [], "Events": []},
         ),
+        patch.object(
+            EftelingApiClient,
+            "async_get_annual_passes",
+            new_callable=AsyncMock,
+            return_value={},
+        ),
     ):
         config_entry.add_to_hass(hass)
         assert await hass.config_entries.async_setup(config_entry.entry_id)
@@ -471,6 +529,12 @@ async def test_sensor_setup_without_supported_dynamic_entities(
             "async_get_park_info",
             new_callable=AsyncMock,
             return_value={"OpeningHours": [], "Maintenance": [], "Events": []},
+        ),
+        patch.object(
+            EftelingApiClient,
+            "async_get_annual_passes",
+            new_callable=AsyncMock,
+            return_value={},
         ),
     ):
         config_entry.add_to_hass(hass)

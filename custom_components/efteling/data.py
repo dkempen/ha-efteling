@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
     from .api import EftelingApiClient
     from .coordinator import (
+        EftelingAnnualPassesCoordinator,
         EftelingParkInfoUpdateCoordinator,
         EftelingPoiUpdateCoordinator,
         EftelingWaitTimesUpdateCoordinator,
@@ -27,3 +28,4 @@ class EftelingData:
     poi_coordinator: EftelingPoiUpdateCoordinator
     wait_times_coordinator: EftelingWaitTimesUpdateCoordinator
     park_info_coordinator: EftelingParkInfoUpdateCoordinator
+    annual_passes_coordinator: EftelingAnnualPassesCoordinator

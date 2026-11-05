@@ -2,6 +2,8 @@
 
 from typing import NotRequired, TypedDict
 
+type AnnualPasses = dict[str, dict[str, bool]]
+
 
 class ShowTimeInfo(TypedDict):
     """Single showtime entry."""

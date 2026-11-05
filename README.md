@@ -7,7 +7,7 @@
 [![License][license-badge]][license]
 [![GitHub stars][stars-badge]][stars]
 
-Bring Efteling's live attraction, show, and park information into Home Assistant with this integration. Build dashboards, receive notifications, and create automations around wait times, opening hours, shows, special events, and more to make the most of your visit to Efteling!
+Bring Efteling's live attraction, show, and park information into Home Assistant with this integration. Build dashboards, receive notifications, and create automations around wait times, opening hours, shows, special events, annual pass validity, and more to make the most of your visit to Efteling!
 
 ## Features
 
@@ -16,6 +16,7 @@ Bring Efteling's live attraction, show, and park information into Home Assistant
 - **Park information** - Park status, opening and closing times, and opening-hours schedules
 - **Crowd levels** - Live crowd levels based on average attraction wait times, and crowd and occupancy forecasts
 - **Events and maintenance** - Winter Efteling, business events, and planned attraction maintenance
+- **Annual passes** - Annual passes validity information for Classic, Plus, and Premium
 - **Devices and entities** - Dedicated devices, custom icons, and data for dashboards and automations
 - **Localization** - Dutch or English information, with translated entity names and states
 - **Easy setup** - One-click installation and configuration through the Home Assistant UI
@@ -84,8 +85,11 @@ The Efteling park device includes the following entities:
 | Occupancy forecast            | Efteling's forecast park occupancy percentage for today.           |
 | Business event                | Whether a business event is scheduled for today.                   |
 | Winter Efteling               | Whether Winter Efteling is active today.                           |
+| Annual pass Classic           | Whether a Classic annual pass is valid for entry today.            |
+| Annual pass Plus              | Whether a Plus annual pass is valid for entry today.               |
+| Annual pass Premium           | Whether a Premium annual pass is valid for entry today.            |
 
-Most entities expose additional attributes, including operating schedules, daily forecasts, event schedules, and upcoming maintenance information.
+Most entities expose additional attributes, including operating schedules, forecasts, event schedules, validity schedules, and upcoming maintenance information.
 
 **Crowd forecast** and **crowd level** are different measurements. The forecast comes from Efteling's park information, while the integration calculates the crowd level from current attraction wait times. The average only includes attractions reported as open with a valid wait time.
 
@@ -151,11 +155,15 @@ The show status is one of `Currently running`, `Upcoming`, or `No more shows tod
 
 ## Update intervals
 
+The integration retrieves all data from Efteling's public cloud endpoints using polling.
+It refreshes feeds at the intervals below.
+
 | Data                                     | Refresh interval    | Examples                                                                      |
 | ---------------------------------------- | ------------------- | ----------------------------------------------------------------------------- |
 | Attraction wait times and show schedules | Every **5 minutes** | Wait times, show start and end times, and show status                         |
 | Attraction and show metadata             | Every **24 hours**  | Names, descriptions, images, locations, and visitor information               |
 | Park schedule information                | Every **24 hours**  | Opening hours, crowd and occupancy forecasts, events, and planned maintenance |
+| Annual passes                            | Every **24 hours**  | Classic, Plus, and Premium validity by date                                   |
 
 Time-sensitive entity states are also updated at relevant times, such as park opening and closing, local midnight, and show transitions, rather than relying solely on the next scheduled data refresh.
 

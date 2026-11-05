@@ -10,6 +10,7 @@ import aiohttp
 import pytest
 
 from custom_components.efteling.api import (
+    _ANNUAL_PASSES_SCHEMA,
     _PARK_INFO_RESPONSE_SCHEMA,
     _POI_RESPONSE_SCHEMA,
     _WAIT_TIME_RESPONSE_SCHEMA,
@@ -129,6 +130,33 @@ def test_park_info_schema_accepts_nested_fields_and_nulls() -> None:
     assert parsed["Events"][0]["New"] == "field"
 
 
+def test_annual_passes_schema_preserves_date_and_tier_schedule() -> None:
+    """Validate the date-keyed annual-pass schedule."""
+    response = {
+        "2026-10-30": {"Classic": False, "Plus": True, "Premium": True},
+        "2026-10-31": {"Classic": True, "Plus": True, "Premium": False},
+    }
+    parsed = _validate_response(
+        response,
+        _ANNUAL_PASSES_SCHEMA,
+        "annual passes",
+    )
+    assert parsed == response
+
+
+def test_annual_passes_schema_rejects_non_boolean_values() -> None:
+    """Reject values that cannot reliably represent pass validity."""
+    with _raises(
+        EftelingApiClientError,
+        "Invalid annual passes response",
+    ):
+        _validate_response(
+            {"2026-10-30": {"Classic": "false"}},
+            _ANNUAL_PASSES_SCHEMA,
+            "annual passes",
+        )
+
+
 @pytest.mark.parametrize(
     ("response", "schema", "description"),
     [
@@ -161,6 +189,7 @@ def test_api_client_falls_back_to_dutch_for_unknown_language() -> None:
 @pytest.mark.asyncio
 async def test_client_parses_real_api_responses(
     api_response_payloads: tuple[PoiResponse, WaitTimesResponse, ParkInfoResponse],
+    annual_pass_response_payload: dict[str, dict[str, bool]],
 ) -> None:
     """Parse the supplied response samples through the public client methods."""
     client = EftelingApiClient(MagicMock())
@@ -168,11 +197,12 @@ async def test_client_parses_real_api_responses(
         client,
         "_async_get_json",
         new_callable=AsyncMock,
-        side_effect=api_response_payloads,
+        side_effect=[*api_response_payloads, annual_pass_response_payload],
     ):
         poi_records = await client.async_get_poi_list()
         wait_records = await client.async_get_wait_times()
         park_info = await client.async_get_park_info(2026, 11)
+        annual_pass_schedule = await client.async_get_annual_passes()
 
     poi_by_id = {poi["id"]: poi for poi in poi_records}
     assert poi_by_id["python"].get("alternateid") == "pythonsinglerider"
@@ -185,6 +215,7 @@ async def test_client_parses_real_api_responses(
     assert show_times[0].get("Edition") == "Aquanura, met een zachte G"
 
     assert park_info["OpeningHours"][0]["Date"] == "2026-11-01"
+    assert annual_pass_schedule == annual_pass_response_payload
     intervals = park_info["OpeningHours"][0].get("OpeningHours")
     assert intervals is not None
     assert intervals[0] == {
@@ -244,6 +275,15 @@ async def test_get_park_info_normalizes_missing_lists(
     client = _client_for_response(payload=response)
     result = await client.async_get_park_info(2026, 10)
     assert result == {"OpeningHours": [], "Maintenance": [], "Events": []}
+
+
+@pytest.mark.asyncio
+async def test_get_annual_passes_returns_validated_schedule() -> None:
+    """Fetch and validate the annual-pass schedule."""
+    schedule = {"2026-10-30": {"Classic": False, "Plus": True, "Premium": True}}
+    client = _client_for_response(payload=schedule)
+
+    assert await client.async_get_annual_passes() == schedule
 
 
 def _client_for_response(

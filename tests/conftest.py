@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, patch
@@ -16,14 +17,16 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
 
     from custom_components.efteling.models import (
+        AnnualPasses,
         ParkInfoResponse,
         PoiResponse,
         WaitTimesResponse,
     )
+from homeassistant.util import dt as dt_util
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.efteling.api import EftelingApiClient
-from custom_components.efteling.const import DOMAIN
+from custom_components.efteling.const import DOMAIN, PARK_TIME_ZONE
 
 
 @pytest.fixture(autouse=True)
@@ -54,13 +57,26 @@ def api_response_payloads() -> tuple[PoiResponse, WaitTimesResponse, ParkInfoRes
 
 
 @pytest.fixture
+def annual_pass_response_payload() -> AnnualPasses:
+    """Load a representative annual-pass response."""
+    responses_dir = Path(__file__).parent / "responses"
+    return json.loads((responses_dir / "annual_passes.json").read_text())
+
+
+@pytest.fixture
 def api_responses(
     api_response_payloads: tuple[PoiResponse, WaitTimesResponse, ParkInfoResponse],
+    annual_pass_response_payload: AnnualPasses,
 ) -> Generator[None]:
     """Return parsed API records for integration setup tests."""
     poi_response, wait_times_response, park_info = api_response_payloads
     poi = [record["fields"] for record in poi_response["hits"]["hit"]]
     wait_times = wait_times_response["AttractionInfo"]
+    today = dt_util.now(PARK_TIME_ZONE).date()
+    annual_passes = {
+        (today + timedelta(days=index)).isoformat(): values
+        for index, values in enumerate(annual_pass_response_payload.values())
+    }
     with (
         patch.object(
             EftelingApiClient,
@@ -79,6 +95,12 @@ def api_responses(
             "async_get_park_info",
             new_callable=AsyncMock,
             return_value=park_info,
+        ),
+        patch.object(
+            EftelingApiClient,
+            "async_get_annual_passes",
+            new_callable=AsyncMock,
+            return_value=annual_passes,
         ),
     ):
         yield

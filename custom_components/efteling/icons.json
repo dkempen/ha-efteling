@@ -45,6 +45,27 @@
           "on": "mdi:briefcase",
           "off": "mdi:calendar-blank"
         }
+      },
+      "annual_pass_classic": {
+        "default": "mdi:ticket",
+        "state": {
+          "on": "mdi:ticket-confirmation",
+          "off": "mdi:close-circle"
+        }
+      },
+      "annual_pass_plus": {
+        "default": "mdi:ticket",
+        "state": {
+          "on": "mdi:ticket-confirmation",
+          "off": "mdi:close-circle"
+        }
+      },
+      "annual_pass_premium": {
+        "default": "mdi:ticket",
+        "state": {
+          "on": "mdi:ticket-confirmation",
+          "off": "mdi:close-circle"
+        }
       }
     }
   }

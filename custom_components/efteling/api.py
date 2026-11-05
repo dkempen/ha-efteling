@@ -14,6 +14,7 @@ else:
     import voluptuous as vol
 
 from custom_components.efteling.const import (
+    ANNUAL_PASS_URL,
     APP_HEADERS,
     PARK_INFO_URL,
     POINTS_OF_INTEREST_URL,
@@ -23,7 +24,12 @@ from custom_components.efteling.const import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from custom_components.efteling.models import AttractionInfo, ParkInfoResponse, Poi
+    from custom_components.efteling.models import (
+        AnnualPasses,
+        AttractionInfo,
+        ParkInfoResponse,
+        Poi,
+    )
 
 
 _SHOW_TIME_SCHEMA = vol.Schema(
@@ -125,6 +131,11 @@ _PARK_INFO_RESPONSE_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+_ANNUAL_PASSES_SCHEMA = vol.Schema(
+    {str: {str: bool}},
+    extra=vol.ALLOW_EXTRA,
+)
+
 
 class EftelingApiClientError(Exception):
     """Exception to indicate a general API error."""
@@ -210,6 +221,21 @@ class EftelingApiClient:
                 parsed[key] = []
 
         return cast("ParkInfoResponse", parsed)
+
+    async def async_get_annual_passes(self) -> AnnualPasses:
+        """Return the annual-pass schedule for all dates."""
+        response = await self._async_get_json(
+            ANNUAL_PASS_URL,
+            {**self.headers, "host": "www.efteling.com"},
+        )
+        return cast(
+            "AnnualPasses",
+            _validate_response(
+                response,
+                _ANNUAL_PASSES_SCHEMA,
+                "annual passes",
+            ),
+        )
 
     async def _async_get_json(
         self, url: str, headers: dict[str, str]

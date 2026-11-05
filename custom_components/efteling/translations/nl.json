@@ -59,6 +59,27 @@
           "business_events_today": { "name": "Bedrijfsevenementen vandaag" },
           "business_events": { "name": "Bedrijfsevenementen" }
         }
+      },
+      "annual_pass_classic": {
+        "name": "Jaarabonnement Classic",
+        "state": { "on": "Geldig", "off": "Niet geldig" },
+        "state_attributes": {
+          "annual_passes": { "name": "Jaarabonnementen" }
+        }
+      },
+      "annual_pass_plus": {
+        "name": "Jaarabonnement Plus",
+        "state": { "on": "Geldig", "off": "Niet geldig" },
+        "state_attributes": {
+          "annual_passes": { "name": "Jaarabonnementen" }
+        }
+      },
+      "annual_pass_premium": {
+        "name": "Jaarabonnement Premium",
+        "state": { "on": "Geldig", "off": "Niet geldig" },
+        "state_attributes": {
+          "annual_passes": { "name": "Jaarabonnementen" }
+        }
       }
     },
     "sensor": {
