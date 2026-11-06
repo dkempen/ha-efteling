@@ -257,7 +257,7 @@ Efteling and all associated trademarks, names, images, and services remain the p
 [efteling]: https://www.efteling.com
 [home-assistant]: https://www.home-assistant.io
 [home-assistant-badge]: https://img.shields.io/badge/Home_Assistant-Integration-18bcf2.svg?logo=homeassistant&logoColor=white
-[marketplace-badge]: https://img.shields.io/badge/Marketplace-Default-18bcf2.svg?logo=homeassistant&logoColor=white
+[marketplace-badge]: https://img.shields.io/badge/Marketplace-Default-18bcf2.svg?logo=HomeAssistantCommunityStore&logoColor=white
 [version]: https://github.com/dkempen/ha-efteling/releases
 [version-badge]: https://img.shields.io/github/v/release/dkempen/ha-efteling?label=Version
 [stars]: https://github.com/dkempen/ha-efteling
@@ -266,7 +266,7 @@ Efteling and all associated trademarks, names, images, and services remain the p
 [validation-badge]: https://img.shields.io/github/actions/workflow/status/dkempen/ha-efteling/hassfest.yaml?logo=github&logoColor=fff&label=Validation
 [license]: https://github.com/dkempen/ha-efteling?tab=MIT-1-ov-file
 [license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling?label=License
-[install]: https://my.home-assistant.io/redirect/hacs_repository/?owner=dkempen&repository=ha-efteling
-[install-badge]: https://my.home-assistant.io/badges/hacs_repository.svg
+[install]: https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkempen&repository=ha-efteling
+[install-badge]: https://my.home-assistant.io/badges/marketplace_repository.svg
 [configure]: https://my.home-assistant.io/redirect/config_flow_start/?domain=efteling_park
 [configure-badge]: https://my.home-assistant.io/badges/config_flow_start.svg
