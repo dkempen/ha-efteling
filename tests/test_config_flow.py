@@ -21,7 +21,10 @@ from custom_components.efteling_park.api import (
     EftelingApiClientError,
 )
 from custom_components.efteling_park.config_flow import EftelingFlowHandler
-from custom_components.efteling_park.const import DOMAIN
+from custom_components.efteling_park.const import (
+    CONF_CREATE_ATTRACTION_STATUS_SENSORS,
+    DOMAIN,
+)
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -105,7 +108,7 @@ async def test_user_flow_reports_validation_errors(
     assert result.get("type") == FlowResultType.CREATE_ENTRY
     assert "result" in result
     assert result["result"].unique_id == DOMAIN
-    assert result.get("data") == {CONF_LANGUAGE: "en"}
+    assert result["result"].options[CONF_LANGUAGE] == "en"
     assert poi_mock.await_count >= 2
 
 
@@ -164,7 +167,7 @@ async def test_user_flow_creates_entry_after_all_checks_pass(
     assert result.get("type") == FlowResultType.CREATE_ENTRY
     assert "result" in result
     assert result["result"].unique_id == DOMAIN
-    assert result.get("data") == {CONF_LANGUAGE: "en"}
+    assert result["result"].options[CONF_LANGUAGE] == "en"
 
 
 async def test_user_flow_prevents_duplicate_entry(
@@ -188,6 +191,30 @@ async def test_user_flow_prevents_duplicate_entry(
     assert result.get("type") == FlowResultType.CREATE_ENTRY
     assert duplicate.get("type") == FlowResultType.ABORT
     assert duplicate.get("reason") == "single_instance_allowed"
+
+
+async def test_options_flow_saves_attraction_status_sensor_option(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Save the opt-in setting for separate attraction status sensors."""
+    config_entry.add_to_hass(hass)
+    result = await hass.config_entries.options.async_init(config_entry.entry_id)
+    assert result.get("type") == FlowResultType.FORM
+    assert result.get("step_id") == "init"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"],
+        user_input={
+            CONF_CREATE_ATTRACTION_STATUS_SENSORS: True,
+            CONF_LANGUAGE: "en",
+        },
+    )
+    assert result.get("type") == FlowResultType.CREATE_ENTRY
+    assert result.get("data") == {
+        CONF_CREATE_ATTRACTION_STATUS_SENSORS: True,
+        CONF_LANGUAGE: "en",
+    }
 
 
 @pytest.mark.usefixtures("unload_reconfigured_entry")
@@ -215,7 +242,9 @@ async def test_reconfigure_flow_prefills_and_updates_language(
     )
     assert result.get("type") == FlowResultType.ABORT
     assert result.get("reason") == "reconfigure_successful"
-    assert entry.data[CONF_LANGUAGE] == "en"
+    assert entry.data[CONF_LANGUAGE] == "nl"
+    assert entry.options[CONF_LANGUAGE] == "en"
+    assert entry.options[CONF_CREATE_ATTRACTION_STATUS_SENSORS] is False
 
 
 @pytest.mark.parametrize(
@@ -286,5 +315,7 @@ async def test_reconfigure_flow_reports_validation_errors(
         )
     assert result.get("type") == FlowResultType.ABORT
     assert result.get("reason") == "reconfigure_successful"
-    assert entry.data[CONF_LANGUAGE] == "en"
+    assert entry.data[CONF_LANGUAGE] == "nl"
+    assert entry.options[CONF_LANGUAGE] == "en"
+    assert entry.options[CONF_CREATE_ATTRACTION_STATUS_SENSORS] is False
     assert endpoint_mock.await_count == 3

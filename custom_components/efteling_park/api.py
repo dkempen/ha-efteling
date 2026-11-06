@@ -200,7 +200,7 @@ class EftelingApiClient:
         parsed = _validate_response(
             response,
             _WAIT_TIME_RESPONSE_SCHEMA,
-            "wait-times",
+            "wait times",
         )
         return cast("list[AttractionInfo]", parsed["AttractionInfo"])
 

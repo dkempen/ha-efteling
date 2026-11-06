@@ -1,4 +1,4 @@
-"""Attraction wait-time sensor."""
+"""Attraction wait time sensor."""
 
 from __future__ import annotations
 
@@ -24,13 +24,20 @@ from custom_components.efteling_park.models import ATTRACTION_STATUS_MAP, Poi
 
 from .utils import parse_poi_metadata
 
-ENTITY_DESCRIPTION_WAIT = SensorEntityDescription(
-    key="wait_time",
-    translation_key="wait_time",
+ENTITY_DESCRIPTION_ATTRACTION_WAIT_TIME = SensorEntityDescription(
+    key="attraction_wait_time",
+    translation_key="attraction_wait_time",
     device_class=SensorDeviceClass.DURATION,
     state_class=SensorStateClass.MEASUREMENT,
     native_unit_of_measurement=UnitOfTime.MINUTES,
     suggested_display_precision=0,
+)
+
+ENTITY_DESCRIPTION_STATUS = SensorEntityDescription(
+    key="attraction_status",
+    translation_key="attraction_status",
+    device_class=SensorDeviceClass.ENUM,
+    options=sorted(set(ATTRACTION_STATUS_MAP.values()) | {"unknown"}),
 )
 
 
@@ -53,7 +60,7 @@ class EftelingAttractionSensor(
             device_key=ATTRACTIONS,
             device_translation_key="efteling_attractions",
         )
-        self.entity_description = ENTITY_DESCRIPTION_WAIT
+        self.entity_description = ENTITY_DESCRIPTION_ATTRACTION_WAIT_TIME
         self._attraction_id = attraction_id
         self._attr_unique_id = attraction_id
         self._attr_name = attraction_name
@@ -64,6 +71,7 @@ class EftelingAttractionSensor(
         """Refresh cached metadata when the POI coordinator updates."""
         if poi is self._poi:
             return
+
         self._poi = poi
         self._metadata = parse_poi_metadata(poi)
         self.async_write_ha_state()
@@ -72,18 +80,23 @@ class EftelingAttractionSensor(
     def native_value(self) -> int | None:
         """Return wait time if attraction is open."""
         attraction = self.coordinator.data.get(self._attraction_id)
+
         if attraction is None or attraction.get("State") != "open":
             return None
+
         return attraction.get("WaitingTime")
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attraction metadata and current status."""
         attraction = self.coordinator.data.get(self._attraction_id)
+
         if attraction is None:
             return None
+
         status = attraction["State"]
         metadata = self._metadata
+
         return {
             "empire": metadata.empire,
             "status": ATTRACTION_STATUS_MAP.get(status, status),
@@ -98,9 +111,60 @@ class EftelingAttractionSensor(
             "stimuli": metadata.stimuli,
             "targetgroups": metadata.targetgroups,
             "type": metadata.type,
+            "sensor_type": "attraction_wait_time",
         }
 
     @property
     def icon(self) -> str | None:
         """Return an attraction-specific icon when configured."""
         return CUSTOM_ATTRACTION_ICONS.get(self._attraction_id)
+
+
+class EftelingAttractionStatusSensor(EftelingAttractionSensor):
+    """Sensor for a single attraction's operating status."""
+
+    def __init__(
+        self,
+        coordinator: EftelingWaitTimesUpdateCoordinator,
+        attraction_id: str,
+        attraction_name: str,
+        poi: Poi,
+    ) -> None:
+        """Initialize the status sensor with the attraction's shared metadata."""
+        super().__init__(coordinator, attraction_id, attraction_name, poi)
+
+        # Use the translated entity name instead of the inherited attraction name.
+        del self._attr_name
+        self._attr_translation_placeholders = {
+            "attraction_name": attraction_name,
+        }
+
+        self.entity_description = ENTITY_DESCRIPTION_STATUS
+        self._attr_unique_id = f"{attraction_id}_status"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return attraction metadata and its current wait time."""
+        attributes = super().extra_state_attributes
+
+        if attributes is None:
+            return None
+
+        attributes.pop("status")
+        attributes["wait_time"] = self.coordinator.data[self._attraction_id].get(
+            "WaitingTime"
+        )
+        return {
+            **attributes,
+            "sensor_type": "attraction_status",
+        }
+
+    @property
+    def native_value(self) -> str | None:
+        """Return the normalized operating status."""
+        attraction = self.coordinator.data.get(self._attraction_id)
+
+        if attraction is None:
+            return None
+
+        return ATTRACTION_STATUS_MAP.get(attraction["State"], "unknown")

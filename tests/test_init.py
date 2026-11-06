@@ -79,7 +79,8 @@ async def test_reconfigure_reloads_loaded_entry_with_new_language(
 
     assert result.get("type") is FlowResultType.ABORT
     assert result.get("reason") == "reconfigure_successful"
-    assert loaded_entry.data[CONF_LANGUAGE] == "en"
+    assert loaded_entry.data[CONF_LANGUAGE] == "nl"
+    assert loaded_entry.options[CONF_LANGUAGE] == "en"
     assert loaded_entry.state is ConfigEntryState.LOADED
     assert validation_client.call_count == 1
     assert validation_client.call_args.kwargs["language"] == "en"

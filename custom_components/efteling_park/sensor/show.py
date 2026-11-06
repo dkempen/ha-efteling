@@ -43,9 +43,9 @@ class ParsedShowTime:
     edition: str | None
 
 
-ENTITY_DESCRIPTION_SHOW = SensorEntityDescription(
-    key="start_time",
-    translation_key="start_time",
+ENTITY_DESCRIPTION_SHOW_START_TIME = SensorEntityDescription(
+    key="show_start_time",
+    translation_key="show_start_time",
     device_class=SensorDeviceClass.TIMESTAMP,
 )
 
@@ -69,7 +69,7 @@ class EftelingShowSensor(
             device_key=SHOWS,
             device_translation_key="efteling_shows",
         )
-        self.entity_description = ENTITY_DESCRIPTION_SHOW
+        self.entity_description = ENTITY_DESCRIPTION_SHOW_START_TIME
         self._show_id = show_id
         self._attr_unique_id = show_id
         self._attr_name = show_name
@@ -229,4 +229,5 @@ class EftelingShowSensor(
             "image_detail": metadata.image_detail,
             "properties": metadata.properties,
             "type": metadata.type,
+            "sensor_type": "show_start_time",
         }

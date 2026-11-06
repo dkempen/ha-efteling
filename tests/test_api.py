@@ -89,7 +89,7 @@ def test_wait_time_schema_accepts_nested_fields_and_nulls() -> None:
             }
         ]
     }
-    parsed = _validate_response(response, _WAIT_TIME_RESPONSE_SCHEMA, "wait-times")
+    parsed = _validate_response(response, _WAIT_TIME_RESPONSE_SCHEMA, "wait times")
     record = parsed["AttractionInfo"][0]
     assert record["new_record_field"] == "value"
     assert record["ShowTimes"][0]["new_show_field"] is True
@@ -161,7 +161,7 @@ def test_annual_passes_schema_rejects_non_boolean_values() -> None:
     ("response", "schema", "description"),
     [
         ({}, _POI_RESPONSE_SCHEMA, "POI"),
-        ({"AttractionInfo": [{"Id": "one"}]}, _WAIT_TIME_RESPONSE_SCHEMA, "wait-times"),
+        ({"AttractionInfo": [{"Id": "one"}]}, _WAIT_TIME_RESPONSE_SCHEMA, "wait times"),
         (
             {"Events": [{"DateFrom": "2026-10-23"}]},
             _PARK_INFO_RESPONSE_SCHEMA,

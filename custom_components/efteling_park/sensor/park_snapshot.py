@@ -194,7 +194,7 @@ def opening_datetime(day: OpeningHours, value: str | None) -> datetime | None:
 
 
 def valid_wait(value: int | None) -> int | None:
-    """Return a valid nonnegative wait-time value."""
+    """Return a valid nonnegative wait time value."""
     if value is None:
         return None
     return value if value >= 0 else None

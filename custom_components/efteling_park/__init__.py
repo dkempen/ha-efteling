@@ -13,7 +13,10 @@ from typing import TYPE_CHECKING
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from custom_components.efteling_park.const import CONF_LANGUAGE
+from custom_components.efteling_park.const import (
+    CONF_LANGUAGE,
+    DEFAULT_LANGUAGE,
+)
 from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
     EftelingParkInfoUpdateCoordinator,
@@ -35,7 +38,6 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-# https://developers.home-assistant.io/docs/config_entries_index/#setting-up-an-entry
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: EftelingConfigEntry,
@@ -43,8 +45,12 @@ async def async_setup_entry(
     """Set up this integration using UI."""
     client = EftelingApiClient(
         session=async_get_clientsession(hass),
-        language=entry.data.get(CONF_LANGUAGE, "nl"),
+        language=entry.options.get(
+            CONF_LANGUAGE,
+            entry.data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE),
+        ),
     )
+
     poi_coordinator = EftelingPoiUpdateCoordinator(
         hass=hass,
         client=client,

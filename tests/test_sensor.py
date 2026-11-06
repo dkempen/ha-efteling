@@ -18,6 +18,7 @@ from custom_components.efteling_park.api import (
 )
 from custom_components.efteling_park.const import (
     ATTRACTIONS,
+    CONF_CREATE_ATTRACTION_STATUS_SENSORS,
     DOMAIN,
     PARK,
     PARK_TIME_ZONE,
@@ -76,6 +77,13 @@ async def test_sensor_setup_preserves_entity_and_device_identity(
         )
         == 2
     )
+    assert attraction.entity_id == "sensor.efteling_attractions_python"
+    assert show.entity_id == "sensor.efteling_shows_aquanura"
+    assert not any(
+        entity.config_entry_id == loaded_entry.entry_id
+        and entity.unique_id == "python_status"
+        for entity in er.async_get(hass).entities.values()
+    )
 
     devices = dr.async_entries_for_config_entry(
         dr.async_get(hass),
@@ -87,6 +95,99 @@ async def test_sensor_setup_preserves_entity_and_device_identity(
     assert (DOMAIN, ATTRACTIONS) in identifiers
     assert (DOMAIN, SHOWS) in identifiers
     assert (DOMAIN, PARK) in identifiers
+
+
+async def test_attraction_status_sensor_is_created_when_enabled(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    api_responses: None,
+) -> None:
+    """Create a filterable status sensor with the attraction's metadata."""
+    del api_responses
+    config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={CONF_CREATE_ATTRACTION_STATUS_SENSORS: True},
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    wait_entity = _entity_for_unique_id(hass, config_entry, "python")
+    status_entity = _entity_for_unique_id(
+        hass,
+        config_entry,
+        "python_status",
+    )
+    wait_state = _state(hass, wait_entity.entity_id)
+    status_state = _state(hass, status_entity.entity_id)
+    assert status_state.state == "open"
+    assert status_state.attributes["sensor_type"] == "attraction_status"
+    assert status_state.attributes["wait_time"] == 5
+    assert "status" not in status_state.attributes
+    assert wait_state.attributes["status"] == "open"
+    assert wait_state.attributes["sensor_type"] == "attraction_wait_time"
+    assert (
+        status_state.attributes["description"] == wait_state.attributes["description"]
+    )
+    assert status_state.attributes["latitude"] == wait_state.attributes["latitude"]
+    attraction_device = dr.async_get(hass).async_get_device_by_identifier(
+        (DOMAIN, ATTRACTIONS),
+        config_entry.entry_id,
+    )
+    assert attraction_device is not None
+    assert status_entity.device_id == attraction_device.id
+
+
+async def test_attraction_status_sensor_is_removed_when_disabled(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    api_responses: None,
+) -> None:
+    """Remove registered status sensors after the option is disabled."""
+    del api_responses
+    config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={CONF_CREATE_ATTRACTION_STATUS_SENSORS: True},
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    _entity_for_unique_id(hass, config_entry, "python_status")
+
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
+    hass.config_entries.async_update_entry(config_entry, options={})
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    assert not any(
+        entity.config_entry_id == config_entry.entry_id
+        and entity.unique_id == "python_status"
+        for entity in er.async_get(hass).entities.values()
+    )
+
+
+async def test_attraction_status_sensor_handles_missing_wait_data(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    api_responses: None,
+) -> None:
+    """Expose an unknown status when a successful update omits the attraction."""
+    del api_responses
+    config_entry.add_to_hass(hass)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={CONF_CREATE_ATTRACTION_STATUS_SENSORS: True},
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    status_entity = _entity_for_unique_id(hass, config_entry, "python_status")
+    config_entry.runtime_data.wait_times_coordinator.async_set_updated_data({})
+    await hass.async_block_till_done()
+
+    status_state = _state(hass, status_entity.entity_id)
+    assert status_state.state == "unknown"
+    assert "wait_time" not in status_state.attributes
 
 
 async def test_annual_pass_sensors_expose_all_dates(
@@ -203,7 +304,8 @@ async def test_attraction_closed_state_is_unknown_not_unavailable(
         }
     )
     await hass.async_block_till_done()
-    assert _state(hass, entity.entity_id).state == "unknown"
+    state = _state(hass, entity.entity_id)
+    assert state.state == "unknown"
 
 
 async def test_park_metrics_require_today_and_live_sources(
@@ -316,7 +418,8 @@ async def test_show_has_stable_identity_and_empty_schedule_is_unknown(
         }
     )
     await hass.async_block_till_done()
-    assert _state(hass, entity.entity_id).state == "unknown"
+    state = _state(hass, entity.entity_id)
+    assert state.state == "unknown"
 
 
 async def test_showtime_transitions_and_metadata_updates(
@@ -374,6 +477,7 @@ async def test_showtime_transitions_and_metadata_updates(
         state = hass.states.get(show.entity_id)
         assert state is not None
         assert state.attributes["status"] == "current"
+        assert state.attributes["sensor_type"] == "show_start_time"
         assert state.attributes["duration_minutes"] == 60
         assert state.attributes["edition"] == "Matinee"
         assert len(state.attributes["previous_showtimes"]) == 1

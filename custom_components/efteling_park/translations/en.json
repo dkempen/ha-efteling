@@ -3,18 +3,26 @@
     "step": {
       "user": {
         "title": "Efteling",
-        "description": "Set the language for information retrieved from Efteling.",
-        "data": { "language": "Language" },
+        "description": "Configure how Efteling information is retrieved and which entities are created.",
+        "data": {
+          "language": "Language",
+          "create_attraction_status_sensors": "Create separate attraction status sensors"
+        },
         "data_description": {
-          "language": "This affects attraction and show names, descriptions, and other details."
+          "language": "This affects attraction and show names, descriptions, and other information.",
+          "create_attraction_status_sensors": "Create an additional status sensor for every attraction.\nThe status is already available by default as an attribute on wait time sensor, so this is only needed to more easily monitor the status history."
         }
       },
       "reconfigure": {
         "title": "Reconfigure Efteling",
-        "description": "Set the language for information retrieved from Efteling.",
-        "data": { "language": "Language" },
+        "description": "Update the Efteling integration settings.",
+        "data": {
+          "language": "Language",
+          "create_attraction_status_sensors": "Create separate attraction status sensors"
+        },
         "data_description": {
-          "language": "This affects attraction and show names, descriptions, and other details."
+          "language": "This affects attraction and show names, descriptions, and other information.",
+          "create_attraction_status_sensors": "Create an additional status sensor for every attraction.\nThe status is already available by default as an attribute on wait time sensor, so this is only needed to more easily monitor the status history."
         }
       }
     },
@@ -24,7 +32,23 @@
       "invalid_response": "The Efteling API returned an invalid response."
     }
   },
-  "selector": { "language": { "options": { "en": "English", "nl": "Dutch" } } },
+  "selector": {
+    "language": { "options": { "en": "English", "nl": "Dutch" } }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "language": "Language",
+          "create_attraction_status_sensors": "Create separate attraction status sensors"
+        },
+        "data_description": {
+          "language": "Choose the language for attraction and show names, descriptions, and other information.",
+          "create_attraction_status_sensors": "Create an additional status sensor for every attraction.\nThe status is already available by default as an attribute on wait time sensor, so this is only needed to more easily monitor the status history."
+        }
+      }
+    }
+  },
   "device": {
     "efteling_attractions": { "name": "Efteling attractions" },
     "efteling_shows": { "name": "Efteling shows" },
@@ -126,7 +150,7 @@
           "extremely_busy": "Extremely busy"
         }
       },
-      "wait_time": {
+      "attraction_wait_time": {
         "state_attributes": {
           "empire": { "name": "Empire" },
           "status": {
@@ -149,10 +173,44 @@
           "entry_requirements": { "name": "Entry requirements" },
           "stimuli": { "name": "Stimuli" },
           "targetgroups": { "name": "Target groups" },
-          "type": { "name": "Type" }
+          "type": { "name": "Type" },
+          "sensor_type": {
+            "name": "Sensor type",
+            "state": { "attraction_wait_time": "Attraction wait time" }
+          }
         }
       },
-      "start_time": {
+      "attraction_status": {
+        "name": "{attraction_name} Status",
+        "state_attributes": {
+          "empire": { "name": "Empire" },
+          "description": { "name": "Description" },
+          "subtitle": { "name": "Subtitle" },
+          "latitude": { "name": "Latitude" },
+          "longitude": { "name": "Longitude" },
+          "image": { "name": "Image" },
+          "image_detail": { "name": "Detail image" },
+          "properties": { "name": "Properties" },
+          "entry_requirements": { "name": "Entry requirements" },
+          "stimuli": { "name": "Stimuli" },
+          "targetgroups": { "name": "Target groups" },
+          "type": { "name": "Type" },
+          "wait_time": { "name": "Wait time" },
+          "sensor_type": {
+            "name": "Sensor type",
+            "state": { "attraction_status": "Attraction status" }
+          }
+        },
+        "state": {
+          "closed": "Closed",
+          "open": "Open",
+          "under_maintenance": "Under maintenance",
+          "out_of_order": "Out of order",
+          "temporarily_out_of_order": "Temporarily out of order",
+          "unknown": "Unknown"
+        }
+      },
+      "show_start_time": {
         "name": "Start time",
         "state_attributes": {
           "status": {
@@ -176,7 +234,11 @@
           "image": { "name": "Image" },
           "image_detail": { "name": "Detail image" },
           "properties": { "name": "Properties" },
-          "type": { "name": "Type" }
+          "type": { "name": "Type" },
+          "sensor_type": {
+            "name": "Sensor type",
+            "state": { "show_start_time": "Show start time" }
+          }
         }
       }
     }

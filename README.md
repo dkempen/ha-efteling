@@ -58,7 +58,7 @@ The Marketplace installs the integration and starts its configuration flow autom
 <summary>Manual installation without the Marketplace or HACS</summary>
 
 1. Download the `custom_components/efteling_park/` directory from this repository.
-2. Copy it into the `custom_components/` directory of your Home Assistant configuration.
+2. Copy it into the `custom_components/` directory of the Home Assistant configuration.
 3. Restart Home Assistant.
 
 </details>
@@ -73,19 +73,22 @@ The Marketplace installs the integration and starts its configuration flow autom
 
 ### Manual configuration
 
-The integration is configured through the Home Assistant UI. No account credentials or additional settings are required.
+The integration is configured through the Home Assistant UI. No account credentials are required.
 
 1. Go to **Settings → Devices & services → Add integration**.
 2. Search for **Efteling**.
-3. Select the language for information retrieved from Efteling: **Dutch** or **English**. Dutch is the default.
+3. Complete the setup with the default settings, or optionally change either setting:
+   - **Language:** Dutch by default; choose Dutch or English for information retrieved from Efteling.
+   - **Separate attraction status sensors:** Disabled by default; enable to create a status sensor for each attraction. Status is also already available as an attribute on each wait time sensor.
 4. Complete the setup.
 
 The integration creates three devices: **Efteling park**, **Efteling attractions**, and **Efteling shows**.
+These settings can always be changed later from the integration's options.
 
 ## Entities
 
 The integration supports Efteling's public attraction, show, park-information, and annual-pass data.
-Attraction and show entities are created from the live points-of-interest and wait-time feeds.
+Attraction and show entities are created from the live points-of-interest and wait time feeds.
 Park entities share the Efteling park device. The integration is read-only and does not access personal account information.
 
 ### Park
@@ -114,7 +117,9 @@ Most entities expose additional attributes, including operating schedules, forec
 
 ### Attractions
 
-Each attraction has a sensor whose value represents the current wait time in minutes. When an attraction is not open or no valid wait time is available, the sensor state is `unknown`.
+Each attraction has a wait time sensor whose value represents the current wait time in minutes. When an attraction is not open or no valid wait time is available, the sensor state is `unknown`. The sensor's `status` attribute reports the attraction's operating status.
+
+A separate status sensor can optionally be enabled for every attraction in the integration options. This makes operating status easier to track in history and use in automations.
 
 For example:
 
@@ -140,6 +145,9 @@ Attraction sensors expose additional attributes for dashboards and automations:
 | `type`                  | Efteling point-of-interest type. |
 
 The attraction status is one of `Open`, `Closed`, `Under maintenance`, `Out of order`, or `Temporarily out of order`. Status labels follow the Home Assistant language setting.
+
+The sensor entity IDs for attraction wait times and show start times use the prefixes `sensor.efteling_attractions_` and `sensor.efteling_shows_`, respectively.
+Enabling the optional attraction status sensors adds entities with the `_status` suffix, which can be filtered using the `sensor_type` attribute.
 
 ## Use cases
 
@@ -233,11 +241,11 @@ To also remove the integration files:
 
 - **Marketplace:** Uninstall Efteling from **Settings → Marketplace**.
 - **HACS:** Uninstall Efteling from **HACS → Integrations**.
-- **Manual installation:** Remove `custom_components/efteling_park/` from your Home Assistant configuration and restart Home Assistant.
+- **Manual installation:** Remove `custom_components/efteling_park/` from the Home Assistant configuration and restart Home Assistant.
 
 ## Development
 
-The integration's source code is located in `custom_components/efteling_park/`. You can use the Home Assistant development container to work on the integration. Run `scripts/setup` and `scripts/develop` to set up and launch a local Home Assistant environment.
+The integration's source code is located in `custom_components/efteling_park/`. The Home Assistant development container can be used to work on the integration. Run `scripts/setup` and `scripts/develop` to set up and launch a local Home Assistant environment.
 
 ## Credits
 

@@ -3,18 +3,26 @@
     "step": {
       "user": {
         "title": "Efteling",
-        "description": "Stel de taal in voor informatie die van de Efteling wordt opgehaald.",
-        "data": { "language": "Taal" },
+        "description": "Configureer hoe Efteling-informatie wordt opgehaald en welke entiteiten worden aangemaakt.",
+        "data": {
+          "language": "Taal",
+          "create_attraction_status_sensors": "Afzonderlijke statussensoren voor attracties aanmaken"
+        },
         "data_description": {
-          "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows."
+          "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows.",
+          "create_attraction_status_sensors": "Maak voor iedere attractie een extra statussensor aan.\nDe status is ook al standaard beschikbaar als attribuut van de wachttijdensensor, dus het is alleen nodig om de status geschiedenis makkelijker bij te houden."
         }
       },
       "reconfigure": {
         "title": "Efteling opnieuw configureren",
-        "description": "Stel de taal in voor informatie die van de Efteling wordt opgehaald.",
-        "data": { "language": "Taal" },
+        "description": "Pas de instellingen van de Efteling-integratie aan.",
+        "data": {
+          "language": "Taal",
+          "create_attraction_status_sensors": "Afzonderlijke statussensoren voor attracties aanmaken"
+        },
         "data_description": {
-          "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows."
+          "language": "Dit geldt voor namen, beschrijvingen en overige informatie over attracties en shows.",
+          "create_attraction_status_sensors": "Maak voor iedere attractie een extra statussensor aan.\nDe status is ook al standaard beschikbaar als attribuut van de wachttijdensensor, dus het is alleen nodig om de status geschiedenis makkelijker bij te houden."
         }
       }
     },
@@ -28,6 +36,20 @@
   },
   "selector": {
     "language": { "options": { "en": "Engels", "nl": "Nederlands" } }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "language": "Taal",
+          "create_attraction_status_sensors": "Afzonderlijke statussensoren voor attracties aanmaken"
+        },
+        "data_description": {
+          "language": "Kies de taal voor namen, beschrijvingen en overige informatie over attracties en shows.",
+          "create_attraction_status_sensors": "Maak voor iedere attractie een extra statussensor aan.\nDe status is ook al standaard beschikbaar als attribuut van de wachttijdensensor, dus het is alleen nodig om de status geschiedenis makkelijker bij te houden."
+        }
+      }
+    }
   },
   "device": {
     "efteling_attractions": { "name": "Efteling attracties" },
@@ -132,7 +154,7 @@
           "extremely_busy": "Stervensdruk"
         }
       },
-      "wait_time": {
+      "attraction_wait_time": {
         "state_attributes": {
           "empire": { "name": "Rijk" },
           "status": {
@@ -155,10 +177,44 @@
           "entry_requirements": { "name": "Toegangsvoorwaarden" },
           "stimuli": { "name": "Prikkels" },
           "targetgroups": { "name": "Doelgroepen" },
-          "type": { "name": "Type" }
+          "type": { "name": "Type" },
+          "sensor_type": {
+            "name": "Sensortype",
+            "state": { "attraction_wait_time": "Attractie wachttijd" }
+          }
         }
       },
-      "start_time": {
+      "attraction_status": {
+        "name": "{attraction_name} Status",
+        "state_attributes": {
+          "empire": { "name": "Rijk" },
+          "description": { "name": "Beschrijving" },
+          "subtitle": { "name": "Ondertitel" },
+          "latitude": { "name": "Breedtegraad" },
+          "longitude": { "name": "Lengtegraad" },
+          "image": { "name": "Afbeelding" },
+          "image_detail": { "name": "Detailafbeelding" },
+          "properties": { "name": "Eigenschappen" },
+          "entry_requirements": { "name": "Toegangsvoorwaarden" },
+          "stimuli": { "name": "Prikkels" },
+          "targetgroups": { "name": "Doelgroepen" },
+          "type": { "name": "Type" },
+          "wait_time": { "name": "Wachttijd" },
+          "sensor_type": {
+            "name": "Sensortype",
+            "state": { "attraction_status": "Attractiestatus" }
+          }
+        },
+        "state": {
+          "closed": "Gesloten",
+          "open": "Open",
+          "under_maintenance": "In onderhoud",
+          "out_of_order": "Buiten bedrijf",
+          "temporarily_out_of_order": "Tijdelijk buiten bedrijf",
+          "unknown": "Onbekend"
+        }
+      },
+      "show_start_time": {
         "name": "Starttijd",
         "state_attributes": {
           "status": {
@@ -182,7 +238,11 @@
           "image": { "name": "Afbeelding" },
           "image_detail": { "name": "Detailafbeelding" },
           "properties": { "name": "Eigenschappen" },
-          "type": { "name": "Type" }
+          "type": { "name": "Type" },
+          "sensor_type": {
+            "name": "Sensortype",
+            "state": { "show_start_time": "Starttijd show" }
+          }
         }
       }
     }
