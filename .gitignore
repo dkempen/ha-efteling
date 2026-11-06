@@ -9,3 +9,6 @@ config/
 .coverage*
 coverage.json
 htmlcov/
+
+# Park map
+images/map/*-full.jpg
