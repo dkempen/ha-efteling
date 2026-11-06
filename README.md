@@ -262,8 +262,8 @@ Efteling and all associated trademarks, names, images, and services remain the p
 [version-badge]: https://img.shields.io/github/v/release/dkempen/ha-efteling?label=Version
 [stars]: https://github.com/dkempen/ha-efteling
 [stars-badge]: https://img.shields.io/github/stars/dkempen/ha-efteling
-[validation]: https://github.com/dkempen/ha-efteling/actions/workflows/hassfest.yaml
-[validation-badge]: https://img.shields.io/github/actions/workflow/status/dkempen/ha-efteling/hassfest.yaml?logo=github&logoColor=fff&label=Validation
+[validation]: https://github.com/dkempen/ha-efteling/actions/workflows/validate.yaml
+[validation-badge]: https://img.shields.io/github/actions/workflow/status/dkempen/ha-efteling/validate.yaml?logo=github&logoColor=fff&label=Validation
 [license]: https://github.com/dkempen/ha-efteling?tab=MIT-1-ov-file
 [license-badge]: https://img.shields.io/github/license/dkempen/ha-efteling?label=License
 [install]: https://my.home-assistant.io/redirect/marketplace_repository/?owner=dkempen&repository=ha-efteling
