@@ -1,4 +1,10 @@
 {
+  "bounds": {
+    "max_latitude": 51.65379826,
+    "max_longitude": 5.05522907,
+    "min_latitude": 51.64599309,
+    "min_longitude": 5.04264951
+  },
   "summer": {
     "pixel_sha256": "ca1e02ad74e174da3aef5e2013926e1e40bef5a434b9ad5c8bb8f003b0595c2d",
     "updated_at": "2026-11-06T22:22:12Z"
