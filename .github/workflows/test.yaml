@@ -2,7 +2,11 @@ name: Test
 
 on:
   push:
+    paths-ignore:
+      - 'images/map/**'
   pull_request:
+    paths-ignore:
+      - 'images/map/**'
   workflow_dispatch:
 
 permissions: {}

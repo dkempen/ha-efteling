@@ -10,6 +10,11 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.const import CONF_LANGUAGE
+from homeassistant.util import dt as dt_util
+from pytest_homeassistant.common import MockConfigEntry
+
+from custom_components.efteling_park.api import EftelingApiClient
+from custom_components.efteling_park.const import DOMAIN, PARK_TIME_ZONE
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -22,17 +27,6 @@ if TYPE_CHECKING:
         PoiResponse,
         WaitTimesResponse,
     )
-from homeassistant.util import dt as dt_util
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
-from custom_components.efteling_park.api import EftelingApiClient
-from custom_components.efteling_park.const import DOMAIN, PARK_TIME_ZONE
-
-
-@pytest.fixture(autouse=True)
-def enable_integration(enable_custom_integrations: None) -> None:
-    """Enable loading the local custom integration in tests."""
-    del enable_custom_integrations
 
 
 @pytest.fixture

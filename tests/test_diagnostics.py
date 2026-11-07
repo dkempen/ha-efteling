@@ -8,8 +8,8 @@ from homeassistant.setup import async_setup_component
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
-    from pytest_homeassistant_custom_component.typing import ClientSessionGenerator
+    from pytest_homeassistant.common import MockConfigEntry
+    from pytest_homeassistant.typing import ClientSessionGenerator
 
 
 async def test_diagnostics_include_config_and_coordinator_data(

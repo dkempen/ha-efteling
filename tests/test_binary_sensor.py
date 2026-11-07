@@ -16,7 +16,7 @@ from custom_components.efteling_park.sensor import park_snapshot
 if TYPE_CHECKING:
     import pytest
     from homeassistant.core import HomeAssistant, State
-    from pytest_homeassistant_custom_component.common import MockConfigEntry
+    from pytest_homeassistant.common import MockConfigEntry
 
 
 def _entity_for_unique_id(
