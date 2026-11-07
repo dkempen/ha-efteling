@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import logging
+import math
 import sys
 import time
 import urllib.error
@@ -174,6 +175,39 @@ def get_source_crop() -> tuple[int, int, int, int]:
     """Convert the crop after rotation to coordinates before rotation."""
     left, top, right, bottom = ROTATED_CROP
     return FULL_MAP_SIZE - bottom, left, FULL_MAP_SIZE - top, right
+
+
+def get_geographic_coordinates(
+    pixel_x: int,
+    pixel_y: int,
+) -> dict[str, float]:
+    """Convert coordinates on the source tile canvas to latitude and longitude."""
+    world_pixel_size = TILE_SIZE * (2**ZOOM_LEVEL)
+
+    world_pixel_x = TILE_ORIGIN_X * TILE_SIZE + pixel_x
+    world_pixel_y = TILE_ORIGIN_Y * TILE_SIZE + pixel_y
+
+    longitude = world_pixel_x / world_pixel_size * 360.0 - 180.0
+    mercator_y = math.pi * (1.0 - 2.0 * world_pixel_y / world_pixel_size)
+    latitude = math.degrees(math.atan(math.sinh(mercator_y)))
+
+    return {
+        "latitude": round(latitude, 8),
+        "longitude": round(longitude, 8),
+    }
+
+
+def get_map_bounds() -> dict[str, float]:
+    """Return the minimum and maximum geographic coordinates of the map."""
+    source_left, source_top, source_right, source_bottom = get_source_crop()
+    top_left = get_geographic_coordinates(source_right, source_top)
+    bottom_right = get_geographic_coordinates(source_left, source_bottom)
+    return {
+        "min_latitude": bottom_right["latitude"],
+        "max_latitude": top_left["latitude"],
+        "min_longitude": bottom_right["longitude"],
+        "max_longitude": top_left["longitude"],
+    }
 
 
 def get_required_tile_coordinates() -> tuple[tuple[int, int], ...]:
@@ -585,6 +619,8 @@ def run_generation(arguments: argparse.Namespace) -> tuple[SeasonResult, ...]:
         )
         maps[season] = map_entry
         results.append(result)
+
+    maps["bounds"] = get_map_bounds()
 
     manifest_content = json.dumps(
         maps,
