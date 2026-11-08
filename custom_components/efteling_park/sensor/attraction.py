@@ -12,10 +12,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfTime
 
-from custom_components.efteling_park.const import (
-    ATTRACTIONS,
-    CUSTOM_ATTRACTION_ICONS,
-)
+from custom_components.efteling_park.const import ATTRACTIONS, CUSTOM_ATTRACTION_ICONS
 from custom_components.efteling_park.coordinator import (
     EftelingWaitTimesUpdateCoordinator,
 )
@@ -111,6 +108,7 @@ class EftelingAttractionSensor(
         metadata = self._metadata
 
         return {
+            "id": self._attraction_id,
             "empire": metadata.empire,
             "status": ATTRACTION_STATUS_MAP.get(status, status),
             "description": metadata.description,
@@ -164,6 +162,11 @@ class EftelingAttractionStatusSensor(EftelingAttractionSensor):
 
         self.entity_description = ENTITY_DESCRIPTION_STATUS
         self._attr_unique_id = f"{attraction_id}_status"
+
+    @property
+    def icon(self) -> str | None:
+        """Return an attraction-specific icon when configured."""
+        return CUSTOM_ATTRACTION_ICONS.get(self._attraction_id)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:

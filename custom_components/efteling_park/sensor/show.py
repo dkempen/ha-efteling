@@ -94,6 +94,7 @@ class EftelingShowSensor(
 
     @callback
     def _cancel_timer(self) -> None:
+        """Cancel the pending scheduled update."""
         if self._unsub_timer is not None:
             self._unsub_timer()
             self._unsub_timer = None
@@ -162,6 +163,7 @@ class EftelingShowSensor(
         for items in (show.get("ShowTimes"), show.get("PastShowTimes")):
             if items is None:
                 continue
+
             for item in items:
                 start = self._parse_show_datetime(item.get("StartDateTime"))
 
@@ -236,7 +238,7 @@ class EftelingShowSensor(
         entries = self._entries
 
         if not entries:
-            return None
+            return {"id": self._show_id}
 
         current = self._current_entry(now)
         future = [item for item in entries if item.start > now]
@@ -253,6 +255,7 @@ class EftelingShowSensor(
         metadata = self._metadata
 
         return {
+            "id": self._show_id,
             "status": status,
             "current_show_end": current.end if current else None,
             "previous_showtimes": [item.start for item in past],

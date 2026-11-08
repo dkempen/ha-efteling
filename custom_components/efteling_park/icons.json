@@ -22,7 +22,20 @@
           "30": "mdi:timer-sand-full"
         }
       },
-      "crowd_level": { "default": "mdi:chart-bar" }
+      "crowd_level": { "default": "mdi:chart-bar" },
+      "attraction_wait_time": { "default": "mdi:timer-sand" },
+      "attraction_status": {
+        "default": "mdi:help-circle-outline",
+        "state": {
+          "closed": "mdi:close-circle",
+          "open": "mdi:check-circle",
+          "under_maintenance": "mdi:wrench-clock",
+          "out_of_order": "mdi:alert-circle",
+          "temporarily_out_of_order": "mdi:alert-circle-outline",
+          "unknown": "mdi:help-circle-outline"
+        }
+      },
+      "show_start_time": { "default": "mdi:calendar-clock" }
     },
     "binary_sensor": {
       "park_status": {
