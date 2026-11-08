@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -31,6 +31,7 @@ class EftelingEntity[CoordinatorT: DataUpdateCoordinator[Any]](
         super().__init__(coordinator)
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_key)},
+            entry_type=DeviceEntryType.SERVICE,
             translation_key=device_translation_key,
             manufacturer=NAME,
         )
