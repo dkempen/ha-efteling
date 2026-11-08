@@ -94,6 +94,7 @@ async def async_setup_entry(
                     attraction_id=attraction_id,
                     attraction_name=str(name),
                     poi=poi,
+                    map_metadata=runtime_data.park_map,
                 )
                 sensors.append(entity)
 
@@ -104,6 +105,7 @@ async def async_setup_entry(
                             attraction_id=attraction_id,
                             attraction_name=str(name),
                             poi=poi,
+                            map_metadata=runtime_data.park_map,
                         )
                     )
 
@@ -115,6 +117,7 @@ async def async_setup_entry(
                     show_id=attraction_id,
                     show_name=str(name),
                     poi=poi,
+                    map_metadata=runtime_data.park_map,
                 )
                 sensors.append(entity)
 

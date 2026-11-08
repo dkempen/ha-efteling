@@ -30,6 +30,7 @@ from .utils import parse_poi_metadata
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from custom_components.efteling_park.map import ParkMapMetadata
     from custom_components.efteling_park.models import Poi
 
 
@@ -62,6 +63,7 @@ class EftelingShowSensor(
         show_id: str,
         show_name: str,
         poi: Poi,
+        map_metadata: ParkMapMetadata | None = None,
     ) -> None:
         """Initialize show sensor."""
         super().__init__(
@@ -76,7 +78,12 @@ class EftelingShowSensor(
         self._unsub_timer: Callable[[], None] | None = None
         self.async_on_remove(self._cancel_timer)
         self._poi = poi
-        self._metadata = parse_poi_metadata(poi)
+        self._map_metadata = map_metadata
+        self._metadata = parse_poi_metadata(
+            poi,
+            map_metadata,
+            poi_id=show_id,
+        )
         self._entries: list[ParsedShowTime] = []
         self._refresh_entries()
 
@@ -102,8 +109,13 @@ class EftelingShowSensor(
         """Refresh cached metadata when the POI coordinator updates."""
         if poi is self._poi:
             return
+
         self._poi = poi
-        self._metadata = parse_poi_metadata(poi)
+        self._metadata = parse_poi_metadata(
+            poi,
+            self._map_metadata,
+            poi_id=self._show_id,
+        )
         self.async_write_ha_state()
 
     @staticmethod
@@ -111,11 +123,15 @@ class EftelingShowSensor(
         """Parse a show timestamp, assuming Efteling local time if no zone exists."""
         if value is None:
             return None
+
         parsed = dt_util.parse_datetime(value)
+
         if parsed is None:
             return None
+
         if parsed.tzinfo is None:
             parsed = parsed.replace(tzinfo=PARK_TIME_ZONE)
+
         return dt_util.as_utc(parsed)
 
     def _current_entry(self, now: datetime) -> ParsedShowTime | None:
@@ -130,28 +146,38 @@ class EftelingShowSensor(
         """Return a positive integer duration when the API value is valid."""
         if value is None:
             return None
+
         return value if value > 0 else None
 
     def _refresh_entries(self) -> None:
         """Parse and sort show entries after coordinator data changes."""
         show = self.coordinator.data.get(self._show_id)
+
         if show is None:
             self._entries = []
             return
+
         entries: list[ParsedShowTime] = []
+
         for key in ("ShowTimes", "PastShowTimes"):
             items = show.get(key) or []
+
             for item in items:
                 start = self._parse_show_datetime(item.get("StartDateTime"))
+
                 if start is None:
                     continue
+
                 end_raw = item.get("EndDateTime")
                 end = self._parse_show_datetime(end_raw)
                 duration = self._parse_duration(item.get("Duration"))
+
                 if end is None and duration is not None:
                     end = start + timedelta(minutes=duration)
+
                 if end is None or end <= start:
                     continue
+
                 entries.append(
                     ParsedShowTime(
                         start=start,
@@ -160,6 +186,7 @@ class EftelingShowSensor(
                         edition=item.get("Edition"),
                     )
                 )
+
         self._entries = sorted(entries, key=lambda item: item.start)
 
     def _schedule_next_update(self) -> None:
@@ -168,11 +195,15 @@ class EftelingShowSensor(
         now = dt_util.now()
         current = self._current_entry(now)
         boundaries = [item.start for item in self._entries if item.start > now]
+
         if current is not None:
             boundaries.append(current.end)
+
         if boundaries:
             self._unsub_timer = async_track_point_in_time(
-                self.hass, self._handle_scheduled_update, min(boundaries)
+                self.hass,
+                self._handle_scheduled_update,
+                min(boundaries),
             )
 
     @callback
@@ -192,8 +223,10 @@ class EftelingShowSensor(
         """Return the start time of the current or next show."""
         now = dt_util.now()
         current = self._current_entry(now)
+
         if current is not None:
             return current.start
+
         return next((item.start for item in self._entries if item.start > now), None)
 
     @property
@@ -201,18 +234,24 @@ class EftelingShowSensor(
         """Expose current/upcoming showtimes and related metadata."""
         now = dt_util.now()
         entries = self._entries
+
         if not entries:
             return None
+
         current = self._current_entry(now)
         future = [item for item in entries if item.start > now]
         past = [item for item in entries if item.end <= now]
+
         source = (
             current or (future[0] if future else None) or (past[-1] if past else None)
         )
+
         status = (
             "current" if current else "upcoming" if future else "no_more_shows_today"
         )
+
         metadata = self._metadata
+
         return {
             "status": status,
             "current_show_end": current.end if current else None,
@@ -225,6 +264,9 @@ class EftelingShowSensor(
             "subtitle": metadata.subtitle,
             "latitude": metadata.latitude,
             "longitude": metadata.longitude,
+            "map_x": metadata.map_x,
+            "map_y": metadata.map_y,
+            "map_marker": metadata.map_marker,
             "image": metadata.image,
             "image_detail": metadata.image_detail,
             "properties": metadata.properties,

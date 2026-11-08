@@ -15,6 +15,7 @@ from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.efteling_park.api import EftelingApiClient
 from custom_components.efteling_park.const import DOMAIN, PARK_TIME_ZONE
+from custom_components.efteling_park.map import ParkMapMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -27,6 +28,37 @@ if TYPE_CHECKING:
         PoiResponse,
         WaitTimesResponse,
     )
+
+
+@pytest.fixture(autouse=True)
+def mock_park_map_metadata() -> Generator[None]:
+    """Provide deterministic map metadata without a network request."""
+    summer_updated_at = dt_util.parse_datetime("2026-11-06T22:22:12Z")
+    winter_updated_at = dt_util.parse_datetime("2026-11-06T22:22:18Z")
+
+    assert summer_updated_at is not None
+    assert winter_updated_at is not None
+
+    map_metadata = ParkMapMetadata(
+        manifest={
+            "summer": summer_updated_at,
+            "winter": winter_updated_at,
+        },
+        bounds={
+            "min_latitude": 51.64599309,
+            "max_latitude": 51.65379826,
+            "min_longitude": 5.04264951,
+            "max_longitude": 5.05522907,
+        },
+        rotation_degrees=90,
+    )
+
+    with patch(
+        "custom_components.efteling_park.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=map_metadata,
+    ):
+        yield
 
 
 @pytest.fixture
@@ -52,7 +84,7 @@ def api_response_payloads() -> tuple[PoiResponse, WaitTimesResponse, ParkInfoRes
 
 @pytest.fixture
 def annual_pass_response_payload() -> AnnualPasses:
-    """Load a representative annual-pass response."""
+    """Return a representative annual-pass response."""
     responses_dir = Path(__file__).parent / "responses"
     return json.loads((responses_dir / "annual_passes.json").read_text())
 
@@ -71,6 +103,7 @@ def api_responses(
         (today + timedelta(days=index)).isoformat(): values
         for index, values in enumerate(annual_pass_response_payload.values())
     }
+
     with (
         patch.object(
             EftelingApiClient,

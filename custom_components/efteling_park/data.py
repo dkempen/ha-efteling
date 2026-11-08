@@ -15,6 +15,7 @@ if TYPE_CHECKING:
         EftelingPoiUpdateCoordinator,
         EftelingWaitTimesUpdateCoordinator,
     )
+    from .map import ParkMapMetadata
 
 
 type EftelingConfigEntry = ConfigEntry[EftelingData]
@@ -29,3 +30,4 @@ class EftelingData:
     wait_times_coordinator: EftelingWaitTimesUpdateCoordinator
     park_info_coordinator: EftelingParkInfoUpdateCoordinator
     annual_passes_coordinator: EftelingAnnualPassesCoordinator
+    park_map: ParkMapMetadata | None

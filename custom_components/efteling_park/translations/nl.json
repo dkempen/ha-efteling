@@ -104,6 +104,17 @@
         }
       }
     },
+    "image": {
+      "map": {
+        "name": "Plattegrond",
+        "state_attributes": {
+          "min_latitude": { "name": "Minimale breedtegraad" },
+          "max_latitude": { "name": "Maximale breedtegraad" },
+          "min_longitude": { "name": "Minimale lengtegraad" },
+          "max_longitude": { "name": "Maximale lengtegraad" }
+        }
+      }
+    },
     "sensor": {
       "crowd_forecast": {
         "name": "Verwachte drukte",
@@ -171,6 +182,12 @@
           "subtitle": { "name": "Ondertitel" },
           "latitude": { "name": "Breedtegraad" },
           "longitude": { "name": "Lengtegraad" },
+          "map_x": { "name": "Plattegrond X" },
+          "map_y": { "name": "Plattegrond Y" },
+          "map_marker": {
+            "name": "Plattegrondmarkering",
+            "state": { "true": "Ja" }
+          },
           "image": { "name": "Afbeelding" },
           "image_detail": { "name": "Detailafbeelding" },
           "properties": { "name": "Eigenschappen" },
@@ -192,6 +209,12 @@
           "subtitle": { "name": "Ondertitel" },
           "latitude": { "name": "Breedtegraad" },
           "longitude": { "name": "Lengtegraad" },
+          "map_x": { "name": "Plattegrond X" },
+          "map_y": { "name": "Plattegrond Y" },
+          "map_marker": {
+            "name": "Plattegrondmarkering",
+            "state": { "true": "Ja" }
+          },
           "image": { "name": "Afbeelding" },
           "image_detail": { "name": "Detailafbeelding" },
           "properties": { "name": "Eigenschappen" },
@@ -235,6 +258,12 @@
           "subtitle": { "name": "Ondertitel" },
           "latitude": { "name": "Breedtegraad" },
           "longitude": { "name": "Lengtegraad" },
+          "map_x": { "name": "Plattegrond X" },
+          "map_y": { "name": "Plattegrond Y" },
+          "map_marker": {
+            "name": "Plattegrondmarkering",
+            "state": { "true": "Ja" }
+          },
           "image": { "name": "Afbeelding" },
           "image_detail": { "name": "Detailafbeelding" },
           "properties": { "name": "Eigenschappen" },

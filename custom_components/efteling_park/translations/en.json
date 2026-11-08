@@ -100,6 +100,17 @@
         }
       }
     },
+    "image": {
+      "map": {
+        "name": "Map",
+        "state_attributes": {
+          "min_latitude": { "name": "Minimum latitude" },
+          "max_latitude": { "name": "Maximum latitude" },
+          "min_longitude": { "name": "Minimum longitude" },
+          "max_longitude": { "name": "Maximum longitude" }
+        }
+      }
+    },
     "sensor": {
       "crowd_forecast": {
         "name": "Crowd forecast",
@@ -167,6 +178,9 @@
           "subtitle": { "name": "Subtitle" },
           "latitude": { "name": "Latitude" },
           "longitude": { "name": "Longitude" },
+          "map_x": { "name": "Map X" },
+          "map_y": { "name": "Map Y" },
+          "map_marker": { "name": "Map marker", "state": { "true": "Yes" } },
           "image": { "name": "Image" },
           "image_detail": { "name": "Detail image" },
           "properties": { "name": "Properties" },
@@ -188,6 +202,9 @@
           "subtitle": { "name": "Subtitle" },
           "latitude": { "name": "Latitude" },
           "longitude": { "name": "Longitude" },
+          "map_x": { "name": "Map X" },
+          "map_y": { "name": "Map Y" },
+          "map_marker": { "name": "Map marker", "state": { "true": "Yes" } },
           "image": { "name": "Image" },
           "image_detail": { "name": "Detail image" },
           "properties": { "name": "Properties" },
@@ -231,6 +248,9 @@
           "subtitle": { "name": "Subtitle" },
           "latitude": { "name": "Latitude" },
           "longitude": { "name": "Longitude" },
+          "map_x": { "name": "Map X" },
+          "map_y": { "name": "Map Y" },
+          "map_marker": { "name": "Map marker", "state": { "true": "Yes" } },
           "image": { "name": "Image" },
           "image_detail": { "name": "Detail image" },
           "properties": { "name": "Properties" },

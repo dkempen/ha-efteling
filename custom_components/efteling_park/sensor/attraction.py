@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -23,6 +23,9 @@ from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.models import ATTRACTION_STATUS_MAP, Poi
 
 from .utils import parse_poi_metadata
+
+if TYPE_CHECKING:
+    from custom_components.efteling_park.map import ParkMapMetadata
 
 ENTITY_DESCRIPTION_ATTRACTION_WAIT_TIME = SensorEntityDescription(
     key="attraction_wait_time",
@@ -53,6 +56,7 @@ class EftelingAttractionSensor(
         attraction_id: str,
         attraction_name: str,
         poi: Poi,
+        map_metadata: ParkMapMetadata | None = None,
     ) -> None:
         """Initialize sensor."""
         super().__init__(
@@ -65,7 +69,12 @@ class EftelingAttractionSensor(
         self._attr_unique_id = attraction_id
         self._attr_name = attraction_name
         self._poi = poi
-        self._metadata = parse_poi_metadata(poi)
+        self._map_metadata = map_metadata
+        self._metadata = parse_poi_metadata(
+            poi,
+            map_metadata,
+            poi_id=attraction_id,
+        )
 
     def update_poi(self, poi: Poi) -> None:
         """Refresh cached metadata when the POI coordinator updates."""
@@ -73,7 +82,11 @@ class EftelingAttractionSensor(
             return
 
         self._poi = poi
-        self._metadata = parse_poi_metadata(poi)
+        self._metadata = parse_poi_metadata(
+            poi,
+            self._map_metadata,
+            poi_id=self._attraction_id,
+        )
         self.async_write_ha_state()
 
     @property
@@ -104,6 +117,9 @@ class EftelingAttractionSensor(
             "subtitle": metadata.subtitle,
             "latitude": metadata.latitude,
             "longitude": metadata.longitude,
+            "map_x": metadata.map_x,
+            "map_y": metadata.map_y,
+            "map_marker": metadata.map_marker,
             "image": metadata.image,
             "image_detail": metadata.image_detail,
             "properties": metadata.properties,
@@ -129,9 +145,16 @@ class EftelingAttractionStatusSensor(EftelingAttractionSensor):
         attraction_id: str,
         attraction_name: str,
         poi: Poi,
+        map_metadata: ParkMapMetadata | None = None,
     ) -> None:
         """Initialize the status sensor with the attraction's shared metadata."""
-        super().__init__(coordinator, attraction_id, attraction_name, poi)
+        super().__init__(
+            coordinator,
+            attraction_id,
+            attraction_name,
+            poi,
+            map_metadata,
+        )
 
         # Use the translated entity name instead of the inherited attraction name.
         del self._attr_name
@@ -154,6 +177,8 @@ class EftelingAttractionStatusSensor(EftelingAttractionSensor):
         attributes["wait_time"] = self.coordinator.data[self._attraction_id].get(
             "WaitingTime"
         )
+        attributes["map_marker"] = False
+
         return {
             **attributes,
             "sensor_type": "attraction_status",

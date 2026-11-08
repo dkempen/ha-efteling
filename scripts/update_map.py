@@ -37,6 +37,7 @@ TILE_GRID_SIZE = 24
 FULL_MAP_SIZE = TILE_GRID_SIZE * TILE_SIZE
 TILE_ORIGIN_X = 134736
 TILE_ORIGIN_Y = 86993
+ROTATION_DEGREES = 90
 
 # Coordinates are left, top, right, bottom on the canvas after a 90-degree
 # counterclockwise rotation of the complete 24-by-24 tile canvas.
@@ -174,7 +175,22 @@ def configure_logging() -> None:
 def get_source_crop() -> tuple[int, int, int, int]:
     """Convert the crop after rotation to coordinates before rotation."""
     left, top, right, bottom = ROTATED_CROP
-    return FULL_MAP_SIZE - bottom, left, FULL_MAP_SIZE - top, right
+    crops = {
+        0: (left, top, right, bottom),
+        90: (FULL_MAP_SIZE - bottom, left, FULL_MAP_SIZE - top, right),
+        180: (
+            FULL_MAP_SIZE - right,
+            FULL_MAP_SIZE - bottom,
+            FULL_MAP_SIZE - left,
+            FULL_MAP_SIZE - top,
+        ),
+        270: (top, FULL_MAP_SIZE - right, bottom, FULL_MAP_SIZE - left),
+    }
+    try:
+        return crops[ROTATION_DEGREES]
+    except KeyError as error:
+        message = f"Unsupported map rotation: {ROTATION_DEGREES} degrees."
+        raise MapGenerationError(message) from error
 
 
 def get_geographic_coordinates(
@@ -395,7 +411,7 @@ def create_cropped_map(
     downloaded_tiles.clear()
 
     if full_size:
-        full_size_image = mosaic.transpose(Image.Transpose.ROTATE_90)
+        full_size_image = rotate_image(mosaic)
         del mosaic
         cropped = full_size_image.crop(ROTATED_CROP)
     else:
@@ -409,7 +425,7 @@ def create_cropped_map(
             source_right - source_tile_origin_x,
             source_bottom - source_tile_origin_y,
         )
-        cropped = mosaic.crop(crop_box).transpose(Image.Transpose.ROTATE_90)
+        cropped = rotate_image(mosaic.crop(crop_box))
         del mosaic
 
     expected_size = (
@@ -424,6 +440,27 @@ def create_cropped_map(
         raise MapGenerationError(message)
 
     return cropped, full_size_image
+
+
+def get_rotation_transpose() -> Image.Transpose | None:
+    """Return the Pillow transpose operation for the configured rotation."""
+    rotations = {
+        0: None,
+        90: Image.Transpose.ROTATE_90,
+        180: Image.Transpose.ROTATE_180,
+        270: Image.Transpose.ROTATE_270,
+    }
+    try:
+        return rotations[ROTATION_DEGREES]
+    except KeyError as error:
+        message = f"Unsupported map rotation: {ROTATION_DEGREES} degrees."
+        raise MapGenerationError(message) from error
+
+
+def rotate_image(image: Image.Image) -> Image.Image:
+    """Apply the configured rotation, copying the image when it is zero degrees."""
+    transpose = get_rotation_transpose()
+    return image.copy() if transpose is None else image.transpose(transpose)
 
 
 def generate_map(
@@ -621,6 +658,7 @@ def run_generation(arguments: argparse.Namespace) -> tuple[SeasonResult, ...]:
         results.append(result)
 
     maps["bounds"] = get_map_bounds()
+    maps["rotation_degrees"] = ROTATION_DEGREES
 
     manifest_content = json.dumps(
         maps,

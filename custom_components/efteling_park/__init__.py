@@ -26,6 +26,7 @@ from custom_components.efteling_park.coordinator import (
 
 from .api import EftelingApiClient
 from .data import EftelingData
+from .map import async_get_park_map_metadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -35,6 +36,7 @@ if TYPE_CHECKING:
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
+    Platform.IMAGE,
 ]
 
 
@@ -43,6 +45,8 @@ async def async_setup_entry(
     entry: EftelingConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
+    park_map = await async_get_park_map_metadata(hass)
+
     client = EftelingApiClient(
         session=async_get_clientsession(hass),
         language=entry.options.get(
@@ -86,6 +90,7 @@ async def async_setup_entry(
         wait_times_coordinator=wait_times_coordinator,
         park_info_coordinator=park_info_coordinator,
         annual_passes_coordinator=annual_passes_coordinator,
+        park_map=park_map,
     )
 
     await poi_coordinator.async_config_entry_first_refresh()

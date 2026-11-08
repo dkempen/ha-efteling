@@ -41,6 +41,16 @@ PARK_EVENT_BINARY_SENSOR_DESCRIPTIONS = (
 )
 
 
+def is_park_event_active(
+    data: EftelingData,
+    event_type: str,
+) -> bool:
+    """Return whether a particular Park event is active today."""
+    return any(
+        item["Type"] == event_type for item in build_snapshot(data)["events_today"]
+    )
+
+
 class EftelingParkEventBinarySensor(
     EftelingEntity[EftelingParkInfoUpdateCoordinator],
     BinarySensorEntity,
@@ -100,10 +110,7 @@ class EftelingParkEventBinarySensor(
             "winter_efteling": "winter",
             "business_event": "business",
         }[self.entity_description.key]
-        return any(
-            item.get("Type") == event_type
-            for item in build_snapshot(self._data)["events_today"]
-        )
+        return is_park_event_active(self._data, event_type)
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
