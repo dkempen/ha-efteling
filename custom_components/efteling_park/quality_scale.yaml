@@ -1,0 +1,253 @@
+# Quality Scale for Efteling
+# https://developers.home-assistant.io/docs/core/integration-quality-scale/
+
+rules:
+  # ============================================================================
+  # 🥉 Bronze (The baseline for every integration in core)
+  # ============================================================================
+
+  # Actions are registered when the integration loads, not per config entry.
+  action-setup:
+    status: exempt
+    comment: No custom service actions are registered.
+
+  # A polling integration uses an interval that fits its data.
+  appropriate-polling: done
+
+  # The integration has a logo and icon in the brands repository.
+  brands:
+    status: done
+    comment: >
+      Custom integration branding is supplied in the integration's brand/
+      directory with icon, logo, and high-DPI variants, as supported since
+      Home Assistant 2026.3.
+
+  # The coordinator lives in coordinator.py and the base entity in entity.py.
+  common-modules: done
+
+  # The integration is set up from the UI, with a clear config flow.
+  config-flow: done
+
+  # The config flow has full test coverage, including recovery from errors.
+  config-flow-test-coverage: done
+
+  # Dependencies are open source, on PyPI, and built and published in public CI.
+  dependency-transparency:
+    status: exempt
+    comment: >
+      The integration has no additional runtime requirements. It uses
+      Home Assistant's built-in asynchronous HTTP client and standard
+      library functionality.
+
+  # The documentation describes the actions of the integration.
+  docs-actions:
+    status: exempt
+    comment: The integration does not provide custom service actions.
+
+  # The documentation describes the conditions of the integration.
+  docs-conditions:
+    status: exempt
+    comment: The integration does not provide custom conditions.
+
+  # The documentation describes what the integration connects to.
+  docs-high-level-description: done
+
+  # The documentation has step-by-step setup instructions, with prerequisites.
+  docs-installation-instructions: done
+
+  # The documentation explains how to remove the integration.
+  docs-removal-instructions: done
+
+  # The documentation describes the triggers of the integration.
+  docs-triggers:
+    status: exempt
+    comment: The integration does not provide custom triggers.
+
+  # Entities subscribe in async_added_to_hass and unsubscribe when removed.
+  entity-event-setup: done
+
+  # Every entity has a unique ID, so users can customize it.
+  entity-unique-id: done
+
+  # Entities set has_entity_name to True, and are named in context of their device.
+  has-entity-name: done
+
+  # Runtime data is stored in ConfigEntry.runtime_data.
+  runtime-data: done
+
+  # The config flow tests the connection before it creates the entry.
+  test-before-configure: done
+
+  # Setup checks that it works, and raises the right exception when it does not.
+  test-before-setup: done
+
+  # The same device or service cannot be set up twice.
+  unique-config-entry: done
+
+  # ============================================================================
+  # 🥈 Silver (Reliability: errors, offline devices, reauthentication, and ownership)
+  # ============================================================================
+
+  # Actions raise ServiceValidationError or HomeAssistantError when they fail.
+  action-exceptions:
+    status: exempt
+    comment: The integration does not provide custom service actions.
+
+  # The integration can be unloaded and reloaded without a restart.
+  config-entry-unloading: done
+
+  # The documentation describes every option of the options flow.
+  docs-configuration-parameters: done
+
+  # The documentation describes every field asked for during setup.
+  docs-installation-parameters: done
+
+  # Entities become unavailable when the device or service cannot be reached.
+  entity-unavailable: done
+
+  # The integration has at least one integration owner.
+  integration-owner: done
+
+  # The integration logs a lost connection once, and once when it comes back.
+  log-when-unavailable: done
+
+  # Every entity platform sets PARALLEL_UPDATES.
+  parallel-updates: done
+
+  # Users can enter new credentials without removing the integration.
+  reauthentication-flow:
+    status: exempt
+    comment: >
+      The integration accesses Efteling's public endpoints without an account,
+      credentials, or authentication tokens. There is no authentication
+      mechanism to renew.
+
+  # The tests cover more than 95% of every module of the integration.
+  test-coverage: done
+
+  # ============================================================================
+  # 🥇 Gold (The best user experience: discovery, devices, translations, and documentation for users)
+  # ============================================================================
+
+  # Entities are grouped in devices, with complete device information.
+  devices: done
+
+  # Users can download diagnostics, with sensitive data redacted.
+  diagnostics: done
+
+  # Devices are discovered, so users do not have to look them up.
+  discovery:
+    status: exempt
+    comment: >
+      This is a cloud service integration. It has no physical devices or
+      local network endpoints that Home Assistant can discover.
+
+  # Discovery updates the address of a known device when it changes.
+  discovery-update-info:
+    status: exempt
+    comment: >
+      The integration does not discover network devices and has no host,
+      IP address, or other network connection information to update.
+
+  # The documentation explains how and how often data is updated.
+  docs-data-update: done
+
+  # The documentation gives automation examples or blueprints.
+  docs-examples: done
+
+  # The documentation lists the known limitations.
+  docs-known-limitations: done
+
+  # The documentation lists known supported and unsupported devices.
+  docs-supported-devices:
+    status: exempt
+    comment: >
+      This integration connects to Efteling's public cloud service rather
+      than physical hardware. There are no physical device models or
+      hardware compatibility combinations to document.
+
+  # The documentation describes the entities and functionality it provides.
+  docs-supported-functions: done
+
+  # The documentation helps users solve common problems themselves.
+  docs-troubleshooting: done
+
+  # The documentation shows what you can do with the integration.
+  docs-use-cases: done
+
+  # Devices that appear after setup are added without a reload.
+  dynamic-devices:
+    status: done
+    comment: >
+      New attractions and shows are discovered from the POI and wait-time
+      coordinators. New entities are added automatically through coordinator
+      listeners without requiring an integration reload. All attraction
+      entities share the Attractions service device, and all show entities
+      share the Shows service device.
+
+  # Configuration and diagnostic entities have an entity category.
+  entity-category: done
+
+  # Entities use a device class wherever one fits.
+  entity-device-class: done
+
+  # Entities that few users need are disabled by default.
+  entity-disabled-by-default: done
+
+  # Entity names come from strings.json, so they can be translated.
+  entity-translations: done
+
+  # Errors shown to users come from strings.json, so they can be translated.
+  exception-translations: done
+
+  # Entity icons are defined in icons.json.
+  icon-translations:
+    status: exempt
+    comment: >
+      Home Assistant's native icon translations cannot select an entity's
+      icon based on an arbitrary attribute such as the POI ID. Supporting
+      individual attraction and show icons therefore requires resolving
+      the icon in Python using the ID. A separate translation key for
+      every POI would be disproportionate for this integration.
+
+  # Users can change the setup of an entry without removing it.
+  reconfiguration-flow: done
+
+  # The integration raises repair issues for problems users can fix.
+  repair-issues:
+    status: exempt
+    comment: >
+      The integration only consumes Efteling's public cloud service.
+      Temporary upstream outages, unavailable endpoints, and incorrect
+      upstream data cannot be fixed by the Home Assistant user. The
+      integration already handles temporary communication failures through
+      coordinator availability and retries.
+
+  # Devices that are gone are removed, or can be removed by the user.
+  stale-devices:
+    status: exempt
+    comment: >
+      The integration creates three fixed logical service devices:
+      Park, Attractions, and Shows. Attractions and shows are entities
+      grouped under these devices, not independently registered devices
+      that can disappear from an upstream device inventory. The devices
+      remain valid for as long as the config entry exists.
+
+  # ============================================================================
+  # 🏆 Platinum (Technical excellence: async, efficient, and strictly typed)
+  # ============================================================================
+
+  # The library of the integration uses asyncio.
+  async-dependency: done
+
+  # The library accepts the web session of Home Assistant.
+  inject-websession: done
+
+  # The integration is fully typed and checked with strict mypy settings.
+  strict-typing:
+    status: done
+    comment: >
+      The integration has strict Mypy settings in pyproject.toml, runs
+      scripts/type-check in CI, and includes py.typed. All integration
+      source files pass the strict type check, and the options flow exposes
+      the typed EftelingConfigEntry.
