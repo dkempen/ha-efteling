@@ -14,6 +14,7 @@ Bring Efteling's live attraction, show, and park information into Home Assistant
 - **Attractions** - Live wait times, operating status, images, locations, and attraction details
 - **Shows** - Current and upcoming show times, previous show times, status, and show information
 - **Park information** - Park status, opening and closing times, and opening-hours schedules
+- **Park map** - Current park map image with automated location support for attractions and shows in dashboards
 - **Crowd levels** - Live crowd levels based on average attraction wait times, and crowd and occupancy forecasts
 - **Events and maintenance** - Winter Efteling, business events, and planned attraction maintenance
 - **Annual passes** - Annual pass validity information for Classic, Plus, and Premium
@@ -110,10 +111,15 @@ The Efteling park device includes the following entities:
 | Annual pass Classic           | Whether a Classic annual pass is valid for entry today.            |
 | Annual pass Plus              | Whether a Plus annual pass is valid for entry today.               |
 | Annual pass Premium           | Whether a Premium annual pass is valid for entry today.            |
+| Map                           | Current park map with easy location support to use in dashboards.  |
 
 Most entities expose additional attributes, including operating schedules, forecasts, event schedules, validity schedules, and upcoming maintenance information.
 
 **Crowd forecast** and **crowd level** are different measurements. The forecast comes from Efteling's park information, while the integration calculates the crowd level from current attraction wait times. The average only includes attractions reported as open with a valid wait time.
+
+The park map image entity updates automatically, and it switches between the summer and winter Efteling maps.
+Its state attributes provide the map's minimum and maximum latitude and longitude, and rotation, which can be used to position attraction locations on the image.
+All attractions and shows also have an `map_x` and `map_y` attribute (in percentages of the current map) to be easily displayed.
 
 ### Attractions
 
@@ -132,11 +138,14 @@ Attraction sensors expose additional attributes for dashboards and automations:
 
 | Attribute               | Description                      |
 | ----------------------- | -------------------------------- |
+| `id`                    | Unique attraction id.            |
 | `status`                | Current attraction status.       |
 | `empire`                | Efteling area or realm.          |
 | `description`           | Attraction description.          |
 | `subtitle`              | Attraction subtitle.             |
 | `latitude`, `longitude` | Attraction coordinates.          |
+| `map_x`, `map_y`        | Map image position in percent.   |
+| `map_marker`            | If it should be on the map.      |
 | `image`, `image_detail` | Main and detail image URLs.      |
 | `properties`            | Attraction properties.           |
 | `entry_requirements`    | Entry requirements.              |
@@ -148,6 +157,40 @@ The attraction status is one of `Open`, `Closed`, `Under maintenance`, `Out of o
 
 The sensor entity IDs for attraction wait times and show start times use the prefixes `sensor.efteling_attractions_` and `sensor.efteling_shows_`, respectively.
 Enabling the optional attraction status sensors adds entities with the `_status` suffix, which can be filtered using the `sensor_type` attribute.
+
+### Shows
+
+Each show has a timestamp sensor that provides the start time of the currently running show or, if no show is running, the next upcoming show. If no current or upcoming show is available, the sensor state is `unknown`.
+
+For example:
+
+```text
+sensor.efteling_aquanura
+State: 2026-10-21 21:00:00
+```
+
+Show sensors also expose the following attributes:
+
+| Attribute               | Description                             |
+| ----------------------- | --------------------------------------- |
+| `id`                    | Unique show id.                         |
+| `status`                | Current show status.                    |
+| `current_show_end`      | End time of the currently running show. |
+| `previous_showtimes`    | Start times of previous shows.          |
+| `upcoming_showtimes`    | Start times of upcoming shows.          |
+| `duration_minutes`      | Show duration, in minutes.              |
+| `edition`               | Show edition, when available.           |
+| `empire`                | Efteling area or realm.                 |
+| `description`           | Show description.                       |
+| `subtitle`              | Show subtitle, when available.          |
+| `latitude`, `longitude` | Show coordinates.                       |
+| `map_x`, `map_y`        | Map image position in percent.          |
+| `map_marker`            | If it should be on the map.             |
+| `image`, `image_detail` | Main and detail image URLs.             |
+| `properties`            | Show properties.                        |
+| `type`                  | Efteling point-of-interest type.        |
+
+The show status is one of `Currently running`, `Upcoming`, or `No more shows today`. Status labels follow the Home Assistant language setting.
 
 ## Use cases
 
@@ -169,37 +212,6 @@ automation:
         data:
           message: Python's wait time is {{ states('sensor.efteling_attractions_python') }} minutes.
 ```
-
-### Shows
-
-Each show has a timestamp sensor that provides the start time of the currently running show or, if no show is running, the next upcoming show. If no current or upcoming show is available, the sensor state is `unknown`.
-
-For example:
-
-```text
-sensor.efteling_aquanura
-State: 2026-10-21 21:00:00
-```
-
-Show sensors also expose the following attributes:
-
-| Attribute               | Description                             |
-| ----------------------- | --------------------------------------- |
-| `status`                | Current show status.                    |
-| `current_show_end`      | End time of the currently running show. |
-| `previous_showtimes`    | Start times of previous shows.          |
-| `upcoming_showtimes`    | Start times of upcoming shows.          |
-| `duration_minutes`      | Show duration, in minutes.              |
-| `edition`               | Show edition, when available.           |
-| `empire`                | Efteling area or realm.                 |
-| `description`           | Show description.                       |
-| `subtitle`              | Show subtitle, when available.          |
-| `latitude`, `longitude` | Show coordinates.                       |
-| `image`, `image_detail` | Main and detail image URLs.             |
-| `properties`            | Show properties.                        |
-| `type`                  | Efteling point-of-interest type.        |
-
-The show status is one of `Currently running`, `Upcoming`, or `No more shows today`. Status labels follow the Home Assistant language setting.
 
 ## Update intervals
 
