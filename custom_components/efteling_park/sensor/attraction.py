@@ -90,7 +90,7 @@ class EftelingAttractionSensor(
         self.async_write_ha_state()
 
     @property
-    def native_value(self) -> int | None:
+    def native_value(self) -> int | str | None:
         """Return wait time if attraction is open."""
         attraction = self.coordinator.data.get(self._attraction_id)
 

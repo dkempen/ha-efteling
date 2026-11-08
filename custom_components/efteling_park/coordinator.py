@@ -108,7 +108,7 @@ class EftelingParkInfoUpdateCoordinator(
 
     def start_monthly_refresh(self) -> Callable[[], None]:
         """Start a timer for the next month boundary and return its cleanup."""
-        self._unsub_monthly_refresh = None
+        self._unsub_monthly_refresh: Callable[[], None] | None = None
         self._schedule_monthly_refresh()
         return self._cancel_monthly_refresh
 

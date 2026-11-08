@@ -247,8 +247,8 @@ class EftelingApiClient:
         self,
         method: str,
         url: str,
-        data: dict | None = None,
-        headers: dict | None = None,
+        data: dict[str, object] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> dict[str, object]:
         """Get information from the API."""
         try:

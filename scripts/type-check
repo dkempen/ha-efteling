@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+TYPECHECK_PYTHON="${PYTHON:-python3}"
+
+cd "$ROOT"
+
+exec "$TYPECHECK_PYTHON" -m mypy --config-file pyproject.toml custom_components/efteling_park

@@ -159,9 +159,9 @@ class EftelingShowSensor(
 
         entries: list[ParsedShowTime] = []
 
-        for key in ("ShowTimes", "PastShowTimes"):
-            items = show.get(key) or []
-
+        for items in (show.get("ShowTimes"), show.get("PastShowTimes")):
+            if items is None:
+                continue
             for item in items:
                 start = self._parse_show_datetime(item.get("StartDateTime"))
 

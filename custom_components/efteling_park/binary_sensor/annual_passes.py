@@ -114,7 +114,7 @@ class EftelingAnnualPassBinarySensor(
         return self._today_availability is True
 
     @property
-    def extra_state_attributes(self) -> dict[str, dict[str, bool]]:
+    def extra_state_attributes(self) -> dict[str, dict[str, bool | None]]:
         """Expose all annual-pass data for this tier."""
         schedule = {
             date: availability.get(self.entity_description.key.title())

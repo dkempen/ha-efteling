@@ -2,7 +2,7 @@
 
 from typing import NotRequired, TypedDict
 
-type AnnualPasses = dict[str, dict[str, bool]]
+type AnnualPasses = dict[str, dict[str, bool | None]]
 
 
 class ShowTimeInfo(TypedDict):

@@ -155,8 +155,11 @@ class EftelingParkSensor(
             occupancy = today_record.get("Crowdedness") if today_record else None
             value = occupancy_forecast_value(occupancy)
 
-        elif key in ("opening_time", "closing_time"):
-            value = snapshot[key]
+        elif key == "opening_time":
+            value = snapshot["opening_time"]
+
+        elif key == "closing_time":
+            value = snapshot["closing_time"]
 
         elif key == "attractions_under_maintenance":
             value = len(snapshot["maintenance_today"])
