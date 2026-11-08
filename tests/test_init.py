@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, patch
 
+import pytest
 from homeassistant.config_entries import SOURCE_RECONFIGURE, ConfigEntryState
 from homeassistant.const import CONF_LANGUAGE
 from homeassistant.data_entry_flow import FlowResultType
@@ -20,7 +21,8 @@ if TYPE_CHECKING:
 
 
 async def test_setup_and_unload(
-    hass: HomeAssistant, loaded_entry: MockConfigEntry
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
 ) -> None:
     """Forward platforms, load entities, and unload their listeners cleanly."""
     assert loaded_entry.state is ConfigEntryState.LOADED
@@ -30,20 +32,34 @@ async def test_setup_and_unload(
     assert loaded_entry.state is ConfigEntryState.NOT_LOADED
 
 
+@pytest.mark.parametrize(
+    "method_name",
+    [
+        "async_get_poi_list",
+        "async_get_wait_times",
+        "async_get_park_info",
+        "async_get_annual_passes",
+    ],
+)
 async def test_initial_coordinator_failure_retries_setup(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,
+    api_responses: None,
+    method_name: str,
 ) -> None:
-    """Let Home Assistant retry when an initial endpoint refresh fails."""
+    """Let Home Assistant retry when any initial endpoint refresh fails."""
+    del api_responses
+
     with patch.object(
         EftelingApiClient,
-        "async_get_poi_list",
+        method_name,
         new_callable=AsyncMock,
         side_effect=EftelingApiClientCommunicationError("offline"),
     ):
         config_entry.add_to_hass(hass)
         await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
+
     assert config_entry.state is ConfigEntryState.SETUP_RETRY
 
 

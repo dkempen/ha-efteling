@@ -7,6 +7,7 @@ https://github.com/dkempen/ha-efteling
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 from typing import TYPE_CHECKING
 
@@ -93,10 +94,17 @@ async def async_setup_entry(
         park_map=park_map,
     )
 
-    await poi_coordinator.async_config_entry_first_refresh()
-    await wait_times_coordinator.async_config_entry_first_refresh()
-    await park_info_coordinator.async_config_entry_first_refresh()
-    await annual_passes_coordinator.async_config_entry_first_refresh()
+    refresh_results = await asyncio.gather(
+        poi_coordinator.async_config_entry_first_refresh(),
+        wait_times_coordinator.async_config_entry_first_refresh(),
+        park_info_coordinator.async_config_entry_first_refresh(),
+        annual_passes_coordinator.async_config_entry_first_refresh(),
+        return_exceptions=True,
+    )
+
+    for result in refresh_results:
+        if isinstance(result, BaseException):
+            raise result
 
     entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
 

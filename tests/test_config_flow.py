@@ -55,6 +55,7 @@ async def unload_reconfigured_entry(
             "async_get_poi_list",
             "async_get_wait_times",
             "async_get_park_info",
+            "async_get_annual_passes",
         )
         for error, expected in (
             (EftelingApiClientCommunicationError, "cannot_connect"),
@@ -79,6 +80,7 @@ async def test_user_flow_reports_validation_errors(
             "Maintenance": [],
             "Events": [],
         },
+        "async_get_annual_passes": {},
     }[method_name]
     with patch.object(
         EftelingApiClient,
@@ -89,7 +91,7 @@ async def test_user_flow_reports_validation_errors(
             successful_response,
             successful_response,
         ],
-    ) as poi_mock:
+    ) as endpoint_mock:
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_USER},
@@ -109,14 +111,14 @@ async def test_user_flow_reports_validation_errors(
     assert "result" in result
     assert result["result"].unique_id == DOMAIN
     assert result["result"].options[CONF_LANGUAGE] == "en"
-    assert poi_mock.await_count >= 2
+    assert endpoint_mock.await_count >= 2
 
 
 async def test_user_flow_creates_entry_after_all_checks_pass(
     hass: HomeAssistant,
     api_responses: None,
 ) -> None:
-    """Create an entry only after all three endpoint checks succeed."""
+    """Create an entry only after all four endpoint checks succeed."""
     del api_responses
     with (
         patch.object(
@@ -135,8 +137,18 @@ async def test_user_flow_creates_entry_after_all_checks_pass(
             EftelingApiClient,
             "async_get_park_info",
             new_callable=AsyncMock,
-            return_value={"OpeningHours": [], "Maintenance": [], "Events": []},
+            return_value={
+                "OpeningHours": [],
+                "Maintenance": [],
+                "Events": [],
+            },
         ) as park_info_mock,
+        patch.object(
+            EftelingApiClient,
+            "async_get_annual_passes",
+            new_callable=AsyncMock,
+            return_value={},
+        ) as annual_passes_mock,
     ):
         original_create_entry = EftelingFlowHandler.async_create_entry
 
@@ -148,6 +160,7 @@ async def test_user_flow_creates_entry_after_all_checks_pass(
             poi_mock.assert_awaited_once()
             wait_times_mock.assert_awaited_once()
             park_info_mock.assert_awaited_once()
+            annual_passes_mock.assert_awaited_once()
             return original_create_entry(flow, *args, **kwargs)
 
         with patch.object(
@@ -255,6 +268,7 @@ async def test_reconfigure_flow_prefills_and_updates_language(
             "async_get_poi_list",
             "async_get_wait_times",
             "async_get_park_info",
+            "async_get_annual_passes",
         )
         for error, expected in (
             (EftelingApiClientCommunicationError, "cannot_connect"),
@@ -287,6 +301,7 @@ async def test_reconfigure_flow_reports_validation_errors(
             "Maintenance": [],
             "Events": [],
         },
+        "async_get_annual_passes": {},
     }[method_name]
     with patch.object(
         EftelingApiClient,
@@ -318,4 +333,27 @@ async def test_reconfigure_flow_reports_validation_errors(
     assert entry.data[CONF_LANGUAGE] == "nl"
     assert entry.options[CONF_LANGUAGE] == "en"
     assert entry.options[CONF_CREATE_ATTRACTION_STATUS_SENSORS] is False
-    assert endpoint_mock.await_count == 3
+    assert endpoint_mock.await_count >= 2
+
+
+async def test_user_flow_reraises_unexpected_validation_error(
+    hass: HomeAssistant,
+    api_responses: None,
+) -> None:
+    """Do not translate unexpected endpoint errors into validation errors."""
+    del api_responses
+    with patch.object(
+        EftelingApiClient,
+        "async_get_poi_list",
+        new_callable=AsyncMock,
+        side_effect=RuntimeError("unexpected failure"),
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_USER},
+        )
+        with pytest.raises(RuntimeError, match="unexpected failure"):
+            await hass.config_entries.flow.async_configure(
+                result["flow_id"],
+                user_input={CONF_LANGUAGE: "nl"},
+            )

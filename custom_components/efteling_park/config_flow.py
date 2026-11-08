@@ -156,15 +156,30 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         )
         now = dt_util.now(PARK_TIME_ZONE)
 
-        try:
-            await asyncio.gather(
-                client.async_get_poi_list(),
-                client.async_get_wait_times(),
-                client.async_get_park_info(now.year, now.month),
-            )
-        except EftelingApiClientCommunicationError:
+        results = await asyncio.gather(
+            client.async_get_poi_list(),
+            client.async_get_wait_times(),
+            client.async_get_park_info(now.year, now.month),
+            client.async_get_annual_passes(),
+            return_exceptions=True,
+        )
+
+        # Do not hide unexpected programming or cancellation errors behind
+        # an ordinary API validation error.
+        for result in results:
+            if isinstance(result, BaseException) and not isinstance(
+                result,
+                EftelingApiClientError,
+            ):
+                raise result
+
+        if any(
+            isinstance(result, EftelingApiClientCommunicationError)
+            for result in results
+        ):
             return "cannot_connect"
-        except EftelingApiClientError:
+
+        if any(isinstance(result, EftelingApiClientError) for result in results):
             return "invalid_response"
 
         return None

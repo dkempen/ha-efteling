@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import math
 from dataclasses import dataclass
@@ -33,6 +34,7 @@ MAP_IMAGE_URLS: dict[MapSeason, str] = {
 MAP_SEASONS: tuple[MapSeason, ...] = ("summer", "winter")
 SUPPORTED_ROTATIONS = frozenset({0, 90, 180, 270})
 DEFAULT_ROTATION_DEGREES = 90
+MAP_MANIFEST_TIMEOUT = 10
 
 
 @dataclass(frozen=True)
@@ -198,9 +200,10 @@ async def async_get_park_map_metadata(
     should not prevent the other integration platforms from loading.
     """
     try:
-        async with async_get_clientsession(hass).get(MAP_MANIFEST_URL) as response:
-            response.raise_for_status()
-            raw_manifest = json.loads(await response.text())
+        async with asyncio.timeout(MAP_MANIFEST_TIMEOUT):
+            async with async_get_clientsession(hass).get(MAP_MANIFEST_URL) as response:
+                response.raise_for_status()
+                raw_manifest = json.loads(await response.text())
 
         return parse_map_manifest(raw_manifest)
 
