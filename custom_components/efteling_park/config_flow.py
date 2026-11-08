@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -36,6 +36,9 @@ from custom_components.efteling_park.const import (
     NAME,
     PARK_TIME_ZONE,
 )
+
+if TYPE_CHECKING:
+    from custom_components.efteling_park.data import EftelingConfigEntry
 
 
 def _get_options_schema(
@@ -78,7 +81,7 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     def async_get_options_flow(
-        config_entry: config_entries.ConfigEntry,
+        config_entry: config_entries.ConfigEntry[Any],
     ) -> EftelingOptionsFlowHandler:
         """Return the options flow handler."""
         del config_entry
@@ -117,7 +120,7 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         user_input: dict[str, Any] | None = None,
     ) -> config_entries.ConfigFlowResult:
         """Handle reconfiguration of an existing entry."""
-        entry = self._get_reconfigure_entry()
+        entry = cast("EftelingConfigEntry", self._get_reconfigure_entry())
 
         await self.async_set_unique_id(entry.unique_id)
         self._abort_if_unique_id_mismatch()
@@ -187,6 +190,11 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
 class EftelingOptionsFlowHandler(config_entries.OptionsFlowWithReload):
     """Handle Efteling options."""
+
+    @property
+    def config_entry(self) -> EftelingConfigEntry:
+        """Return the integration's typed config entry."""
+        return cast("EftelingConfigEntry", super().config_entry)
 
     async def async_step_init(
         self,
