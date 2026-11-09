@@ -405,8 +405,9 @@ async def test_show_has_stable_identity_and_empty_schedule_is_unknown(
     hass: HomeAssistant,
     loaded_entry: MockConfigEntry,
 ) -> None:
-    """Create the show sensor by its existing unique ID with no fake time."""
+    """Expose POI metadata even when a show has no scheduled performances."""
     entity = _entity_for_unique_id(hass, loaded_entry, "aquanura")
+
     loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(
         {
             "aquanura": {
@@ -414,12 +415,47 @@ async def test_show_has_stable_identity_and_empty_schedule_is_unknown(
                 "Name": "Aquanura",
                 "State": "open",
                 "ShowTimes": [],
+                "PastShowTimes": [],
             }
         }
     )
     await hass.async_block_till_done()
+
     state = _state(hass, entity.entity_id)
+
+    # No showtime means the timestamp remains unknown.
     assert state.state == "unknown"
+
+    # Schedule attributes remain available and have consistent types.
+    assert state.attributes["id"] == "aquanura"
+    assert state.attributes["status"] == "no_more_shows_today"
+    assert state.attributes["current_show_end"] is None
+    assert state.attributes["previous_showtimes"] == []
+    assert state.attributes["upcoming_showtimes"] == []
+    assert state.attributes["edition"] is None
+
+    # POI metadata must still be exposed.
+    assert state.attributes["empire"] == "Fantasierijk"
+    assert state.attributes["description"].startswith("Sluit je dag in de Efteling af")
+    assert (
+        state.attributes["subtitle"]
+        == "Laat je verwonderen door dit muzikale spektakel"
+    )
+    assert state.attributes["latitude"] == 51.648014
+    assert state.attributes["longitude"] == 5.045388
+    assert state.attributes["properties"] == [
+        "attractionforfamiliy",
+        "outdoorattraction",
+        "easilyaccessiblewheelchairs",
+        "assistancedogs",
+    ]
+    assert state.attributes["type"] == "Watershow"
+    assert state.attributes["image"].startswith("https://www.efteling.com/")
+    assert state.attributes["image_detail"].startswith("https://www.efteling.com/")
+    assert state.attributes["sensor_type"] == "show_start_time"
+
+    # Static POI duration is used when no live showtime duration exists.
+    assert state.attributes["duration_minutes"] == 14
 
 
 async def test_showtime_transitions_and_metadata_updates(
@@ -463,6 +499,11 @@ async def test_showtime_transitions_and_metadata_updates(
                             "EndDateTime": "2026-10-23T14:00:00",
                             "Duration": 0,
                         },
+                        {
+                            "StartDateTime": "2026-10-23T16:00:00",
+                            "EndDateTime": "2026-10-23T16:30:00",
+                            "Duration": "unknown",
+                        },
                     ],
                     "PastShowTimes": [
                         {
@@ -481,7 +522,7 @@ async def test_showtime_transitions_and_metadata_updates(
         assert state.attributes["duration_minutes"] == 60
         assert state.attributes["edition"] == "Matinee"
         assert len(state.attributes["previous_showtimes"]) == 1
-        assert len(state.attributes["upcoming_showtimes"]) == 1
+        assert len(state.attributes["upcoming_showtimes"]) == 2
         assert track.call_count == 1
 
         now = datetime(2026, 10, 23, 12, 40, tzinfo=park_timezone)

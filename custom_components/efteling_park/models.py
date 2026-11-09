@@ -45,6 +45,7 @@ class Poi(TypedDict):
     properties: NotRequired[list[str] | None]
     properties_entry_requirements: NotRequired[list[str] | None]
     properties_stimuli: NotRequired[list[str] | None]
+    showduration: NotRequired[str | None]
     subtitle: NotRequired[str | None]
     targetgroups: NotRequired[list[str] | None]
     type: NotRequired[str | None]

@@ -84,6 +84,7 @@ class EftelingShowSensor(
             map_metadata,
             poi_id=show_id,
         )
+        self._poi_duration = self._parse_duration(poi.get("showduration"))
         self._entries: list[ParsedShowTime] = []
         self._refresh_entries()
 
@@ -117,6 +118,7 @@ class EftelingShowSensor(
             self._map_metadata,
             poi_id=self._show_id,
         )
+        self._poi_duration = self._parse_duration(poi.get("showduration"))
         self.async_write_ha_state()
 
     @staticmethod
@@ -143,12 +145,17 @@ class EftelingShowSensor(
         )
 
     @staticmethod
-    def _parse_duration(value: int | None) -> int | None:
+    def _parse_duration(value: int | str | None) -> int | None:
         """Return a positive integer duration when the API value is valid."""
         if value is None:
             return None
 
-        return value if value > 0 else None
+        try:
+            duration = int(value)
+        except ValueError:
+            return None
+
+        return duration if duration > 0 else None
 
     def _refresh_entries(self) -> None:
         """Parse and sort show entries after coordinator data changes."""
@@ -232,13 +239,10 @@ class EftelingShowSensor(
         return next((item.start for item in self._entries if item.start > now), None)
 
     @property
-    def extra_state_attributes(self) -> dict[str, Any] | None:
-        """Expose current/upcoming showtimes and related metadata."""
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Expose showtimes and POI metadata, even without a schedule."""
         now = dt_util.now()
         entries = self._entries
-
-        if not entries:
-            return {"id": self._show_id}
 
         current = self._current_entry(now)
         future = [item for item in entries if item.start > now]
@@ -254,13 +258,19 @@ class EftelingShowSensor(
 
         metadata = self._metadata
 
+        duration = (
+            source.duration
+            if source is not None and source.duration is not None
+            else self._poi_duration
+        )
+
         return {
             "id": self._show_id,
             "status": status,
             "current_show_end": current.end if current else None,
             "previous_showtimes": [item.start for item in past],
             "upcoming_showtimes": [item.start for item in future],
-            "duration_minutes": source.duration if source else None,
+            "duration_minutes": duration,
             "edition": source.edition if source else None,
             "empire": metadata.empire,
             "description": metadata.description,
