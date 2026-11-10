@@ -9,15 +9,14 @@ on:
       - .github/workflows/map.yaml
   workflow_dispatch:
   schedule:
-    - cron: "0 17 * * *"
-      timezone: Europe/Amsterdam
+    - cron: "0 0 * * *"
 
 permissions:
   contents: write
 
 jobs:
-  update-map:
-    name: Generate and commit park maps
+  update-park-map:
+    name: Update park map
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
