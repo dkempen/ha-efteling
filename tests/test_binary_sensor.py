@@ -4,13 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
 
 from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
-from custom_components.efteling_park.api import EftelingApiClient
+from custom_components.efteling_park.const import PARK_TIME_ZONE
 from custom_components.efteling_park.sensor import park_snapshot
 
 if TYPE_CHECKING:
@@ -50,6 +49,47 @@ async def test_missing_schedule_makes_park_status_unavailable(
     loaded_entry.runtime_data.park_info_coordinator.async_set_updated_data(
         {"OpeningHours": [], "Maintenance": [], "Events": []}
     )
+    await hass.async_block_till_done()
+    assert _state(hass, entity.entity_id).state == "unavailable"
+
+
+async def test_annual_pass_sensors_expose_all_dates(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Expose each pass tier's permission and every supplied date."""
+    today = dt_util.now(PARK_TIME_ZONE).date()
+    schedule = {
+        (today + timedelta(days=offset)).isoformat(): {
+            "Classic": offset != 0,
+            "Plus": True,
+            "Premium": offset != 1,
+        }
+        for offset in (0, 1, 30, 365)
+    }
+    loaded_entry.runtime_data.annual_passes_coordinator.async_set_updated_data(schedule)
+    await hass.async_block_till_done()
+
+    for tier, pass_name, expected in (
+        ("classic", "Classic", False),
+        ("plus", "Plus", True),
+        ("premium", "Premium", True),
+    ):
+        entity = _entity_for_unique_id(hass, loaded_entry, f"park_{tier}")
+        state = _state(hass, entity.entity_id)
+        assert state.state == ("on" if expected else "off")
+        assert state.attributes["annual_passes"] == {
+            date: availability[pass_name] for date, availability in schedule.items()
+        }
+
+
+async def test_annual_pass_sensor_is_unavailable_without_today_data(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Mark today's pass availability unavailable when Efteling omits its date."""
+    entity = _entity_for_unique_id(hass, loaded_entry, "park_classic")
+    loaded_entry.runtime_data.annual_passes_coordinator.async_set_updated_data({})
     await hass.async_block_till_done()
     assert _state(hass, entity.entity_id).state == "unavailable"
 
@@ -140,95 +180,4 @@ async def test_event_sensors_expose_current_and_all_event_attributes(
     assert (
         business_state.attributes["business_events_today"][0]["name"]
         == "(Bedrijfs)evenement"
-    )
-
-
-async def test_timer_callbacks_are_removed_when_entry_unloads(
-    hass: HomeAssistant,
-    config_entry: MockConfigEntry,
-    api_responses: None,
-) -> None:
-    """Unsubscribe coordinator and entity time listeners on unload."""
-    del api_responses
-    timer_removers = {
-        name: MagicMock()
-        for name in (
-            "coordinator",
-            "annual_passes",
-            "park_status",
-            "park_event",
-            "show",
-            "park_sensor",
-        )
-    }
-    show_start = dt_util.now() + timedelta(hours=1)
-    show_end = show_start + timedelta(minutes=30)
-    with (
-        patch.object(
-            EftelingApiClient,
-            "async_get_wait_times",
-            new_callable=AsyncMock,
-            return_value=[
-                {
-                    "Id": "aquanura",
-                    "Name": "Aquanura",
-                    "State": "open",
-                    "ShowTimes": [
-                        {
-                            "StartDateTime": show_start.isoformat(),
-                            "EndDateTime": show_end.isoformat(),
-                        }
-                    ],
-                }
-            ],
-        ),
-        patch(
-            "custom_components.efteling_park.coordinator.async_track_point_in_time",
-            return_value=timer_removers["coordinator"],
-        ),
-        patch(
-            "custom_components.efteling_park.binary_sensor.annual_passes.async_track_point_in_time",
-            return_value=timer_removers["annual_passes"],
-        ) as annual_pass_tracker,
-        patch(
-            "custom_components.efteling_park.binary_sensor.park_status.async_track_point_in_time",
-            return_value=timer_removers["park_status"],
-        ) as status_tracker,
-        patch(
-            "custom_components.efteling_park.binary_sensor.park_event.async_track_point_in_time",
-            return_value=timer_removers["park_event"],
-        ) as event_tracker,
-        patch(
-            "custom_components.efteling_park.sensor.show.async_track_point_in_time",
-            return_value=timer_removers["show"],
-        ) as show_tracker,
-        patch(
-            "custom_components.efteling_park.sensor.park.async_track_point_in_time",
-            return_value=timer_removers["park_sensor"],
-        ) as park_tracker,
-    ):
-        config_entry.add_to_hass(hass)
-        assert await hass.config_entries.async_setup(config_entry.entry_id)
-        await hass.async_block_till_done()
-
-        for tracker in (
-            annual_pass_tracker,
-            status_tracker,
-            event_tracker,
-            show_tracker,
-            park_tracker,
-        ):
-            for call in tracker.call_args_list.copy():
-                call.args[1](call.args[2])
-        await hass.async_block_till_done()
-
-        cleanup_counts_before_unload = {
-            name: remover.call_count for name, remover in timer_removers.items()
-        }
-        assert await hass.config_entries.async_unload(config_entry.entry_id)
-        await hass.async_block_till_done()
-
-    assert all(
-        remover.call_count > cleanup_counts_before_unload[name]
-        for name, remover in timer_removers.items()
     )

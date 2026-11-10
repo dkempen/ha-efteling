@@ -14,7 +14,7 @@ else:
     import voluptuous as vol
 
 from custom_components.efteling_park.const import (
-    ANNUAL_PASS_URL,
+    ANNUAL_PASSES_URL,
     APP_HEADERS,
     PARK_INFO_URL,
     POINTS_OF_INTEREST_URL,
@@ -29,6 +29,8 @@ if TYPE_CHECKING:
         AttractionInfo,
         ParkInfoResponse,
         Poi,
+        PoiResponse,
+        WaitTimesResponse,
     )
 
 
@@ -43,32 +45,7 @@ _SHOW_TIME_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-_POI_FIELDS_SCHEMA = vol.Schema(
-    {
-        vol.Required("id"): str,
-        vol.Required("name"): str,
-        vol.Required("category"): str,
-        vol.Optional("alternateid"): vol.Any(str, None),
-    },
-    extra=vol.ALLOW_EXTRA,
-)
-
-_POI_HIT_SCHEMA = vol.Schema(
-    {vol.Required("fields"): _POI_FIELDS_SCHEMA},
-    extra=vol.ALLOW_EXTRA,
-)
-
-_POI_HITS_SCHEMA = vol.Schema(
-    {vol.Required("hit"): [_POI_HIT_SCHEMA]},
-    extra=vol.ALLOW_EXTRA,
-)
-
-_POI_RESPONSE_SCHEMA = vol.Schema(
-    {vol.Required("hits"): _POI_HITS_SCHEMA},
-    extra=vol.ALLOW_EXTRA,
-)
-
-_WAIT_TIME_RECORD_SCHEMA = vol.Schema(
+_ATTRACTION_INFO_SCHEMA = vol.Schema(
     {
         vol.Required("Id"): str,
         vol.Required("Name"): str,
@@ -82,8 +59,58 @@ _WAIT_TIME_RECORD_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+_POI_FIELDS_SCHEMA = vol.Schema(
+    {
+        vol.Required("id"): str,
+        vol.Required("name"): str,
+        vol.Required("category"): str,
+        vol.Optional("alternateid"): vol.Any(str, None),
+        vol.Optional("alternatelabel"): vol.Any(str, None),
+        vol.Optional("wis_info"): vol.Any(_ATTRACTION_INFO_SCHEMA, None),
+        vol.Optional("detail_text"): vol.Any(str, None),
+        vol.Optional("empire"): vol.Any(str, None),
+        vol.Optional("image"): vol.Any(str, None),
+        vol.Optional("image_detailview1"): vol.Any(str, None),
+        vol.Optional("latlon"): vol.Any(str, None),
+        vol.Optional("properties"): vol.Any([str], None),
+        vol.Optional("properties_entry_requirements"): vol.Any([str], None),
+        vol.Optional("properties_stimuli"): vol.Any([str], None),
+        vol.Optional("showduration"): vol.Any(str, None),
+        vol.Optional("subtitle"): vol.Any(str, None),
+        vol.Optional("targetgroups"): vol.Any([str], None),
+        vol.Optional("type"): vol.Any(str, None),
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+_POI_HIT_SCHEMA = vol.Schema(
+    {
+        vol.Optional("id"): str,
+        vol.Required("fields"): _POI_FIELDS_SCHEMA,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+_POI_HITS_SCHEMA = vol.Schema(
+    {
+        vol.Required("hit"): [_POI_HIT_SCHEMA],
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
+_POI_RESPONSE_SCHEMA = vol.Schema(
+    {
+        vol.Required("hits"): _POI_HITS_SCHEMA,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 _WAIT_TIME_RESPONSE_SCHEMA = vol.Schema(
-    {vol.Required("AttractionInfo"): [_WAIT_TIME_RECORD_SCHEMA]},
+    {
+        vol.Optional("Version"): str,
+        vol.Optional("TimeStamp"): str,
+        vol.Required("AttractionInfo"): [_ATTRACTION_INFO_SCHEMA],
+    },
     extra=vol.ALLOW_EXTRA,
 )
 
@@ -98,7 +125,11 @@ _OPENING_INTERVAL_SCHEMA = vol.Schema(
 _OPENING_DAY_SCHEMA = vol.Schema(
     {
         vol.Required("Date"): str,
-        vol.Optional("OpeningHours"): vol.Any([_OPENING_INTERVAL_SCHEMA], None),
+        vol.Optional("FormattedDate"): vol.Any(str, None),
+        vol.Optional("OpeningHours"): vol.Any(
+            [_OPENING_INTERVAL_SCHEMA],
+            None,
+        ),
         vol.Optional("Crowded"): vol.Any(int, None),
         vol.Optional("Crowdedness"): vol.Any(int, None),
     },
@@ -109,6 +140,11 @@ _MAINTENANCE_SCHEMA = vol.Schema(
     {
         vol.Required("DateFrom"): str,
         vol.Required("DateTo"): str,
+        vol.Optional("Name"): vol.Any(str, None),
+        vol.Optional("OpenInWeekend"): vol.Any(bool, None),
+        vol.Optional("State"): vol.Any(str, None),
+        vol.Optional("Type"): vol.Any(str, None),
+        vol.Optional("Url"): vol.Any(str, None),
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -118,21 +154,37 @@ _EVENT_SCHEMA = vol.Schema(
         vol.Required("DateFrom"): str,
         vol.Required("DateTo"): str,
         vol.Required("Type"): str,
+        vol.Optional("Name"): vol.Any(str, None),
+        vol.Optional("Description"): vol.Any(str, None),
+        vol.Optional("Link"): vol.Any(str, None),
     },
     extra=vol.ALLOW_EXTRA,
 )
 
 _PARK_INFO_RESPONSE_SCHEMA = vol.Schema(
     {
-        vol.Optional("OpeningHours", default=[]): vol.Any([_OPENING_DAY_SCHEMA], None),
-        vol.Optional("Maintenance", default=[]): vol.Any([_MAINTENANCE_SCHEMA], None),
-        vol.Optional("Events", default=[]): vol.Any([_EVENT_SCHEMA], None),
+        vol.Optional("OpeningHours", default=[]): vol.Any(
+            [_OPENING_DAY_SCHEMA],
+            None,
+        ),
+        vol.Optional("Maintenance", default=[]): vol.Any(
+            [_MAINTENANCE_SCHEMA],
+            None,
+        ),
+        vol.Optional("Events", default=[]): vol.Any(
+            [_EVENT_SCHEMA],
+            None,
+        ),
     },
     extra=vol.ALLOW_EXTRA,
 )
 
 _ANNUAL_PASSES_SCHEMA = vol.Schema(
-    {str: {str: bool}},
+    {
+        str: {
+            str: vol.Any(bool, None),
+        },
+    },
     extra=vol.ALLOW_EXTRA,
 )
 
@@ -159,10 +211,16 @@ def _validate_response(
 ) -> dict[str, Any]:
     """Validate an API response."""
     try:
-        return cast("dict[str, Any]", schema(response))
+        validated = schema(response)
+
+        if not isinstance(validated, dict):
+            msg = f"Invalid {description} response: expected an object"
+            raise EftelingApiClientError(msg)
     except vol.Invalid as exception:
         msg = f"Invalid {description} response: {exception}"
         raise EftelingApiClientError(msg) from exception
+    else:
+        return validated
 
 
 class EftelingApiClient:
@@ -190,9 +248,9 @@ class EftelingApiClient:
         """Return POI data (points of interest, for example attractions)."""
         response = await self._async_get_json(POINTS_OF_INTEREST_URL, self.headers)
         parsed = _validate_response(response, _POI_RESPONSE_SCHEMA, "POI")
-        hits = cast("dict[str, object]", parsed["hits"])
-        records = cast("list[dict[str, object]]", hits["hit"])
-        return [cast("Poi", record["fields"]) for record in records]
+        poi_response = cast("PoiResponse", parsed)
+
+        return [hit["fields"] for hit in poi_response["hits"]["hit"]]
 
     async def async_get_wait_times(self) -> list[AttractionInfo]:
         """Return wait times data."""
@@ -202,7 +260,9 @@ class EftelingApiClient:
             _WAIT_TIME_RESPONSE_SCHEMA,
             "wait times",
         )
-        return cast("list[AttractionInfo]", parsed["AttractionInfo"])
+        wait_times_response = cast("WaitTimesResponse", parsed)
+
+        return wait_times_response["AttractionInfo"]
 
     async def async_get_park_info(self, year: int, month: int) -> ParkInfoResponse:
         """Return park schedules for the requested month."""
@@ -225,20 +285,21 @@ class EftelingApiClient:
     async def async_get_annual_passes(self) -> AnnualPasses:
         """Return the annual-pass schedule for all dates."""
         response = await self._async_get_json(
-            ANNUAL_PASS_URL,
+            ANNUAL_PASSES_URL,
             {**self.headers, "host": "www.efteling.com"},
         )
-        return cast(
-            "AnnualPasses",
-            _validate_response(
-                response,
-                _ANNUAL_PASSES_SCHEMA,
-                "annual passes",
-            ),
+        parsed = _validate_response(
+            response,
+            _ANNUAL_PASSES_SCHEMA,
+            "annual passes",
         )
 
+        return cast("AnnualPasses", parsed)
+
     async def _async_get_json(
-        self, url: str, headers: dict[str, str]
+        self,
+        url: str,
+        headers: dict[str, str],
     ) -> dict[str, object]:
         """Fetch a JSON object from an Efteling endpoint."""
         return await self._api_wrapper("get", url, headers=headers)
@@ -262,11 +323,14 @@ class EftelingApiClient:
                     if response.status in (401, 403):
                         msg = f"Efteling API access denied with HTTP {response.status}"
                         raise EftelingApiClientError(msg)
+
                     _verify_response_or_raise(response)
                     payload = await response.json()
+
                     if not isinstance(payload, dict):
                         msg = "Invalid API response: expected a JSON object"
                         raise EftelingApiClientError(msg)
+
                     return cast("dict[str, object]", payload)
 
         except TimeoutError as exception:

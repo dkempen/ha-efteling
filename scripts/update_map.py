@@ -1,4 +1,5 @@
-"""Generate the seasonal Efteling park maps from the map tile service."""  # noqa: INP001
+#!/usr/bin/env python3
+"""Generate the seasonal Efteling park maps from the map tile service."""
 
 from __future__ import annotations
 
@@ -43,7 +44,7 @@ ROTATION_DEGREES = 90
 # counterclockwise rotation of the complete 24-by-24 tile canvas.
 ROTATED_CROP = (2570, 3530, 7260, 8220)
 
-JPEG_QUALITY = 90
+JPEG_QUALITY = 70
 JPEG_SUBSAMPLING = 0
 JPEG_OPTIMIZE = True
 JPEG_PROGRESSIVE = True
@@ -280,7 +281,7 @@ def fetch_tile_attempt(
         raise MapGenerationError(message)
 
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310
+        with urllib.request.urlopen(url, timeout=timeout) as response:  # noqa: S310 - URL comes from the fixed HTTPS tile template.
             data = response.read()
     except urllib.error.HTTPError as error:
         return TileDownloadAttempt(
@@ -666,7 +667,16 @@ def run_generation(arguments: argparse.Namespace) -> tuple[SeasonResult, ...]:
         indent=2,
         sort_keys=True,
     )
-    write_text_atomically(manifest_path, f"{manifest_content}\n")
+    manifest_text = f"{manifest_content}\n"
+    manifest_changed = (
+        not manifest_path.exists()
+        or manifest_path.read_text(encoding="utf-8") != manifest_text
+    )
+    if manifest_changed:
+        write_text_atomically(manifest_path, manifest_text)
+        _LOGGER.info("The map manifest changed.")
+    else:
+        _LOGGER.info("The map manifest is unchanged.")
 
     return tuple(results)
 

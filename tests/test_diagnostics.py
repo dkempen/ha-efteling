@@ -6,6 +6,10 @@ from typing import TYPE_CHECKING
 
 from homeassistant.setup import async_setup_component
 
+from custom_components.efteling_park.diagnostics import (
+    async_get_config_entry_diagnostics,
+)
+
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from pytest_homeassistant.common import MockConfigEntry
@@ -63,3 +67,35 @@ async def test_diagnostics_include_config_and_coordinator_data(
     assert poi["latlon"] == "**REDACTED**"
     assert poi["metadata"][0]["latitude"] == "**REDACTED**"
     assert poi["metadata"][0]["longitude"] == "**REDACTED**"
+
+
+async def test_diagnostics_redact_coordinates_recursively(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Redact coordinate fields at the root and in nested records."""
+    loaded_entry.runtime_data.poi_coordinator.async_set_updated_data(
+        {
+            "python": {
+                "id": "python",
+                "name": "Python",
+                "category": "attraction",
+                "latlon": "51.647575,5.053534",
+                "latitude": 51.647575,
+                "longitude": 5.053534,
+                "location": {"Latitude": 51.647575, "Longitude": 5.053534},
+                "history": [{"latitude": 51.647575, "longitude": 5.053534}],
+                "safe_field": "retained",
+            }
+        }
+    )
+    diagnostics = await async_get_config_entry_diagnostics(hass, loaded_entry)
+    poi = diagnostics["coordinators"]["poi"]["python"]
+    assert poi["latlon"] == "**REDACTED**"
+    assert poi["latitude"] == "**REDACTED**"
+    assert poi["longitude"] == "**REDACTED**"
+    assert poi["location"]["Latitude"] == "**REDACTED**"
+    assert poi["location"]["Longitude"] == "**REDACTED**"
+    assert poi["history"][0]["latitude"] == "**REDACTED**"
+    assert poi["history"][0]["longitude"] == "**REDACTED**"
+    assert poi["safe_field"] == "retained"

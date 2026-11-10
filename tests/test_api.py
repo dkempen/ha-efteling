@@ -144,6 +144,25 @@ def test_annual_passes_schema_preserves_date_and_tier_schedule() -> None:
     assert parsed == response
 
 
+def test_annual_passes_schema_accepts_null_availability() -> None:
+    """Allow unpublished annual-pass availability."""
+    response = {
+        "2026-10-30": {
+            "Classic": True,
+            "Plus": None,
+            "Premium": False,
+        }
+    }
+    assert (
+        _validate_response(
+            response,
+            _ANNUAL_PASSES_SCHEMA,
+            "annual passes",
+        )
+        == response
+    )
+
+
 def test_annual_passes_schema_rejects_non_boolean_values() -> None:
     """Reject values that cannot reliably represent pass validity."""
     with _raises(
@@ -155,6 +174,15 @@ def test_annual_passes_schema_rejects_non_boolean_values() -> None:
             _ANNUAL_PASSES_SCHEMA,
             "annual passes",
         )
+
+
+def test_validate_response_rejects_non_object_schema_result() -> None:
+    """Reject schema results that are not JSON objects."""
+    with _raises(
+        EftelingApiClientError,
+        "Invalid test response: expected an object",
+    ):
+        _validate_response({}, lambda _: [], "test")
 
 
 @pytest.mark.parametrize(
@@ -184,6 +212,43 @@ def test_api_client_falls_back_to_dutch_for_unknown_language() -> None:
     client = EftelingApiClient(MagicMock(), language="fr")
     assert client.headers["x-app-language"] == "nl"
     assert client.headers["accept-language"] == "nl"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("language", ["nl", "en"])
+async def test_api_client_requests_use_localized_urls_and_headers(
+    language: str,
+) -> None:
+    """Use endpoint-specific hosts and the configured language on every call."""
+    client = EftelingApiClient(MagicMock(), language=language)
+    with patch.object(
+        client,
+        "_async_get_json",
+        new_callable=AsyncMock,
+        side_effect=[
+            {"hits": {"hit": []}},
+            {"AttractionInfo": []},
+            {},
+            {},
+        ],
+    ) as get_json:
+        await client.async_get_poi_list()
+        await client.async_get_wait_times()
+        await client.async_get_park_info(2026, 11)
+        await client.async_get_annual_passes()
+
+    calls = get_json.await_args_list
+    assert len(calls) == 4
+    assert calls[0].args[1]["host"] == "api.efteling.com"
+    assert calls[1].args[1]["host"] == "api.efteling.com"
+    assert calls[2].args[0].endswith(f"/{language}/2026/11")
+    assert calls[2].args[1]["host"] == "www.efteling.com"
+    assert calls[3].args[1]["host"] == "www.efteling.com"
+    assert all(
+        call.args[1]["x-app-language"] == language
+        and call.args[1]["accept-language"] == language
+        for call in calls
+    )
 
 
 @pytest.mark.asyncio
@@ -372,3 +437,107 @@ async def test_api_wrapper_maps_network_failures(
     client = EftelingApiClient(session)
     with _raises(EftelingApiClientCommunicationError):
         await client.async_get_park_info(2026, 10)
+
+
+@pytest.mark.parametrize(
+    ("response", "schema", "description"),
+    [
+        pytest.param(
+            {
+                "hits": {
+                    "hit": [
+                        {
+                            "fields": {
+                                "id": "python",
+                                "name": "Python",
+                                "category": "attraction",
+                                "properties": "not-a-list",
+                            }
+                        }
+                    ]
+                }
+            },
+            _POI_RESPONSE_SCHEMA,
+            "POI",
+            id="invalid-poi-properties",
+        ),
+        pytest.param(
+            {
+                "hits": {
+                    "hit": [
+                        {
+                            "fields": {
+                                "id": "python",
+                                "name": "Python",
+                                "category": "attraction",
+                                "wis_info": {
+                                    "Id": "python",
+                                    "Name": "Python",
+                                },
+                            }
+                        }
+                    ]
+                }
+            },
+            _POI_RESPONSE_SCHEMA,
+            "POI",
+            id="invalid-poi-wis-info",
+        ),
+        pytest.param(
+            {
+                "AttractionInfo": [
+                    {
+                        "Id": "aquanura",
+                        "Name": "Aquanura",
+                        "State": "open",
+                        "ShowTimes": [
+                            {
+                                "StartDateTime": "2026-10-23T20:00:00",
+                                "Duration": "not-a-duration",
+                            }
+                        ],
+                    }
+                ]
+            },
+            _WAIT_TIME_RESPONSE_SCHEMA,
+            "wait times",
+            id="invalid-show-duration",
+        ),
+        pytest.param(
+            {
+                "OpeningHours": [
+                    {
+                        "Date": "2026-10-23",
+                        "OpeningHours": [{"Open": 10, "Close": "20:00"}],
+                    }
+                ]
+            },
+            _PARK_INFO_RESPONSE_SCHEMA,
+            "park information",
+            id="invalid-opening-interval",
+        ),
+        pytest.param(
+            {
+                "2026-10-23": {
+                    "Classic": "false",
+                    "Plus": True,
+                    "Premium": True,
+                }
+            },
+            _ANNUAL_PASSES_SCHEMA,
+            "annual passes",
+            id="invalid-annual-pass-availability",
+        ),
+    ],
+)
+def test_schemas_reject_invalid_optional_and_nested_fields(
+    response: dict[str, object],
+    schema: Callable[[dict[str, Any]], Any],
+    description: str,
+) -> None:
+    """Reject malformed optional and nested API fields."""
+    with _raises(
+        EftelingApiClientError,
+        f"Invalid {description} response",
+    ):
+        _validate_response(response, schema, description)

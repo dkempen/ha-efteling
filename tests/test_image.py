@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -196,6 +196,84 @@ async def test_park_map_reschedules_at_midnight(
     map_entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
 
     assert hass.states.get(map_entity_id) is not None
+
+
+async def test_map_image_is_cached_until_the_season_changes(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Reuse the map image within a season and reload it after a season change."""
+    load_image = AsyncMock(return_value=Image("image/jpeg", b"map image"))
+    today = dt_util.now(PARK_TIME_ZONE).date().isoformat()
+    with patch.object(ImageEntity, "_async_load_image_from_url", load_image):
+        entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
+        runtime_data = loaded_entry.runtime_data
+        runtime_data.park_info_coordinator.async_set_updated_data(
+            {"OpeningHours": [], "Maintenance": [], "Events": []}
+        )
+        await hass.async_block_till_done()
+        await async_get_image(hass, entity_id)
+        await async_get_image(hass, entity_id)
+        assert load_image.await_count == 1
+        assert load_image.await_args_list[0].args[0] == MAP_IMAGE_URLS["summer"]
+
+        runtime_data.park_info_coordinator.async_set_updated_data(
+            {
+                "OpeningHours": [],
+                "Maintenance": [],
+                "Events": [
+                    {
+                        "DateFrom": today,
+                        "DateTo": today,
+                        "Type": "winter",
+                        "Name": "Winter Efteling",
+                    }
+                ],
+            }
+        )
+        await hass.async_block_till_done()
+        await async_get_image(hass, entity_id)
+
+    assert load_image.await_count == 2
+    assert load_image.await_args_list[1].args[0] == MAP_IMAGE_URLS["winter"]
+
+
+@pytest.mark.parametrize(
+    "schedule_case",
+    [
+        (
+            datetime(2026, 3, 28, 23, 30, tzinfo=PARK_TIME_ZONE),
+            datetime(2026, 3, 29, 0, 0, tzinfo=PARK_TIME_ZONE),
+        ),
+        (
+            datetime(2026, 10, 24, 23, 30, tzinfo=PARK_TIME_ZONE),
+            datetime(2026, 10, 25, 0, 0, tzinfo=PARK_TIME_ZONE),
+        ),
+    ],
+)
+async def test_map_midnight_schedule_uses_local_calendar_midnight_across_dst(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    api_responses: None,
+    freezer: FrozenDateTimeFactory,
+    schedule_case: tuple[datetime, datetime],
+) -> None:
+    """Schedule map refreshes at park-local midnight around both DST changes."""
+    del api_responses
+    local_now, expected_midnight = schedule_case
+    freezer.move_to(local_now)
+    config_entry.add_to_hass(hass)
+    unsubscribe = MagicMock()
+    with patch(
+        "custom_components.efteling_park.image.park_map.async_track_point_in_time",
+        return_value=unsubscribe,
+    ) as schedule_midnight:
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+        schedule_midnight.assert_called_once()
+        assert schedule_midnight.call_args.args[2] == expected_midnight
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
 
 
 @pytest.mark.parametrize(

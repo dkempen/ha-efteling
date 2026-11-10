@@ -204,11 +204,14 @@ rules:
   icon-translations:
     status: exempt
     comment: >
-      Home Assistant's native icon translations cannot select an entity's
-      icon based on an arbitrary attribute such as the POI ID. Supporting
-      individual attraction and show icons therefore requires resolving
-      the icon in Python using the ID. A separate translation key for
-      every POI would be disproportionate for this integration.
+      Default icons for the entity types are defined in icons.json.
+      Attraction-specific and show-specific icons depend on the POI ID
+      supplied by Efteling for each dynamically created entity.
+      Icon translations support fixed translation keys and state-based
+      selection, but cannot select an icon from arbitrary entity-instance
+      data. Home Assistant documents the Python icon property for this
+      type of dynamic icon selection. The Python icon properties are
+      therefore retained for POI-specific overrides.
 
   # Users can change the setup of an entry without removing it.
   reconfiguration-flow: done

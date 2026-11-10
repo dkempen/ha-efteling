@@ -357,3 +357,52 @@ async def test_user_flow_reraises_unexpected_validation_error(
                 result["flow_id"],
                 user_input={CONF_LANGUAGE: "nl"},
             )
+
+
+@pytest.mark.usefixtures("unload_reconfigured_entry")
+@pytest.mark.parametrize(
+    ("error_type", "expected_error"),
+    [
+        (EftelingApiClientCommunicationError, "cannot_connect"),
+        (EftelingApiClientError, "invalid_response"),
+    ],
+)
+async def test_failed_reconfiguration_preserves_existing_options(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    api_responses: None,
+    error_type: type[EftelingApiClientError],
+    expected_error: str,
+) -> None:
+    """Keep saved config unchanged when reconfiguration validation fails."""
+    del api_responses
+    config_entry.add_to_hass(hass)
+    original_data = dict(config_entry.data)
+    original_options = {
+        CONF_LANGUAGE: "nl",
+        CONF_CREATE_ATTRACTION_STATUS_SENSORS: True,
+    }
+    hass.config_entries.async_update_entry(config_entry, options=original_options)
+
+    with patch.object(
+        EftelingApiClient,
+        "async_get_poi_list",
+        new_callable=AsyncMock,
+        side_effect=error_type("validation failed"),
+    ):
+        result = await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": SOURCE_RECONFIGURE, "entry_id": config_entry.entry_id},
+        )
+        result = await hass.config_entries.flow.async_configure(
+            result["flow_id"],
+            user_input={
+                CONF_LANGUAGE: "en",
+                CONF_CREATE_ATTRACTION_STATUS_SENSORS: False,
+            },
+        )
+
+    assert result.get("type") is FlowResultType.FORM
+    assert result.get("errors") == {"base": expected_error}
+    assert config_entry.data == original_data
+    assert dict(config_entry.options) == original_options

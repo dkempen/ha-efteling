@@ -165,7 +165,7 @@ Each show has a timestamp sensor that provides the start time of the currently r
 For example:
 
 ```text
-sensor.efteling_aquanura
+sensor.efteling_shows_aquanura
 State: 2026-10-21 21:00:00
 ```
 

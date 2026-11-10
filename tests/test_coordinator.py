@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
 
@@ -119,16 +119,70 @@ async def test_coordinator_translates_api_errors_to_update_failed(
     assert coordinator.last_update_success is False
 
 
+@pytest.mark.parametrize(
+    ("coordinator_type", "method_name", "success_response", "expected_data"),
+    [
+        (
+            EftelingPoiUpdateCoordinator,
+            "async_get_poi_list",
+            [{"id": "new_ride", "name": "New Ride", "category": "attraction"}],
+            {
+                "new_ride": {
+                    "id": "new_ride",
+                    "name": "New Ride",
+                    "category": "attraction",
+                }
+            },
+        ),
+        (
+            EftelingWaitTimesUpdateCoordinator,
+            "async_get_wait_times",
+            [
+                {
+                    "Id": "new_ride",
+                    "Name": "New Ride",
+                    "State": "open",
+                    "WaitingTime": 10,
+                }
+            ],
+            {
+                "new_ride": {
+                    "Id": "new_ride",
+                    "Name": "New Ride",
+                    "State": "open",
+                    "WaitingTime": 10,
+                }
+            },
+        ),
+        (
+            EftelingParkInfoUpdateCoordinator,
+            "async_get_park_info",
+            {"OpeningHours": [], "Maintenance": [], "Events": []},
+            {"OpeningHours": [], "Maintenance": [], "Events": []},
+        ),
+        (
+            EftelingAnnualPassesCoordinator,
+            "async_get_annual_passes",
+            {"2026-11-09": {"Classic": True, "Plus": True, "Premium": False}},
+            {"2026-11-09": {"Classic": True, "Plus": True, "Premium": False}},
+        ),
+    ],
+)
 async def test_coordinator_refresh_recovers_after_communication_failure(
     hass: HomeAssistant,
+    coordinator_type: type[EftelingCoordinator],
+    method_name: str,
+    success_response: Any,
+    expected_data: Any,
 ) -> None:
-    """Mark a failed refresh unavailable and restore success on recovery."""
+    """Restore each coordinator's expected data after a failed refresh."""
     entry = _entry()
     client = MagicMock(spec=EftelingApiClient)
-    client.async_get_poi_list = AsyncMock(
-        side_effect=[EftelingApiClientCommunicationError("offline"), []]
+    method = AsyncMock(
+        side_effect=[EftelingApiClientCommunicationError("offline"), success_response]
     )
-    coordinator = EftelingPoiUpdateCoordinator(
+    setattr(client, method_name, method)
+    coordinator = coordinator_type(
         hass,
         client,
         entry,
@@ -139,7 +193,8 @@ async def test_coordinator_refresh_recovers_after_communication_failure(
     assert coordinator.last_update_success is False
     await coordinator.async_refresh()
     assert coordinator.last_update_success is True
-    assert coordinator.data == {}
+    assert coordinator.data == expected_data
+    assert method.await_count == 2
 
 
 async def test_park_month_refresh_uses_local_month_and_cleans_timer(

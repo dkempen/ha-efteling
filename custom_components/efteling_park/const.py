@@ -22,7 +22,7 @@ PARK_TIME_ZONE = ZoneInfo("Europe/Amsterdam")
 WAIT_TIMES_URL = "https://api.efteling.com/app/wis"
 POINTS_OF_INTEREST_URL = "https://api.efteling.com/app/poi"
 PARK_INFO_URL = "https://www.efteling.com/service/cached/getpoiinfo"
-ANNUAL_PASS_URL = "https://www.efteling.com/service/subscriptions/availability"  # noqa: S105 # Not a password
+ANNUAL_PASSES_URL = "https://www.efteling.com/service/subscriptions/availability"
 
 APP_HEADERS = {
     "host": "api.efteling.com",
@@ -30,7 +30,6 @@ APP_HEADERS = {
     "accept": "*/*",
     "x-app-name": "Efteling",
     "x-app-platform": "iOS",
-    "accept-encoding": "gzip, deflate, br",
     "x-app-timezone": PARK_TIME_ZONE.key,
     "user-agent": "Efteling/22805 CFNetwork/3860.400.51 Darwin/25.3.0",
 }

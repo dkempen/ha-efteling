@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
@@ -190,56 +190,50 @@ async def test_attraction_status_sensor_handles_missing_wait_data(
     assert "wait_time" not in status_state.attributes
 
 
-async def test_annual_pass_sensors_expose_all_dates(
+async def test_new_and_disappearing_poi_entities(
     hass: HomeAssistant,
     loaded_entry: MockConfigEntry,
 ) -> None:
-    """Expose each pass tier's current permission and every supplied date."""
-    today = dt_util.now(PARK_TIME_ZONE).date().isoformat()
-    coordinator = loaded_entry.runtime_data.annual_passes_coordinator
-    schedule = {
-        today: {"Classic": False, "Plus": True, "Premium": True},
-        (dt_util.now(PARK_TIME_ZONE).date() + timedelta(days=1)).isoformat(): {
-            "Classic": True,
-            "Plus": True,
-            "Premium": False,
-        },
-        (dt_util.now(PARK_TIME_ZONE).date() + timedelta(days=30)).isoformat(): {
-            "Classic": True,
-            "Plus": True,
-            "Premium": True,
-        },
-        (dt_util.now(PARK_TIME_ZONE).date() + timedelta(days=365)).isoformat(): {
-            "Classic": False,
-            "Plus": True,
-            "Premium": False,
-        },
+    """Create newly discovered entities and handle records disappearing."""
+    runtime_data = loaded_entry.runtime_data
+    new_poi = {
+        "id": "new_ride",
+        "name": "New Ride",
+        "category": "attraction",
+        "detail_text": "A new attraction.",
     }
-    coordinator.async_set_updated_data(schedule)
+    new_wait_time = {
+        "Id": "new_ride",
+        "Name": "New Ride",
+        "State": "open",
+        "WaitingTime": 10,
+    }
+    poi_data = dict(runtime_data.poi_coordinator.data)
+    poi_data["new_ride"] = new_poi
+    runtime_data.poi_coordinator.async_set_updated_data(poi_data)
     await hass.async_block_till_done()
 
-    for tier, pass_name, expected in (
-        ("classic", "Classic", False),
-        ("plus", "Plus", True),
-        ("premium", "Premium", True),
-    ):
-        entity = _entity_for_unique_id(hass, loaded_entry, f"park_{tier}")
-        state = _state(hass, entity.entity_id)
-        assert state.state == ("on" if expected else "off")
-        assert state.attributes["annual_passes"] == {
-            date: availability[pass_name] for date, availability in schedule.items()
-        }
-
-
-async def test_annual_pass_sensor_is_unavailable_without_today_data(
-    hass: HomeAssistant,
-    loaded_entry: MockConfigEntry,
-) -> None:
-    """Mark today's pass availability unavailable when Efteling omits its date."""
-    entity = _entity_for_unique_id(hass, loaded_entry, "park_classic")
-    loaded_entry.runtime_data.annual_passes_coordinator.async_set_updated_data({})
+    wait_times = dict(runtime_data.wait_times_coordinator.data)
+    wait_times["new_ride"] = new_wait_time
+    runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
     await hass.async_block_till_done()
-    assert _state(hass, entity.entity_id).state == "unavailable"
+
+    entity = _entity_for_unique_id(hass, loaded_entry, "new_ride")
+    assert _state(hass, entity.entity_id).state == "10"
+
+    poi_data.pop("new_ride")
+    wait_times.pop("new_ride")
+    runtime_data.poi_coordinator.async_set_updated_data(poi_data)
+    runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+    assert _state(hass, entity.entity_id).state == "unknown"
+
+    poi_data["new_ride"] = new_poi
+    wait_times["new_ride"] = new_wait_time
+    runtime_data.poi_coordinator.async_set_updated_data(poi_data)
+    runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+    assert _state(hass, entity.entity_id).state == "10"
 
 
 async def test_attraction_state_metadata_and_wait_failure_recovery(
