@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PYTHON="${PYTHON:-python3}"
+
+cd "$ROOT"
+
+printf '%s\n' 'Running lint checks...'
+scripts/lint-check
+
+printf '%s\n' 'Running type checks...'
+scripts/type-check
+
+printf '%s\n' 'Running tests with coverage...'
+scripts/test --cov --cov-report=json:coverage.json
+
+printf '%s\n' 'Checking per-module coverage...'
+"$PYTHON" scripts/check_coverage.py --minimum-coverage 100
+
+printf '%s\n' 'All local release checks passed.'

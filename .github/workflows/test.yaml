@@ -35,4 +35,4 @@ jobs:
       - name: Run tests
         run: scripts/test --cov --cov-report=json:coverage.json
       - name: Check coverage
-        run: python tests/check_coverage.py
+        run: python scripts/check_coverage.py

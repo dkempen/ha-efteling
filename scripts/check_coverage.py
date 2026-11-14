@@ -1,7 +1,9 @@
-"""Enforce coverage above 95% for every Efteling integration module."""
+#!/usr/bin/env python3
+"""Enforce at least 95% coverage for every Efteling integration module."""
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -14,7 +16,16 @@ MINIMUM_COVERAGE = 95.0
 
 
 def main() -> int:
-    """Check that every integration Python file is present and above threshold."""
+    """Check that every integration Python file meets the requested threshold."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--minimum-coverage",
+        type=float,
+        default=MINIMUM_COVERAGE,
+        help=f"Required per-module coverage percentage (default: {MINIMUM_COVERAGE:g})",
+    )
+    args = parser.parse_args()
+
     report: dict[str, Any] = json.loads(COVERAGE_REPORT.read_text(encoding="utf-8"))
     coverage_files: dict[str, dict[str, Any]] = {}
 
@@ -36,8 +47,11 @@ def main() -> int:
             continue
 
         percent = details["summary"]["percent_covered"]
-        if percent <= MINIMUM_COVERAGE:
-            problems.append(f"{relative_path}: {percent:.2f}% (must exceed 95%)")
+        if percent < args.minimum_coverage:
+            problems.append(
+                f"{relative_path}: {percent:.2f}% "
+                f"(must be at least {args.minimum_coverage:g}%)"
+            )
 
     if problems:
         sys.stderr.write("Per-module coverage requirements not met:\n")
@@ -45,7 +59,10 @@ def main() -> int:
         return 1
 
     module_count = len(list(INTEGRATION_ROOT.rglob("*.py")))
-    sys.stdout.write(f"All {module_count} integration modules exceed 95% coverage.\n")
+    sys.stdout.write(
+        f"All {module_count} integration modules meet or exceed "
+        f"{args.minimum_coverage:g}% coverage.\n"
+    )
     return 0
 
 
