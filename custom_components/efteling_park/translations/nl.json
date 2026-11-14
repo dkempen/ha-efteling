@@ -111,7 +111,8 @@
           "min_latitude": { "name": "Minimale breedtegraad" },
           "max_latitude": { "name": "Maximale breedtegraad" },
           "min_longitude": { "name": "Minimale lengtegraad" },
-          "max_longitude": { "name": "Maximale lengtegraad" }
+          "max_longitude": { "name": "Maximale lengtegraad" },
+          "rotation_degrees": { "name": "Rotatie" }
         }
       }
     },

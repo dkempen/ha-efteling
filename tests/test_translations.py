@@ -137,3 +137,6 @@ def test_all_entity_translation_keys_exist_in_both_languages() -> None:
                 f"Missing {language} {platform} translations: "
                 f"{sorted(keys - available_keys)}"
             )
+
+            map_attributes = entity_translations["image"]["map"]["state_attributes"]
+            assert "rotation_degrees" in map_attributes

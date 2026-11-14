@@ -107,7 +107,8 @@
           "min_latitude": { "name": "Minimum latitude" },
           "max_latitude": { "name": "Maximum latitude" },
           "min_longitude": { "name": "Minimum longitude" },
-          "max_longitude": { "name": "Maximum longitude" }
+          "max_longitude": { "name": "Maximum longitude" },
+          "rotation_degrees": { "name": "Rotation" }
         }
       }
     },

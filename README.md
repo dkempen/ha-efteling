@@ -92,6 +92,8 @@ The integration supports Efteling's public attraction, show, park-information, a
 Attraction and show entities are created from the live points-of-interest and wait time feeds.
 Park entities share the Efteling park device. The integration is read-only and does not access personal account information.
 
+When an update succeeds but a value is missing or not applicable, the entity remains available and reports `unknown` (for example, a closed attraction's wait time or a show without a valid schedule). When a required source update fails, affected entities report `unavailable`. Some date-based park entities are also unavailable when the upstream feed has not published data for the current Efteling-local date.
+
 ### Park
 
 The Efteling park device includes the following entities:
@@ -121,6 +123,7 @@ Crowd-level thresholds are integration-derived: below 5 minutes is very quiet, 5
 The park map image entity updates automatically, and it switches between the summer and winter Efteling maps.
 Its state attributes provide the map's minimum and maximum latitude and longitude, and rotation, which can be used to position attraction locations on the image.
 All attractions and shows also have an `map_x` and `map_y` attribute (in percentages of the current map) to be easily displayed.
+Map metadata is refreshed every 24 hours. It includes image update timestamps, geographic bounds, and rotation; attraction and show map coordinates are recalculated when it changes. If fetching or validating new metadata fails, the integration keeps the last valid metadata.
 
 ### Attractions
 
@@ -225,6 +228,7 @@ It refreshes feeds at the intervals below.
 | Attraction and show metadata             | Every **24 hours**  | Names, descriptions, images, locations, and visitor information               |
 | Park schedule information                | Every **24 hours**  | Opening hours, crowd and occupancy forecasts, events, and planned maintenance |
 | Annual passes                            | Every **24 hours**  | Classic, Plus, and Premium validity by date                                   |
+| Map metadata                             | Every **24 hours**  | Seasonal image timestamps, geographic bounds, and map rotation               |
 
 Time-sensitive entity states are also updated at relevant times, such as park opening and closing, local midnight, and show transitions, rather than relying solely on the next scheduled data refresh.
 
