@@ -146,13 +146,20 @@ async def test_attraction_status_sensor_is_removed_when_disabled(
     """Remove registered status sensors after the option is disabled."""
     del api_responses
     config_entry.add_to_hass(hass)
+    registry = er.async_get(hass)
+    unrelated_status = registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        "unrelated_status",
+        config_entry=config_entry,
+    )
     hass.config_entries.async_update_entry(
         config_entry,
         options={CONF_CREATE_ATTRACTION_STATUS_SENSORS: True},
     )
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
-    _entity_for_unique_id(hass, config_entry, "python_status")
+    status_entity = _entity_for_unique_id(hass, config_entry, "python_status")
 
     assert await hass.config_entries.async_unload(config_entry.entry_id)
     hass.config_entries.async_update_entry(config_entry, options={})
@@ -164,6 +171,17 @@ async def test_attraction_status_sensor_is_removed_when_disabled(
         and entity.unique_id == "python_status"
         for entity in er.async_get(hass).entities.values()
     )
+    assert registry.async_get(unrelated_status.entity_id) is not None
+
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
+    hass.config_entries.async_update_entry(
+        config_entry,
+        options={CONF_CREATE_ATTRACTION_STATUS_SENSORS: True},
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    recreated_status = _entity_for_unique_id(hass, config_entry, "python_status")
+    assert recreated_status.entity_id == status_entity.entity_id
 
 
 async def test_attraction_status_sensor_handles_missing_wait_data(
@@ -185,9 +203,8 @@ async def test_attraction_status_sensor_handles_missing_wait_data(
     config_entry.runtime_data.wait_times_coordinator.async_set_updated_data({})
     await hass.async_block_till_done()
 
-    status_state = _state(hass, status_entity.entity_id)
-    assert status_state.state == "unknown"
-    assert "wait_time" not in status_state.attributes
+    assert hass.states.get(status_entity.entity_id) is None
+    assert _entity_for_unique_id(hass, config_entry, "python_status")
 
 
 async def test_new_and_disappearing_poi_entities(
@@ -222,18 +239,30 @@ async def test_new_and_disappearing_poi_entities(
     assert _state(hass, entity.entity_id).state == "10"
 
     poi_data.pop("new_ride")
-    wait_times.pop("new_ride")
     runtime_data.poi_coordinator.async_set_updated_data(poi_data)
-    runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
     await hass.async_block_till_done()
-    assert _state(hass, entity.entity_id).state == "unknown"
+    assert hass.states.get(entity.entity_id) is None
 
     poi_data["new_ride"] = new_poi
-    wait_times["new_ride"] = new_wait_time
     runtime_data.poi_coordinator.async_set_updated_data(poi_data)
+    await hass.async_block_till_done()
+    assert _state(hass, entity.entity_id).state == "10"
+
+    wait_times.pop("new_ride")
+    runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+    assert hass.states.get(entity.entity_id) is None
+
+    wait_times["new_ride"] = new_wait_time
     runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
     await hass.async_block_till_done()
     assert _state(hass, entity.entity_id).state == "10"
+
+    poi_data["new_ride"] = {**new_poi, "category": "show"}
+    runtime_data.poi_coordinator.async_set_updated_data(poi_data)
+    await hass.async_block_till_done()
+    state = _state(hass, entity.entity_id)
+    assert state.state == "unknown"
 
 
 async def test_attraction_state_metadata_and_wait_failure_recovery(
