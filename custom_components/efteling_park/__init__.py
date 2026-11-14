@@ -20,14 +20,14 @@ from custom_components.efteling_park.const import (
 )
 from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
-    EftelingParkInfoUpdateCoordinator,
-    EftelingPoiUpdateCoordinator,
-    EftelingWaitTimesUpdateCoordinator,
+    EftelingMapMetadataCoordinator,
+    EftelingParkInfoCoordinator,
+    EftelingPoiCoordinator,
+    EftelingWaitTimesCoordinator,
 )
 
 from .api import EftelingApiClient
 from .data import EftelingData
-from .map import async_get_park_map_metadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -46,8 +46,6 @@ async def async_setup_entry(
     entry: EftelingConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-    park_map = await async_get_park_map_metadata(hass)
-
     client = EftelingApiClient(
         session=async_get_clientsession(hass),
         language=entry.options.get(
@@ -56,21 +54,21 @@ async def async_setup_entry(
         ),
     )
 
-    poi_coordinator = EftelingPoiUpdateCoordinator(
+    poi_coordinator = EftelingPoiCoordinator(
         hass=hass,
         client=client,
         config_entry=entry,
         name="poi",
         update_interval=timedelta(days=1),
     )
-    wait_times_coordinator = EftelingWaitTimesUpdateCoordinator(
+    wait_times_coordinator = EftelingWaitTimesCoordinator(
         hass=hass,
         client=client,
         config_entry=entry,
         name="wait_times",
         update_interval=timedelta(minutes=5),
     )
-    park_info_coordinator = EftelingParkInfoUpdateCoordinator(
+    park_info_coordinator = EftelingParkInfoCoordinator(
         hass=hass,
         client=client,
         config_entry=entry,
@@ -84,6 +82,8 @@ async def async_setup_entry(
         name="annual_passes",
         update_interval=timedelta(days=1),
     )
+    map_metadata_coordinator = EftelingMapMetadataCoordinator(hass, entry)
+    await map_metadata_coordinator.async_refresh()
 
     entry.runtime_data = EftelingData(
         client=client,
@@ -91,7 +91,8 @@ async def async_setup_entry(
         wait_times_coordinator=wait_times_coordinator,
         park_info_coordinator=park_info_coordinator,
         annual_passes_coordinator=annual_passes_coordinator,
-        park_map=park_map,
+        map_metadata_coordinator=map_metadata_coordinator,
+        park_map=map_metadata_coordinator.data,
     )
 
     refresh_results = await asyncio.gather(
@@ -109,6 +110,19 @@ async def async_setup_entry(
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
     entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
+
+    def update_map_metadata() -> None:
+        """Publish changed map metadata to dependent entities."""
+        metadata = map_metadata_coordinator.data
+        if metadata is None or metadata == entry.runtime_data.park_map:
+            return
+        entry.runtime_data.park_map = metadata
+        for update in tuple(entry.runtime_data.map_metadata_listeners):
+            update(metadata)
+
+    entry.async_on_unload(
+        map_metadata_coordinator.async_add_listener(update_map_metadata)
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 

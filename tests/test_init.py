@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -12,6 +13,7 @@ from homeassistant.const import CONF_LANGUAGE
 from homeassistant.data_entry_flow import FlowResultType
 from homeassistant.util import dt as dt_util
 
+from custom_components.efteling_park import PLATFORMS, async_unload_entry
 from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
@@ -32,6 +34,38 @@ async def test_setup_and_unload(
     assert await hass.config_entries.async_unload(loaded_entry.entry_id)
     await hass.async_block_till_done()
     assert loaded_entry.state is ConfigEntryState.NOT_LOADED
+
+
+async def test_changed_map_metadata_notifies_listeners(
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Publish changed metadata to listeners registered during setup."""
+    runtime_data = loaded_entry.runtime_data
+    assert runtime_data.park_map is not None
+    listener = MagicMock()
+    runtime_data.map_metadata_listeners.append(listener)
+    updated_metadata = replace(runtime_data.park_map, rotation_degrees=91)
+
+    runtime_data.map_metadata_coordinator.async_set_updated_data(updated_metadata)
+
+    assert runtime_data.park_map is updated_metadata
+    listener.assert_called_once_with(updated_metadata)
+
+
+async def test_unload_entry_returns_platform_unload_result(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Return the result from unloading all integration platforms."""
+    with patch.object(
+        hass.config_entries,
+        "async_unload_platforms",
+        new_callable=AsyncMock,
+        return_value=False,
+    ) as unload_platforms:
+        assert await async_unload_entry(hass, config_entry) is False
+
+    unload_platforms.assert_awaited_once_with(config_entry, PLATFORMS)
 
 
 async def test_scheduled_callbacks_are_cancelled_on_unload(

@@ -14,7 +14,7 @@ from homeassistant.const import UnitOfTime
 
 from custom_components.efteling_park.const import ATTRACTIONS, CUSTOM_ATTRACTION_ICONS
 from custom_components.efteling_park.coordinator import (
-    EftelingWaitTimesUpdateCoordinator,
+    EftelingWaitTimesCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.models import ATTRACTION_STATUS_MAP, Poi
@@ -42,14 +42,14 @@ ENTITY_DESCRIPTION_STATUS = SensorEntityDescription(
 
 
 class EftelingAttractionSensor(
-    EftelingEntity[EftelingWaitTimesUpdateCoordinator],
+    EftelingEntity[EftelingWaitTimesCoordinator],
     SensorEntity,
 ):
     """Sensor for a single attraction."""
 
     def __init__(
         self,
-        coordinator: EftelingWaitTimesUpdateCoordinator,
+        coordinator: EftelingWaitTimesCoordinator,
         attraction_id: str,
         attraction_name: str,
         poi: Poi,
@@ -139,7 +139,7 @@ class EftelingAttractionStatusSensor(EftelingAttractionSensor):
 
     def __init__(
         self,
-        coordinator: EftelingWaitTimesUpdateCoordinator,
+        coordinator: EftelingWaitTimesCoordinator,
         attraction_id: str,
         attraction_name: str,
         poi: Poi,

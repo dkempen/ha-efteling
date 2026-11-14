@@ -18,9 +18,9 @@ from custom_components.efteling_park.const import DOMAIN
 from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
     EftelingCoordinator,
-    EftelingParkInfoUpdateCoordinator,
-    EftelingPoiUpdateCoordinator,
-    EftelingWaitTimesUpdateCoordinator,
+    EftelingParkInfoCoordinator,
+    EftelingPoiCoordinator,
+    EftelingWaitTimesCoordinator,
 )
 
 if TYPE_CHECKING:
@@ -36,7 +36,7 @@ def _entry() -> MockConfigEntry:
     ("coordinator_type", "method_name", "payload", "expected"),
     [
         (
-            EftelingPoiUpdateCoordinator,
+            EftelingPoiCoordinator,
             "async_get_poi_list",
             [
                 {
@@ -49,7 +49,7 @@ def _entry() -> MockConfigEntry:
             {"primary", "alt"},
         ),
         (
-            EftelingWaitTimesUpdateCoordinator,
+            EftelingWaitTimesCoordinator,
             "async_get_wait_times",
             [
                 {"Id": "one", "Name": "One", "State": "open"},
@@ -79,16 +79,16 @@ async def test_coordinator_indexes_api_records(
     )
     await coordinator.async_refresh()
     assert set(coordinator.data) == expected
-    if coordinator_type is EftelingPoiUpdateCoordinator:
+    if coordinator_type is EftelingPoiCoordinator:
         assert coordinator.data["primary"] is coordinator.data["alt"]
 
 
 @pytest.mark.parametrize(
     ("coordinator_type", "method_name"),
     [
-        (EftelingPoiUpdateCoordinator, "async_get_poi_list"),
-        (EftelingWaitTimesUpdateCoordinator, "async_get_wait_times"),
-        (EftelingParkInfoUpdateCoordinator, "async_get_park_info"),
+        (EftelingPoiCoordinator, "async_get_poi_list"),
+        (EftelingWaitTimesCoordinator, "async_get_wait_times"),
+        (EftelingParkInfoCoordinator, "async_get_park_info"),
         (
             EftelingAnnualPassesCoordinator,
             "async_get_annual_passes",
@@ -123,7 +123,7 @@ async def test_coordinator_translates_api_errors_to_update_failed(
     ("coordinator_type", "method_name", "success_response", "expected_data"),
     [
         (
-            EftelingPoiUpdateCoordinator,
+            EftelingPoiCoordinator,
             "async_get_poi_list",
             [{"id": "new_ride", "name": "New Ride", "category": "attraction"}],
             {
@@ -135,7 +135,7 @@ async def test_coordinator_translates_api_errors_to_update_failed(
             },
         ),
         (
-            EftelingWaitTimesUpdateCoordinator,
+            EftelingWaitTimesCoordinator,
             "async_get_wait_times",
             [
                 {
@@ -155,7 +155,7 @@ async def test_coordinator_translates_api_errors_to_update_failed(
             },
         ),
         (
-            EftelingParkInfoUpdateCoordinator,
+            EftelingParkInfoCoordinator,
             "async_get_park_info",
             {"OpeningHours": [], "Maintenance": [], "Events": []},
             {"OpeningHours": [], "Maintenance": [], "Events": []},
@@ -203,7 +203,7 @@ async def test_park_month_refresh_uses_local_month_and_cleans_timer(
     """Schedule the next local month boundary and return a timer cleanup."""
     entry = _entry()
     client = MagicMock(spec=EftelingApiClient)
-    coordinator = EftelingParkInfoUpdateCoordinator(
+    coordinator = EftelingParkInfoCoordinator(
         hass,
         client,
         entry,
@@ -235,7 +235,7 @@ async def test_park_month_refresh_rolls_over_year_and_refreshes(
     loaded_entry: MockConfigEntry,
 ) -> None:
     """Refresh using January's year after a December month boundary."""
-    coordinator = EftelingParkInfoUpdateCoordinator(
+    coordinator = EftelingParkInfoCoordinator(
         hass,
         loaded_entry.runtime_data.client,
         loaded_entry,

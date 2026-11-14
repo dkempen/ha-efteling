@@ -18,6 +18,10 @@ from custom_components.efteling_park.api import (
     EftelingApiClientError,
 )
 from custom_components.efteling_park.const import DOMAIN, LOGGER, PARK_TIME_ZONE
+from custom_components.efteling_park.map import (
+    ParkMapMetadata,
+    async_get_park_map_metadata,
+)
 from custom_components.efteling_park.models import (
     AnnualPasses,
     AttractionInfo,
@@ -59,7 +63,7 @@ class EftelingCoordinator[DataT](DataUpdateCoordinator[DataT]):
         self.client = client
 
 
-class EftelingPoiUpdateCoordinator(EftelingCoordinator[dict[str, Poi]]):
+class EftelingPoiCoordinator(EftelingCoordinator[dict[str, Poi]]):
     """Retrieve POIs indexed by primary and alternate ID."""
 
     async def _async_update_data(self) -> dict[str, Poi]:
@@ -78,7 +82,7 @@ class EftelingPoiUpdateCoordinator(EftelingCoordinator[dict[str, Poi]]):
         return poi_map
 
 
-class EftelingWaitTimesUpdateCoordinator(
+class EftelingWaitTimesCoordinator(
     EftelingCoordinator[dict[str, AttractionInfo]],
 ):
     """Retrieve live attraction and show information indexed by ID."""
@@ -93,7 +97,7 @@ class EftelingWaitTimesUpdateCoordinator(
         return {item["Id"]: item for item in wait_times if item.get("Id")}
 
 
-class EftelingParkInfoUpdateCoordinator(
+class EftelingParkInfoCoordinator(
     EftelingCoordinator[ParkInfoResponse],
 ):
     """Retrieve opening hours, maintenance and events for the current month."""
@@ -164,3 +168,22 @@ class EftelingAnnualPassesCoordinator(
             return await self.client.async_get_annual_passes()
         except EftelingApiClientError as exception:
             raise UpdateFailed(exception) from exception
+
+
+class EftelingMapMetadataCoordinator(DataUpdateCoordinator[ParkMapMetadata | None]):
+    """Refresh supplementary map metadata while retaining the last good value."""
+
+    def __init__(self, hass: HomeAssistant, config_entry: EftelingConfigEntry) -> None:
+        """Initialize the map metadata coordinator."""
+        super().__init__(
+            hass,
+            LOGGER,
+            config_entry=config_entry,
+            name=f"{DOMAIN}_map_metadata",
+            update_interval=timedelta(days=1),
+        )
+
+    async def _async_update_data(self) -> ParkMapMetadata | None:
+        """Fetch metadata without discarding it when the request fails."""
+        metadata = await async_get_park_map_metadata(self.hass)
+        return metadata if metadata is not None else self.data

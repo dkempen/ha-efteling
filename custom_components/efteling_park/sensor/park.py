@@ -18,7 +18,7 @@ from homeassistant.util import dt as dt_util
 
 from custom_components.efteling_park.const import PARK, PARK_TIME_ZONE
 from custom_components.efteling_park.coordinator import (
-    EftelingParkInfoUpdateCoordinator,
+    EftelingParkInfoCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.sensor.park_snapshot import (
@@ -53,14 +53,14 @@ TODAY_DATA_KEYS = frozenset(
 
 
 class EftelingParkSensor(
-    EftelingEntity[EftelingParkInfoUpdateCoordinator],
+    EftelingEntity[EftelingParkInfoCoordinator],
     SensorEntity,
 ):
     """One sensor on the shared Efteling park device."""
 
     def __init__(
         self,
-        coordinator: EftelingParkInfoUpdateCoordinator,
+        coordinator: EftelingParkInfoCoordinator,
         data: EftelingData,
         description: SensorEntityDescription,
     ) -> None:

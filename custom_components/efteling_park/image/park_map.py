@@ -15,7 +15,7 @@ from custom_components.efteling_park.binary_sensor.park_event import (
 )
 from custom_components.efteling_park.const import PARK, PARK_TIME_ZONE
 from custom_components.efteling_park.coordinator import (
-    EftelingParkInfoUpdateCoordinator,
+    EftelingParkInfoCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.map import (
@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 
 class EftelingParkMapImage(
     ImageEntity,
-    EftelingEntity[EftelingParkInfoUpdateCoordinator],
+    EftelingEntity[EftelingParkInfoCoordinator],
 ):
     """Display the current seasonal Efteling park map."""
 

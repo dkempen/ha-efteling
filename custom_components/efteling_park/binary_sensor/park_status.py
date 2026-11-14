@@ -15,7 +15,7 @@ from homeassistant.util import dt as dt_util
 
 from custom_components.efteling_park.const import PARK, PARK_TIME_ZONE
 from custom_components.efteling_park.coordinator import (
-    EftelingParkInfoUpdateCoordinator,
+    EftelingParkInfoCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.sensor.park_snapshot import (
@@ -37,7 +37,7 @@ PARK_STATUS_BINARY_SENSOR_DESCRIPTION = BinarySensorEntityDescription(
 
 
 class EftelingParkStatusBinarySensor(
-    EftelingEntity[EftelingParkInfoUpdateCoordinator],
+    EftelingEntity[EftelingParkInfoCoordinator],
     BinarySensorEntity,
 ):
     """Represent whether the Park is currently open."""

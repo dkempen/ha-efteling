@@ -15,7 +15,7 @@ from homeassistant.util import dt as dt_util
 
 from custom_components.efteling_park.const import PARK, PARK_TIME_ZONE
 from custom_components.efteling_park.coordinator import (
-    EftelingParkInfoUpdateCoordinator,
+    EftelingParkInfoCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.sensor.park_snapshot import (
@@ -52,14 +52,14 @@ def is_park_event_active(
 
 
 class EftelingParkEventBinarySensor(
-    EftelingEntity[EftelingParkInfoUpdateCoordinator],
+    EftelingEntity[EftelingParkInfoCoordinator],
     BinarySensorEntity,
 ):
     """Represent whether a special event is active today."""
 
     def __init__(
         self,
-        coordinator: EftelingParkInfoUpdateCoordinator,
+        coordinator: EftelingParkInfoCoordinator,
         data: EftelingData,
         description: BinarySensorEntityDescription,
     ) -> None:

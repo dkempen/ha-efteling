@@ -21,7 +21,7 @@ from custom_components.efteling_park.const import (
     SHOWS,
 )
 from custom_components.efteling_park.coordinator import (
-    EftelingWaitTimesUpdateCoordinator,
+    EftelingWaitTimesCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 
@@ -52,14 +52,14 @@ ENTITY_DESCRIPTION_SHOW_START_TIME = SensorEntityDescription(
 
 
 class EftelingShowSensor(
-    EftelingEntity[EftelingWaitTimesUpdateCoordinator],
+    EftelingEntity[EftelingWaitTimesCoordinator],
     SensorEntity,
 ):
     """Sensor for a single show. Native value is the active or next show start time."""
 
     def __init__(
         self,
-        coordinator: EftelingWaitTimesUpdateCoordinator,
+        coordinator: EftelingWaitTimesCoordinator,
         show_id: str,
         show_name: str,
         poi: Poi,
