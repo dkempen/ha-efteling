@@ -179,14 +179,19 @@ rules:
   dynamic-devices:
     status: done
     comment: >
-      New attractions and shows are discovered from the POI and wait-time
-      coordinators. New entities are added automatically through coordinator
-      listeners without requiring an integration reload. All attraction
-      entities share the Attractions service device, and all show entities
-      share the Shows service device.
+      The integration creates three fixed logical service devices: Park,
+      Attractions, and Shows. It does not discover additional Home Assistant
+      devices from the upstream service. New attraction and show entities
+      are dynamically added to their existing logical service devices
+      without requiring an integration reload.
 
   # Configuration and diagnostic entities have an entity category.
-  entity-category: done
+  entity-category:
+    status: exempt
+    comment: >
+      The integration does not create configuration or diagnostic entities
+      that require an entity category. Diagnostics are exposed through
+      Home Assistant's diagnostics download functionality.
 
   # Entities use a device class wherever one fits.
   entity-device-class: done
@@ -222,9 +227,9 @@ rules:
     comment: >
       The integration only consumes Efteling's public cloud service.
       Temporary upstream outages, unavailable endpoints, and incorrect
-      upstream data cannot be fixed by the Home Assistant user. The
-      integration already handles temporary communication failures through
-      coordinator availability and retries.
+      upstream data cannot be fixed through integration configuration.
+      Temporary communication failures are handled through coordinator
+      availability, logging, and automatic retries.
 
   # Devices that are gone are removed, or can be removed by the user.
   stale-devices:
@@ -251,6 +256,6 @@ rules:
     status: done
     comment: >
       The integration has strict Mypy settings in pyproject.toml, runs
-      scripts/type-check in CI, and includes py.typed. All integration
-      source files pass the strict type check, and the options flow exposes
-      the typed EftelingConfigEntry.
+      scripts/type-check in CI, and includes py.typed. Integration source
+      files are checked using strict typing. Home Assistant's shared
+      asynchronous HTTP session is injected into the API client.
