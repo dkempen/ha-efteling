@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from datetime import timedelta
+from importlib import import_module
 from pathlib import Path
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, patch
@@ -11,7 +12,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from homeassistant.const import CONF_LANGUAGE
 from homeassistant.util import dt as dt_util
-from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.efteling_park.api import EftelingApiClient
 from custom_components.efteling_park.const import DOMAIN, PARK_TIME_ZONE
@@ -21,6 +21,9 @@ if TYPE_CHECKING:
     from collections.abc import Generator
 
     from homeassistant.core import HomeAssistant
+    from pytest_homeassistant.common import MockConfigEntry
+
+    LEGACY_TEST_FRAMEWORK = False
 
     from custom_components.efteling_park.models import (
         AnnualPasses,
@@ -28,6 +31,15 @@ if TYPE_CHECKING:
         PoiResponse,
         WaitTimesResponse,
     )
+else:
+    try:
+        MockConfigEntry = import_module("pytest_homeassistant.common").MockConfigEntry
+        LEGACY_TEST_FRAMEWORK = False
+    except ModuleNotFoundError:
+        MockConfigEntry = import_module(
+            "pytest_homeassistant_custom_component.common"
+        ).MockConfigEntry
+        LEGACY_TEST_FRAMEWORK = True
 
 
 @pytest.fixture(autouse=True)
@@ -145,3 +157,10 @@ async def loaded_entry(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     return config_entry
+
+
+@pytest.fixture(autouse=True)
+def enable_custom_integrations_compat(request: pytest.FixtureRequest) -> None:
+    """Enable custom integrations when using the legacy test framework."""
+    if LEGACY_TEST_FRAMEWORK:
+        request.getfixturevalue("enable_custom_integrations")

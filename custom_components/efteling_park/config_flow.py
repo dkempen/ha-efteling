@@ -131,11 +131,11 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             error = await self._async_validate_input(user_input)
 
             if error is None:
-                return self.async_update_and_abort(
+                self.hass.config_entries.async_update_entry(
                     entry,
                     options=user_input,
-                    reason="reconfigure_successful",
                 )
+                return self.async_abort(reason="reconfigure_successful")
 
             errors["base"] = error
 

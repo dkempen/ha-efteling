@@ -130,9 +130,13 @@ async def test_attraction_status_sensor_is_created_when_enabled(
         status_state.attributes["description"] == wait_state.attributes["description"]
     )
     assert status_state.attributes["latitude"] == wait_state.attributes["latitude"]
-    attraction_device = dr.async_get(hass).async_get_device_by_identifier(
-        (DOMAIN, ATTRACTIONS),
-        config_entry.entry_id,
+    attraction_device = next(
+        device
+        for device in dr.async_entries_for_config_entry(
+            dr.async_get(hass),
+            config_entry.entry_id,
+        )
+        if (DOMAIN, ATTRACTIONS) in device.identifiers
     )
     assert attraction_device is not None
     assert status_entity.device_id == attraction_device.id

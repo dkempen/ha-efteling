@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
+from importlib import import_module
 from typing import TYPE_CHECKING, Any
 from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
 
 import pytest
-from pytest_homeassistant.common import MockConfigEntry
 
 from custom_components.efteling_park.api import (
     EftelingApiClient,
@@ -27,6 +27,14 @@ from custom_components.efteling_park.map import ParkMapMetadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
+    from pytest_homeassistant.common import MockConfigEntry
+else:
+    try:
+        MockConfigEntry = import_module("pytest_homeassistant.common").MockConfigEntry
+    except ModuleNotFoundError:
+        MockConfigEntry = import_module(
+            "pytest_homeassistant_custom_component.common"
+        ).MockConfigEntry
 
 
 def _entry() -> MockConfigEntry:
