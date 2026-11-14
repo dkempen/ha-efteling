@@ -3,13 +3,17 @@ name: Test
 on:
   push:
     paths-ignore:
-      - 'images/map/**'
+      - "images/map/**"
   pull_request:
     paths-ignore:
-      - 'images/map/**'
+      - "images/map/**"
   workflow_dispatch:
 
 permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -26,6 +30,8 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
         run: python -m pip install -e . --group dev
       - name: Lint
@@ -37,11 +43,11 @@ jobs:
       - name: Check coverage
         run: python scripts/check_coverage.py
       - name: Build wheel
-        run: python -m pip install build && python -m build --wheel
+        run: python -m build --wheel
       - name: Verify typing marker in wheel
         run: |
-          wheel=$(find dist -name '*.whl' -print -quit)
-          unzip -l "$wheel" | grep -q 'efteling_park/py.typed'
+          wheel=$(find dist -name "*.whl" -print -quit)
+          unzip -l "$wheel" | grep -q "efteling_park/py.typed"
 
   minimum-version:
     name: Minimum version
@@ -57,10 +63,12 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - name: Install dependencies
-        run: |
-          python -m pip install --no-deps -e .
-          python -m pip install "pytest-homeassistant-custom-component==0.13.181" "josepy<2" "pycares<4.9"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install integration
+        run: python -m pip install --no-deps -e .
+      - name: Install test dependencies
+        run: python -m pip install --group minimum-test
       - name: Install integration dependencies
         run: python -m pip install "homeassistant==2024.11.0"
       - name: Test config flow and entry lifecycle

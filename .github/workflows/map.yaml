@@ -5,14 +5,19 @@ on:
     branches:
       - master
     paths:
-      - scripts/update_map.py
       - .github/workflows/map.yaml
+      - scripts/update_map.py
+      - pyproject.toml
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-park-map
+  cancel-in-progress: false
 
 jobs:
   update-park-map:
@@ -27,8 +32,10 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.14"
+          cache: pip
+          cache-dependency-path: pyproject.toml
       - name: Install dependencies
-        run: pip install pillow
+        run: python -m pip install --group map
       - name: Generate park maps
         run: python scripts/update_map.py
       - name: Commit map changes

@@ -3,15 +3,19 @@ name: Validate
 on:
   push:
     paths-ignore:
-      - 'images/map/**'
+      - "images/map/**"
   pull_request:
     paths-ignore:
-      - 'images/map/**'
+      - "images/map/**"
   workflow_dispatch:
   schedule:
     - cron: "0 0 * * *"
 
 permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   hacs:

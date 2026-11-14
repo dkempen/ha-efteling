@@ -1,3 +1,4 @@
+
 [project]
 name = "ha-efteling"
 version = "0.6.0"
@@ -7,14 +8,23 @@ requires-python = ">=3.12"
 dependencies = ["homeassistant>=2024.11.0"]
 
 [dependency-groups]
+map = [
+    "pillow==13.0.0",
+]
 test = [
     "pytest-homeassistant==2026.11.0",
     "pytest-cov>=7.1.0",
+]
+minimum-test = [
+    "pytest-homeassistant-custom-component==0.13.181",
+    "josepy<2",
+    "pycares<4.9",
 ]
 dev = [
     { include-group = "test" },
     "ruff==0.17.1",
     "mypy==2.4.1",
+    "build",
 ]
 
 [build-system]
