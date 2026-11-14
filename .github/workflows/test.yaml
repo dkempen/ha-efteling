@@ -36,3 +36,34 @@ jobs:
         run: scripts/test --cov --cov-report=json:coverage.json
       - name: Check coverage
         run: python scripts/check_coverage.py
+      - name: Build wheel
+        run: python -m pip install build && python -m build --wheel
+      - name: Verify typing marker in wheel
+        run: |
+          wheel=$(find dist -name '*.whl' -print -quit)
+          unzip -l "$wheel" | grep -q 'efteling_park/py.typed'
+
+  minimum-version:
+    name: Minimum Home Assistant compatibility
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install minimum-version test dependencies
+        run: >-
+          python -m pip install "homeassistant==2024.11.0"
+          "pytest-homeassistant==2024.11.0"
+      - name: Install integration without resolving latest Home Assistant
+        run: python -m pip install --no-deps -e .
+      - name: Test config flow and entry lifecycle
+        run: >-
+          python -m pytest tests/test_config_flow.py tests/test_init.py
+          tests/test_sensor.py

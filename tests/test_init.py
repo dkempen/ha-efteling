@@ -38,6 +38,56 @@ async def test_setup_and_unload(
     assert not runtime_data.map_metadata_listeners
 
 
+async def test_setup_with_empty_feeds(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+) -> None:
+    """Load platforms successfully when every upstream feed is empty."""
+    with (
+        patch.object(
+            EftelingApiClient,
+            "async_get_poi_list",
+            new_callable=AsyncMock,
+            return_value=[],
+        ),
+        patch.object(
+            EftelingApiClient,
+            "async_get_wait_times",
+            new_callable=AsyncMock,
+            return_value=[],
+        ),
+        patch.object(
+            EftelingApiClient,
+            "async_get_park_info",
+            new_callable=AsyncMock,
+            return_value={"OpeningHours": [], "Maintenance": [], "Events": []},
+        ),
+        patch.object(
+            EftelingApiClient,
+            "async_get_annual_passes",
+            new_callable=AsyncMock,
+            return_value={},
+        ),
+    ):
+        config_entry.add_to_hass(hass)
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    assert config_entry.state is ConfigEntryState.LOADED
+    assert hass.states.get("sensor.efteling_park_crowd_forecast") is not None
+    assert set(hass.states.async_entity_ids("sensor")) == {
+        "sensor.efteling_park_crowd_forecast",
+        "sensor.efteling_park_occupancy_forecast",
+        "sensor.efteling_park_opening_time",
+        "sensor.efteling_park_closing_time",
+        "sensor.efteling_park_attractions_under_maintenance",
+        "sensor.efteling_park_average_wait_time",
+        "sensor.efteling_park_crowd_level",
+    }
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+
 async def test_changed_map_metadata_notifies_listeners(
     loaded_entry: MockConfigEntry,
 ) -> None:
