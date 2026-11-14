@@ -75,7 +75,7 @@ def test_wait_time_schema_accepts_nested_fields_and_nulls() -> None:
             {
                 "Id": "aquanura",
                 "Name": "Aquanura",
-                "State": "open",
+                "State": "future_upstream_status",
                 "Type": None,
                 "WaitingTime": 0,
                 "ShowTimes": [
@@ -91,6 +91,7 @@ def test_wait_time_schema_accepts_nested_fields_and_nulls() -> None:
     }
     parsed = _validate_response(response, _WAIT_TIME_RESPONSE_SCHEMA, "wait times")
     record = parsed["AttractionInfo"][0]
+    assert record["State"] == "future_upstream_status"
     assert record["new_record_field"] == "value"
     assert record["ShowTimes"][0]["new_show_field"] is True
 
@@ -402,15 +403,16 @@ async def test_api_wrapper_treats_access_denial_as_invalid_response(
 
 
 @pytest.mark.asyncio
-async def test_api_wrapper_maps_http_errors_to_communication_error() -> None:
+@pytest.mark.parametrize("status", [404, 500, 503])
+async def test_api_wrapper_maps_http_errors_to_communication_error(status: int) -> None:
     """Map HTTP server failures to the communication error category."""
     error = aiohttp.ClientResponseError(
         request_info=MagicMock(),
         history=(),
-        status=503,
+        status=status,
     )
     client = _client_for_response(status_error=error)
-    with _raises(EftelingApiClientCommunicationError):
+    with _raises(EftelingApiClientCommunicationError, "park information"):
         await client.async_get_park_info(2026, 10)
 
 
@@ -435,8 +437,73 @@ async def test_api_wrapper_maps_network_failures(
     session = MagicMock()
     session.request.side_effect = error
     client = EftelingApiClient(session)
-    with _raises(EftelingApiClientCommunicationError):
+    with _raises(EftelingApiClientCommunicationError, "park information"):
         await client.async_get_park_info(2026, 10)
+
+
+@pytest.mark.parametrize(
+    ("response", "schema", "description"),
+    [
+        pytest.param(
+            {
+                "hits": {
+                    "hit": [
+                        {
+                            "fields": {
+                                "id": " ",
+                                "name": "Python",
+                                "category": "attraction",
+                            }
+                        }
+                    ]
+                }
+            },
+            _POI_RESPONSE_SCHEMA,
+            "POI",
+            id="blank-poi-id",
+        ),
+        pytest.param(
+            {
+                "AttractionInfo": [
+                    {
+                        "Id": "aquanura",
+                        "Name": "Aquanura",
+                        "State": "open",
+                        "WaitingTime": -1,
+                    }
+                ]
+            },
+            _WAIT_TIME_RESPONSE_SCHEMA,
+            "wait times",
+            id="negative-wait-time",
+        ),
+        pytest.param(
+            {
+                "AttractionInfo": [
+                    {
+                        "Id": "aquanura",
+                        "Name": "Aquanura",
+                        "State": "open",
+                        "ShowTimes": [
+                            {"StartDateTime": "2026-10-23T20:00:00", "Duration": 0}
+                        ],
+                    }
+                ]
+            },
+            _WAIT_TIME_RESPONSE_SCHEMA,
+            "wait times",
+            id="non-positive-show-duration",
+        ),
+    ],
+)
+def test_schemas_reject_invalid_semantic_values(
+    response: dict[str, object],
+    schema: Callable[[dict[str, Any]], Any],
+    description: str,
+) -> None:
+    """Reject essential blank identifiers and impossible wait/duration values."""
+    with _raises(EftelingApiClientError, f"Invalid {description} response"):
+        _validate_response(response, schema, description)
 
 
 @pytest.mark.parametrize(

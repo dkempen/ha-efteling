@@ -1,5 +1,7 @@
 """Tests for POI metadata normalization."""
 
+import pytest
+
 from custom_components.efteling_park.sensor.utils import clean_html, parse_poi_metadata
 
 
@@ -59,7 +61,7 @@ def test_parse_poi_metadata_handles_empty_and_invalid_metadata() -> None:
 
 
 def test_parse_poi_metadata_handles_invalid_coordinate_pair() -> None:
-    """Reject a coordinate pair when either coordinate is not numeric."""
+    """Reject the complete coordinate pair when either value is invalid."""
     result = parse_poi_metadata(
         {
             "id": "python",
@@ -69,11 +71,43 @@ def test_parse_poi_metadata_handles_invalid_coordinate_pair() -> None:
         },
         poi_id="python",
     )
-    assert result.latitude == 51.65
+    assert result.latitude is None
     assert result.longitude is None
+
+
+@pytest.mark.parametrize(
+    "coordinates",
+    ["NaN,5", "Infinity,5", "91,5", "51,181", "51,5,6", "51.65, west"],
+)
+def test_parse_poi_metadata_rejects_invalid_geographic_coordinates(
+    coordinates: str,
+) -> None:
+    """Reject non-finite, malformed, and out-of-range coordinate pairs."""
+    result = parse_poi_metadata(
+        {
+            "id": "python",
+            "name": "Python",
+            "category": "attraction",
+            "latlon": coordinates,
+        },
+        poi_id="python",
+    )
+
+    assert (result.latitude, result.longitude) == (None, None)
 
 
 def test_clean_html_unescapes_entities_and_normalizes_breaks() -> None:
     """Clean tags, paragraph boundaries, entities, and whitespace."""
     assert clean_html(" <p>A&nbsp;&amp; B</p> <p>C<br/>D</p> ") == "A & B\nC\nD"
     assert clean_html("") == ""
+
+
+def test_clean_html_preserves_blocks_and_omits_script_and_style() -> None:
+    """Extract nested visible text with block boundaries and no executable text."""
+    assert (
+        clean_html(
+            "<div>A <b>nested</b></div><ul><li>One</li><li>Two</li></ul>"
+            "<script>bad()</script><style>.hidden {}</style>"
+        )
+        == "A nested\nOne\nTwo"
+    )

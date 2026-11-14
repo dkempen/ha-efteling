@@ -2,16 +2,20 @@
 
 from __future__ import annotations
 
-import html
-import re
-from contextlib import suppress
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from html.parser import HTMLParser
+from math import isfinite
+from typing import TYPE_CHECKING, ClassVar
 from urllib.parse import urljoin
 
 if TYPE_CHECKING:
     from custom_components.efteling_park.map import ParkMapMetadata
     from custom_components.efteling_park.models import Poi
+
+MIN_LATITUDE = -90.0
+MAX_LATITUDE = 90.0
+MIN_LONGITUDE = -180.0
+MAX_LONGITUDE = 180.0
 
 
 @dataclass(frozen=True)
@@ -59,17 +63,7 @@ def parse_poi_metadata(
     poi_id: str,
 ) -> PoiMetadata:
     """Normalize API-supplied POI metadata once for an entity update."""
-    latitude: float | None = None
-    longitude: float | None = None
-
-    coordinates = poi.get("latlon")
-
-    if coordinates and "," in coordinates:
-        latitude_raw, _, longitude_raw = coordinates.partition(",")
-
-        with suppress(ValueError):
-            latitude = float(latitude_raw.strip())
-            longitude = float(longitude_raw.strip())
+    latitude, longitude = _parse_coordinates(poi.get("latlon"))
 
     position = (
         map_metadata.map_position(latitude, longitude)
@@ -110,13 +104,78 @@ def clean_html(value: str | None) -> str:
     if not value:
         return ""
 
-    text = html.unescape(value).replace("\xa0", " ")
-    text = re.sub(
-        r"<br\s*/?>|</p\s*>\s*<p\b[^>]*>",
-        "\n",
-        text,
-        flags=re.IGNORECASE,
-    )
-    text = re.sub(r"<[^>]+>", "", text)
+    parser = _PoiHtmlTextParser()
+    parser.feed(value)
+    parser.close()
+    text = "".join(parser.parts).replace("\xa0", " ")
 
-    return re.sub(r"\s*\n\s*", "\n", text).strip()
+    return "\n".join(part.strip() for part in text.splitlines() if part.strip())
+
+
+def _parse_coordinates(value: str | None) -> tuple[float | None, float | None]:
+    """Return a finite, in-range geographic coordinate pair."""
+    if value is None:
+        return None, None
+
+    latitude_raw, separator, longitude_raw = value.partition(",")
+    if not separator or "," in longitude_raw:
+        return None, None
+
+    try:
+        latitude = float(latitude_raw.strip())
+        longitude = float(longitude_raw.strip())
+    except ValueError:
+        return None, None
+
+    if (
+        not isfinite(latitude)
+        or not isfinite(longitude)
+        or not MIN_LATITUDE <= latitude <= MAX_LATITUDE
+        or not MIN_LONGITUDE <= longitude <= MAX_LONGITUDE
+    ):
+        return None, None
+
+    return latitude, longitude
+
+
+class _PoiHtmlTextParser(HTMLParser):
+    """Extract POI text while preserving structural line breaks."""
+
+    _BLOCK_TAGS: ClassVar[frozenset[str]] = frozenset(
+        {"br", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "p"}
+    )
+    _IGNORED_TAGS: ClassVar[frozenset[str]] = frozenset({"script", "style"})
+
+    def __init__(self) -> None:
+        """Initialize the parser."""
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self._ignored_depth = 0
+
+    def handle_starttag(
+        self,
+        tag: str,
+        _attrs: list[tuple[str, str | None]],
+    ) -> None:
+        """Start a block or ignored content region."""
+        if tag in self._IGNORED_TAGS:
+            self._ignored_depth += 1
+        elif not self._ignored_depth and tag in self._BLOCK_TAGS:
+            self._append_line_break()
+
+    def handle_endtag(self, tag: str) -> None:
+        """End a block or ignored content region."""
+        if tag in self._IGNORED_TAGS:
+            self._ignored_depth = max(0, self._ignored_depth - 1)
+        elif not self._ignored_depth and tag in self._BLOCK_TAGS:
+            self._append_line_break()
+
+    def handle_data(self, data: str) -> None:
+        """Collect visible text outside script and style elements."""
+        if not self._ignored_depth:
+            self.parts.append(data)
+
+    def _append_line_break(self) -> None:
+        """Add one structural line break without introducing blank lines."""
+        if self.parts and not self.parts[-1].endswith("\n"):
+            self.parts.append("\n")

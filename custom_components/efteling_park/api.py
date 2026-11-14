@@ -36,10 +36,10 @@ if TYPE_CHECKING:
 
 _SHOW_TIME_SCHEMA = vol.Schema(
     {
-        vol.Required("StartDateTime"): str,
+        vol.Required("StartDateTime"): vol.All(str, vol.Match(r"\S")),
         vol.Optional("ShowDateTime"): vol.Any(str, None),
         vol.Optional("EndDateTime"): vol.Any(str, None),
-        vol.Optional("Duration"): vol.Any(int, None),
+        vol.Optional("Duration"): vol.Any(vol.All(int, vol.Range(min=1)), None),
         vol.Optional("Edition"): vol.Any(str, None),
     },
     extra=vol.ALLOW_EXTRA,
@@ -47,12 +47,12 @@ _SHOW_TIME_SCHEMA = vol.Schema(
 
 _ATTRACTION_INFO_SCHEMA = vol.Schema(
     {
-        vol.Required("Id"): str,
+        vol.Required("Id"): vol.All(str, vol.Match(r"\S")),
         vol.Required("Name"): str,
         vol.Required("State"): str,
         vol.Optional("Type"): vol.Any(str, None),
         vol.Optional("Empire"): vol.Any(str, None),
-        vol.Optional("WaitingTime"): vol.Any(int, None),
+        vol.Optional("WaitingTime"): vol.Any(vol.All(int, vol.Range(min=0)), None),
         vol.Optional("ShowTimes"): vol.Any([_SHOW_TIME_SCHEMA], None),
         vol.Optional("PastShowTimes"): vol.Any([_SHOW_TIME_SCHEMA], None),
     },
@@ -61,7 +61,7 @@ _ATTRACTION_INFO_SCHEMA = vol.Schema(
 
 _POI_FIELDS_SCHEMA = vol.Schema(
     {
-        vol.Required("id"): str,
+        vol.Required("id"): vol.All(str, vol.Match(r"\S")),
         vol.Required("name"): str,
         vol.Required("category"): str,
         vol.Optional("alternateid"): vol.Any(str, None),
@@ -246,7 +246,11 @@ class EftelingApiClient:
 
     async def async_get_poi_list(self) -> list[Poi]:
         """Return POI data (points of interest, for example attractions)."""
-        response = await self._async_get_json(POINTS_OF_INTEREST_URL, self.headers)
+        response = await self._async_get_json(
+            POINTS_OF_INTEREST_URL,
+            self.headers,
+            endpoint="POI",
+        )
         parsed = _validate_response(response, _POI_RESPONSE_SCHEMA, "POI")
         poi_response = cast("PoiResponse", parsed)
 
@@ -254,7 +258,11 @@ class EftelingApiClient:
 
     async def async_get_wait_times(self) -> list[AttractionInfo]:
         """Return wait times data."""
-        response = await self._async_get_json(WAIT_TIMES_URL, self.headers)
+        response = await self._async_get_json(
+            WAIT_TIMES_URL,
+            self.headers,
+            endpoint="wait times",
+        )
         parsed = _validate_response(
             response,
             _WAIT_TIME_RESPONSE_SCHEMA,
@@ -269,6 +277,7 @@ class EftelingApiClient:
         response = await self._async_get_json(
             f"{PARK_INFO_URL}/{self._language}/{year}/{month:02d}",
             {**self.headers, "host": "www.efteling.com"},
+            endpoint="park information",
         )
         parsed = _validate_response(
             response,
@@ -287,6 +296,7 @@ class EftelingApiClient:
         response = await self._async_get_json(
             ANNUAL_PASSES_URL,
             {**self.headers, "host": "www.efteling.com"},
+            endpoint="annual passes",
         )
         parsed = _validate_response(
             response,
@@ -300,9 +310,11 @@ class EftelingApiClient:
         self,
         url: str,
         headers: dict[str, str],
+        *,
+        endpoint: str,
     ) -> dict[str, object]:
         """Fetch a JSON object from an Efteling endpoint."""
-        return await self._api_wrapper("get", url, headers=headers)
+        return await self._api_wrapper("get", url, headers=headers, endpoint=endpoint)
 
     async def _api_wrapper(
         self,
@@ -310,6 +322,8 @@ class EftelingApiClient:
         url: str,
         data: dict[str, object] | None = None,
         headers: dict[str, str] | None = None,
+        *,
+        endpoint: str,
     ) -> dict[str, object]:
         """Get information from the API."""
         try:
@@ -321,21 +335,24 @@ class EftelingApiClient:
                     json=data,
                 ) as response:
                     if response.status in (401, 403):
-                        msg = f"Efteling API access denied with HTTP {response.status}"
+                        msg = (
+                            f"Efteling {endpoint} access denied with HTTP "
+                            f"{response.status}"
+                        )
                         raise EftelingApiClientError(msg)
 
                     _verify_response_or_raise(response)
                     payload = await response.json()
 
                     if not isinstance(payload, dict):
-                        msg = "Invalid API response: expected a JSON object"
+                        msg = f"Invalid {endpoint} response: expected a JSON object"
                         raise EftelingApiClientError(msg)
 
                     return cast("dict[str, object]", payload)
 
         except TimeoutError as exception:
-            msg = f"Timeout error fetching information - {exception}"
+            msg = f"Timeout fetching {endpoint}"
             raise EftelingApiClientCommunicationError(msg) from exception
         except (aiohttp.ClientError, json.JSONDecodeError) as exception:
-            msg = f"Error fetching information - {exception}"
+            msg = f"Error fetching {endpoint}: {exception}"
             raise EftelingApiClientCommunicationError(msg) from exception
