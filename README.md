@@ -228,7 +228,7 @@ It refreshes feeds at the intervals below.
 | Attraction and show metadata             | Every **24 hours**  | Names, descriptions, images, locations, and visitor information               |
 | Park schedule information                | Every **24 hours**  | Opening hours, crowd and occupancy forecasts, events, and planned maintenance |
 | Annual passes                            | Every **24 hours**  | Classic, Plus, and Premium validity by date                                   |
-| Map metadata                             | Every **24 hours**  | Seasonal image timestamps, geographic bounds, and map rotation               |
+| Map metadata                             | Every **24 hours**  | Seasonal image timestamps, geographic bounds, and map rotation                |
 
 Time-sensitive entity states are also updated at relevant times, such as park opening and closing, local midnight, and show transitions, rather than relying solely on the next scheduled data refresh.
 

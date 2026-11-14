@@ -161,10 +161,7 @@ async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration
                     continue
 
                 attraction = wait_times[attraction_id]
-                poi = poi_map.get(attraction_id)
-
-                if poi is None:
-                    continue
+                poi = poi_map[attraction_id]
 
                 related_entities: list[EftelingAttractionSensor | EftelingShowSensor]
                 entity: EftelingAttractionSensor | EftelingShowSensor
@@ -217,9 +214,6 @@ async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration
                     )
                     sensors.append(entity)
                     related_entities = [entity]
-
-                else:
-                    continue
 
                 entities[attraction_id] = related_entities
 
