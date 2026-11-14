@@ -109,7 +109,13 @@ rules:
   integration-owner: done
 
   # The integration logs a lost connection once, and once when it comes back.
-  log-when-unavailable: done
+  log-when-unavailable:
+    status: done
+    comment: >
+      Each coordinator raises UpdateFailed only when its prior successful
+      update transitions to failure; Home Assistant logs that transition and
+      logs recovery once. Transport errors have a dedicated client exception;
+      response and semantic validation errors remain generic API failures.
 
   # Every entity platform sets PARALLEL_UPDATES.
   parallel-updates: done
@@ -177,13 +183,12 @@ rules:
 
   # Devices that appear after setup are added without a reload.
   dynamic-devices:
-    status: done
+    status: exempt
     comment: >
-      The integration creates three fixed logical service devices: Park,
-      Attractions, and Shows. It does not discover additional Home Assistant
-      devices from the upstream service. New attraction and show entities
-      are dynamically added to their existing logical service devices
-      without requiring an integration reload.
+      Each config entry owns the same three fixed logical service devices:
+      Park, Attractions, and Shows. Upstream attractions and shows create
+      entities under those devices, not independently discoverable devices
+      that appear or disappear from a device inventory.
 
   # Configuration and diagnostic entities have an entity category.
   entity-category:
