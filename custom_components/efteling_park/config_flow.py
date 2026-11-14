@@ -131,7 +131,7 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             error = await self._async_validate_input(user_input)
 
             if error is None:
-                return self.async_update_reload_and_abort(
+                return self.async_update_and_abort(
                     entry,
                     options=user_input,
                     reason="reconfigure_successful",
@@ -188,13 +188,8 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return None
 
 
-class EftelingOptionsFlowHandler(config_entries.OptionsFlowWithReload):
+class EftelingOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle Efteling options."""
-
-    @property
-    def config_entry(self) -> EftelingConfigEntry:
-        """Return the integration's typed config entry."""
-        return cast("EftelingConfigEntry", super().config_entry)
 
     async def async_step_init(
         self,
@@ -207,7 +202,10 @@ class EftelingOptionsFlowHandler(config_entries.OptionsFlowWithReload):
                 data=user_input,
             )
 
-        entry = self.config_entry
+        entry = cast(
+            "EftelingConfigEntry",
+            self.hass.config_entries.async_get_entry(self.handler),
+        )
 
         return self.async_show_form(
             step_id="init",

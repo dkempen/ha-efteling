@@ -106,6 +106,8 @@ async def async_setup_entry(
         if isinstance(result, BaseException):
             raise result
 
+    entry.async_on_unload(entry.add_update_listener(async_update_options))
+
     entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
@@ -119,3 +121,11 @@ async def async_unload_entry(
 ) -> bool:
     """Handle removal of an entry."""
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_update_options(
+    hass: HomeAssistant,
+    entry: EftelingConfigEntry,
+) -> None:
+    """Reload the integration when options change."""
+    await hass.config_entries.async_reload(entry.entry_id)
