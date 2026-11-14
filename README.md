@@ -116,6 +116,7 @@ The Efteling park device includes the following entities:
 Most entities expose additional attributes, including operating schedules, forecasts, event schedules, validity schedules, and upcoming maintenance information.
 
 **Crowd forecast** and **crowd level** are different measurements. The forecast comes from Efteling's park information, while the integration calculates the crowd level from current attraction wait times. The average only includes attractions reported as open with a valid wait time.
+Crowd-level thresholds are integration-derived: below 5 minutes is very quiet, 5–9 quiet, 10–14 fairly quiet, 15–19 fairly busy, 20–24 busy, 25–29 very busy, and 30 minutes or more extremely busy.
 
 The park map image entity updates automatically, and it switches between the summer and winter Efteling maps.
 Its state attributes provide the map's minimum and maximum latitude and longitude, and rotation, which can be used to position attraction locations on the image.

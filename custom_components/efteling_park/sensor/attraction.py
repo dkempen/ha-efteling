@@ -117,13 +117,20 @@ class EftelingAttractionSensor(
         if attraction is None:
             return None
 
-        status = attraction["State"]
-        metadata = self._metadata
+        return {
+            **self._metadata_attributes(),
+            "status": ATTRACTION_STATUS_MAP.get(
+                attraction["State"], attraction["State"]
+            ),
+            "sensor_type": "attraction_wait_time",
+        }
 
+    def _metadata_attributes(self) -> dict[str, Any]:
+        """Return the cached metadata shared by an attraction's sensors."""
+        metadata = self._metadata
         return {
             "id": self._attraction_id,
             "empire": metadata.empire,
-            "status": ATTRACTION_STATUS_MAP.get(status, status),
             "description": metadata.description,
             "subtitle": metadata.subtitle,
             "latitude": metadata.latitude,
@@ -138,7 +145,6 @@ class EftelingAttractionSensor(
             "stimuli": metadata.stimuli,
             "targetgroups": metadata.targetgroups,
             "type": metadata.type,
-            "sensor_type": "attraction_wait_time",
         }
 
     @property
@@ -184,19 +190,14 @@ class EftelingAttractionStatusSensor(EftelingAttractionSensor):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attraction metadata and its current wait time."""
-        attributes = super().extra_state_attributes
-
-        if attributes is None:
+        attraction = self.coordinator.data.get(self._attraction_id)
+        if attraction is None:
             return None
 
-        attributes.pop("status")
-        attributes["wait_time"] = self.coordinator.data[self._attraction_id].get(
-            "WaitingTime"
-        )
-        attributes["map_marker"] = False
-
         return {
-            **attributes,
+            **self._metadata_attributes(),
+            "wait_time": attraction.get("WaitingTime"),
+            "map_marker": False,
             "sensor_type": "attraction_status",
         }
 

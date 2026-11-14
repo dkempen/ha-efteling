@@ -366,6 +366,58 @@ async def test_park_metrics_require_today_and_live_sources(
     assert _state(hass, forecast.entity_id).state == "unavailable"
 
 
+async def test_live_park_metrics_do_not_depend_on_park_info(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Keep live-derived metrics available when only park-info polling fails."""
+    entity = _entity_for_unique_id(hass, loaded_entry, "park_average_wait_time")
+    client_method = loaded_entry.runtime_data.client.async_get_park_info
+    client_method.side_effect = EftelingApiClientCommunicationError("offline")
+    await loaded_entry.runtime_data.park_info_coordinator.async_refresh()
+    await hass.async_block_till_done()
+
+    assert _state(hass, entity.entity_id).state != "unavailable"
+
+
+async def test_crowd_level_threshold_boundaries(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Classify the average wait using the integration's documented thresholds."""
+    entity = _entity_for_unique_id(hass, loaded_entry, "park_crowd_level")
+    coordinator = loaded_entry.runtime_data.wait_times_coordinator
+    expected = {
+        0: "very_quiet",
+        4: "very_quiet",
+        5: "quiet",
+        9: "quiet",
+        10: "fairly_quiet",
+        14: "fairly_quiet",
+        15: "fairly_busy",
+        19: "fairly_busy",
+        20: "busy",
+        24: "busy",
+        25: "very_busy",
+        29: "very_busy",
+        30: "extremely_busy",
+    }
+
+    for waiting_time, crowd_level in expected.items():
+        coordinator.async_set_updated_data(
+            {
+                attraction_id: {
+                    **attraction,
+                    "State": "open",
+                    "WaitingTime": waiting_time,
+                }
+                for attraction_id, attraction in coordinator.data.items()
+            }
+        )
+        await hass.async_block_till_done()
+        assert _state(hass, entity.entity_id).state == crowd_level
+
+
 async def test_park_sensor_unknown_metric_is_unknown(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,

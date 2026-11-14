@@ -19,6 +19,7 @@ from homeassistant.util import dt as dt_util
 from custom_components.efteling_park.const import PARK, PARK_TIME_ZONE
 from custom_components.efteling_park.coordinator import (
     EftelingParkInfoCoordinator,
+    EftelingWaitTimesCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.sensor.park_snapshot import (
@@ -53,14 +54,14 @@ TODAY_DATA_KEYS = frozenset(
 
 
 class EftelingParkSensor(
-    EftelingEntity[EftelingParkInfoCoordinator],
+    EftelingEntity[EftelingParkInfoCoordinator | EftelingWaitTimesCoordinator],
     SensorEntity,
 ):
     """One sensor on the shared Efteling park device."""
 
     def __init__(
         self,
-        coordinator: EftelingParkInfoCoordinator,
+        coordinator: EftelingParkInfoCoordinator | EftelingWaitTimesCoordinator,
         data: EftelingData,
         description: SensorEntityDescription,
     ) -> None:
@@ -81,12 +82,10 @@ class EftelingParkSensor(
         await super().async_added_to_hass()
 
         if self.entity_description.key in LIVE_DATA_KEYS:
-            for source in (
-                self._data.poi_coordinator,
-                self._data.wait_times_coordinator,
-            ):
-                remove_listener = source.async_add_listener(self._handle_source_update)
-                self.async_on_remove(remove_listener)
+            remove_listener = self._data.poi_coordinator.async_add_listener(
+                self._handle_source_update
+            )
+            self.async_on_remove(remove_listener)
 
         self._schedule_midnight_update()
 
@@ -131,11 +130,11 @@ class EftelingParkSensor(
             return False
 
         key = self.entity_description.key
-        if key in LIVE_DATA_KEYS and not (
-            self._data.poi_coordinator.last_update_success
-            and self._data.wait_times_coordinator.last_update_success
-        ):
-            return False
+        if key in LIVE_DATA_KEYS:
+            return (
+                self._data.poi_coordinator.last_update_success
+                and self._data.wait_times_coordinator.last_update_success
+            )
 
         return key not in TODAY_DATA_KEYS or self._snapshot()["today"] is not None
 
@@ -183,7 +182,7 @@ class EftelingParkSensor(
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Expose data related to this Park metric."""
-        response = self.coordinator.data
+        response = self._data.park_info_coordinator.data
         snapshot = self._snapshot()
         key = self.entity_description.key
         attributes: dict[str, Any] = {}
@@ -274,7 +273,11 @@ def create_park_sensors(data: EftelingData) -> list[EftelingParkSensor]:
     """Create the Park metric sensors."""
     return [
         EftelingParkSensor(
-            data.park_info_coordinator,
+            (
+                data.wait_times_coordinator
+                if description.key in LIVE_DATA_KEYS
+                else data.park_info_coordinator
+            ),
             data,
             description,
         )
