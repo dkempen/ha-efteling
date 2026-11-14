@@ -574,6 +574,97 @@ async def test_showtime_transitions_and_metadata_updates(
     future_unsubscribe.assert_not_called()
 
 
+async def test_show_status_uses_park_date_and_next_timestamp_spans_dates(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Classify today in the park timezone while retaining tomorrow's timestamp."""
+    park_timezone = ZoneInfo("Europe/Amsterdam")
+    now = datetime(2026, 10, 23, 23, 30, tzinfo=park_timezone)
+    monkeypatch.setattr(
+        "custom_components.efteling_park.sensor.show.dt_util.now",
+        lambda _tz=None: now,
+    )
+    await hass.config.async_set_time_zone("America/New_York")
+    show = _entity_for_unique_id(hass, loaded_entry, "aquanura")
+    wait_times = dict(loaded_entry.runtime_data.wait_times_coordinator.data)
+    wait_times["aquanura"] = {
+        "Id": "aquanura",
+        "Name": "Aquanura",
+        "State": "open",
+        "ShowTimes": [
+            {
+                "StartDateTime": "2026-10-24T00:15:00",
+                "EndDateTime": "2026-10-24T00:45:00",
+            },
+            {
+                "StartDateTime": "2026-10-24T10:00:00",
+                "EndDateTime": "2026-10-24T10:30:00",
+            },
+        ],
+    }
+    loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+
+    state = _state(hass, show.entity_id)
+    assert state.attributes["status"] == "no_more_shows_today"
+    assert len(state.attributes["upcoming_showtimes"]) == 2
+    next_show = dt_util.parse_datetime(state.state)
+    assert next_show is not None
+    assert next_show.astimezone(park_timezone).date().isoformat() == "2026-10-24"
+
+    wait_times["aquanura"]["ShowTimes"].append(
+        {
+            "StartDateTime": "2026-10-23T23:45:00",
+            "EndDateTime": "2026-10-24T00:00:00",
+        }
+    )
+    loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+    state = _state(hass, show.entity_id)
+    assert state.attributes["status"] == "upcoming"
+    next_show = dt_util.parse_datetime(state.state)
+    assert next_show is not None
+    assert next_show.astimezone(park_timezone).date().isoformat() == "2026-10-23"
+
+    now = datetime(2026, 10, 24, 0, 0, tzinfo=park_timezone)
+    loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+    state = _state(hass, show.entity_id)
+    assert state.attributes["status"] == "upcoming"
+    next_show = dt_util.parse_datetime(state.state)
+    assert next_show is not None
+    assert next_show.astimezone(park_timezone).date().isoformat() == "2026-10-24"
+
+
+async def test_show_without_end_or_duration_is_ignored(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ignore show records without a usable end time or duration."""
+    now = datetime(2026, 10, 23, 12, 0, tzinfo=ZoneInfo("Europe/Amsterdam"))
+    monkeypatch.setattr(
+        "custom_components.efteling_park.sensor.show.dt_util.now",
+        lambda _tz=None: now,
+    )
+    show = _entity_for_unique_id(hass, loaded_entry, "aquanura")
+    wait_times = dict(loaded_entry.runtime_data.wait_times_coordinator.data)
+    wait_times["aquanura"] = {
+        "Id": "aquanura",
+        "Name": "Aquanura",
+        "State": "open",
+        "ShowTimes": [{"StartDateTime": "2026-10-23T14:00:00"}],
+    }
+    loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
+    await hass.async_block_till_done()
+
+    state = _state(hass, show.entity_id)
+    assert state.state == "unknown"
+    assert state.attributes["status"] == "no_more_shows_today"
+
+
 async def test_dynamic_sensor_creation_uses_names_and_ignores_unknown_pois(
     hass: HomeAssistant,
     config_entry: MockConfigEntry,

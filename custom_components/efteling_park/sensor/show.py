@@ -216,7 +216,7 @@ class EftelingShowSensor(
         self._cancel_timer()
         now = dt_util.now()
         current = self._current_entry(now)
-        boundaries = [item.start for item in self._entries if item.start > now]
+        boundaries = sorted({item.start for item in self._entries if item.start > now})
 
         if current is not None:
             boundaries.append(current.end)
@@ -259,6 +259,12 @@ class EftelingShowSensor(
 
         current = self._current_entry(now)
         future = [item for item in entries if item.start > now]
+        today = now.astimezone(PARK_TIME_ZONE).date()
+        future_today = [
+            item
+            for item in future
+            if item.start.astimezone(PARK_TIME_ZONE).date() == today
+        ]
         past = [item for item in entries if item.end <= now]
 
         source = (
@@ -266,7 +272,11 @@ class EftelingShowSensor(
         )
 
         status = (
-            "current" if current else "upcoming" if future else "no_more_shows_today"
+            "current"
+            if current
+            else "upcoming"
+            if future_today
+            else "no_more_shows_today"
         )
 
         metadata = self._metadata

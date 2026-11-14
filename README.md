@@ -160,7 +160,7 @@ Enabling the optional attraction status sensors adds entities with the `_status`
 
 ### Shows
 
-Each show has a timestamp sensor that provides the start time of the currently running show or, if no show is running, the next upcoming show. If no current or upcoming show is available, the sensor state is `unknown`.
+Each show has a timestamp sensor that provides the start time of the currently running show or, if no show is running, the next scheduled show, including shows on future dates. If no current or future show is available, the sensor state is `unknown`. The `status` attribute is `Upcoming` only when another show remains on the current Efteling-local date; otherwise it is `No more shows today`. A schedule entry without a valid end time or positive duration is ignored.
 
 For example:
 
