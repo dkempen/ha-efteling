@@ -16,7 +16,7 @@ from pytest_homeassistant.common import async_fire_time_changed
 from custom_components.efteling_park.const import PARK_TIME_ZONE
 from custom_components.efteling_park.image import async_setup_entry
 from custom_components.efteling_park.image.park_map import MAP_IMAGE_URLS
-from custom_components.efteling_park.map import _parse_map_bounds
+from custom_components.efteling_park.map import ParkMapMetadata, _parse_map_bounds
 
 if TYPE_CHECKING:
     from freezegun.api import FrozenDateTimeFactory
@@ -81,7 +81,7 @@ async def test_image_setup_entry_skips_missing_map(
     loaded_entry: MockConfigEntry,
 ) -> None:
     """Skip creating an image entity when map metadata is unavailable."""
-    loaded_entry.runtime_data.park_map = None
+    loaded_entry.runtime_data.map_metadata_coordinator.data = None
     add_entities = MagicMock()
 
     await async_setup_entry(hass, loaded_entry, add_entities)
@@ -236,6 +236,66 @@ async def test_map_image_is_cached_until_the_season_changes(
 
     assert load_image.await_count == 2
     assert load_image.await_args_list[1].args[0] == MAP_IMAGE_URLS["winter"]
+
+
+async def test_map_image_cache_invalidates_when_manifest_timestamp_changes(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Reload the selected image after its manifest timestamp changes."""
+    load_image = AsyncMock(return_value=Image("image/jpeg", b"map image"))
+    with patch.object(ImageEntity, "_async_load_image_from_url", load_image):
+        entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
+        metadata = loaded_entry.runtime_data.park_map
+        assert metadata is not None
+        await async_get_image(hass, entity_id)
+
+        changed_manifest = dict(metadata.manifest)
+        changed_manifest["summer"] += timedelta(minutes=1)
+        updated = ParkMapMetadata(
+            manifest=changed_manifest,
+            bounds=metadata.bounds,
+            rotation_degrees=metadata.rotation_degrees,
+        )
+        loaded_entry.runtime_data.map_metadata_coordinator.async_set_updated_data(
+            updated
+        )
+        await hass.async_block_till_done()
+        await async_get_image(hass, entity_id)
+
+    assert load_image.await_count == 2
+
+
+async def test_map_image_updates_bounds_without_reloading_unchanged_image(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Refresh map attributes without invalidating an unchanged image version."""
+    load_image = AsyncMock(return_value=Image("image/jpeg", b"map image"))
+    with patch.object(ImageEntity, "_async_load_image_from_url", load_image):
+        entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
+        metadata = loaded_entry.runtime_data.park_map
+        assert metadata is not None
+        await async_get_image(hass, entity_id)
+
+        updated_bounds = dict(metadata.bounds or MAP_BOUNDS)
+        updated_bounds["min_latitude"] += 0.0001
+        updated = ParkMapMetadata(
+            manifest=metadata.manifest,
+            bounds=updated_bounds,
+            rotation_degrees=180,
+        )
+        loaded_entry.runtime_data.map_metadata_coordinator.async_set_updated_data(
+            updated
+        )
+        await hass.async_block_till_done()
+        await async_get_image(hass, entity_id)
+
+    assert load_image.await_count == 1
+    state = hass.states.get(entity_id)
+    assert state is not None
+    assert state.attributes["min_latitude"] == updated_bounds["min_latitude"]
+    assert state.attributes["rotation_degrees"] == 180
 
 
 @pytest.mark.parametrize(

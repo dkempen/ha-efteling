@@ -171,19 +171,31 @@ class EftelingAnnualPassesCoordinator(
 
 
 class EftelingMapMetadataCoordinator(DataUpdateCoordinator[ParkMapMetadata | None]):
-    """Refresh supplementary map metadata while retaining the last good value."""
+    """Refresh map metadata while retaining the last valid version on failures."""
 
-    def __init__(self, hass: HomeAssistant, config_entry: EftelingConfigEntry) -> None:
-        """Initialize the map metadata coordinator."""
+    config_entry: EftelingConfigEntry
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config_entry: EftelingConfigEntry,
+        initial_metadata: ParkMapMetadata | None,
+        *,
+        name: str,
+        update_interval: timedelta,
+    ) -> None:
+        """Initialize the coordinator with the current manifest if available."""
         super().__init__(
             hass,
             LOGGER,
             config_entry=config_entry,
-            name=f"{DOMAIN}_map_metadata",
-            update_interval=timedelta(days=1),
+            name=f"{DOMAIN}_{name}",
+            update_interval=update_interval,
+            always_update=False,
         )
+        self.data = initial_metadata
 
     async def _async_update_data(self) -> ParkMapMetadata | None:
-        """Fetch metadata without discarding it when the request fails."""
+        """Fetch updated metadata, preserving the last successful value on failure."""
         metadata = await async_get_park_map_metadata(self.hass)
         return metadata if metadata is not None else self.data

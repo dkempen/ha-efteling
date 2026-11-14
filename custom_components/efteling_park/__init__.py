@@ -28,6 +28,7 @@ from custom_components.efteling_park.coordinator import (
 
 from .api import EftelingApiClient
 from .data import EftelingData
+from .map import async_get_park_map_metadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -82,8 +83,14 @@ async def async_setup_entry(
         name="annual_passes",
         update_interval=timedelta(days=1),
     )
-    map_metadata_coordinator = EftelingMapMetadataCoordinator(hass, entry)
-    await map_metadata_coordinator.async_refresh()
+    park_map = await async_get_park_map_metadata(hass)
+    map_metadata_coordinator = EftelingMapMetadataCoordinator(
+        hass,
+        entry,
+        park_map,
+        name="map",
+        update_interval=timedelta(days=1),
+    )
 
     entry.runtime_data = EftelingData(
         client=client,
@@ -92,7 +99,6 @@ async def async_setup_entry(
         park_info_coordinator=park_info_coordinator,
         annual_passes_coordinator=annual_passes_coordinator,
         map_metadata_coordinator=map_metadata_coordinator,
-        park_map=map_metadata_coordinator.data,
     )
 
     refresh_results = await asyncio.gather(
@@ -110,19 +116,7 @@ async def async_setup_entry(
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
     entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
-
-    def update_map_metadata() -> None:
-        """Publish changed map metadata to dependent entities."""
-        metadata = map_metadata_coordinator.data
-        if metadata is None or metadata == entry.runtime_data.park_map:
-            return
-        entry.runtime_data.park_map = metadata
-        for update in tuple(entry.runtime_data.map_metadata_listeners):
-            update(metadata)
-
-    entry.async_on_unload(
-        map_metadata_coordinator.async_add_listener(update_map_metadata)
-    )
+    map_metadata_coordinator.async_set_updated_data(park_map)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
@@ -134,7 +128,10 @@ async def async_unload_entry(
     entry: EftelingConfigEntry,
 ) -> bool:
     """Handle removal of an entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unloaded:
+        entry.runtime_data.unload()
+    return unloaded
 
 
 async def async_update_options(

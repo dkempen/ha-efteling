@@ -65,6 +65,8 @@ class EftelingParkMapImage(
 
         self._unsub_midnight: Callable[[], None] | None = None
         self.async_on_remove(self._cancel_midnight_update)
+        self._data.map_metadata_listeners.append(self._handle_map_metadata_update)
+        self.async_on_remove(self._remove_map_metadata_listener)
 
     @property
     def image_url(self) -> str:
@@ -106,8 +108,29 @@ class EftelingParkMapImage(
 
         if season != self._season:
             self._season = season
-            self._cached_image = None
+            invalidate_image_cache(self)
             self._attr_image_last_updated = self._map_metadata.manifest[season]
+
+    @callback
+    def _handle_map_metadata_update(self, metadata: ParkMapMetadata | None) -> None:
+        """Update map attributes and invalidate a changed seasonal image."""
+        if metadata is None or metadata == self._map_metadata:
+            return
+
+        image_changed = (
+            metadata.manifest[self._season] != self._map_metadata.manifest[self._season]
+        )
+        self._map_metadata = metadata
+        if image_changed:
+            invalidate_image_cache(self)
+            self._attr_image_last_updated = metadata.manifest[self._season]
+        self.async_write_ha_state()
+
+    @callback
+    def _remove_map_metadata_listener(self) -> None:
+        """Unsubscribe from metadata updates when the entity is removed."""
+        if self._handle_map_metadata_update in self._data.map_metadata_listeners:
+            self._data.map_metadata_listeners.remove(self._handle_map_metadata_update)
 
     @callback
     def _cancel_midnight_update(self) -> None:
@@ -141,3 +164,8 @@ class EftelingParkMapImage(
         self._refresh_season()
         self.async_write_ha_state()
         self._schedule_midnight_update()
+
+
+def invalidate_image_cache(entity: ImageEntity) -> None:
+    """Clear Home Assistant's cached image after its source timestamp changes."""
+    entity._cached_image = None  # noqa: SLF001 - ImageEntity has no public cache invalidation API.

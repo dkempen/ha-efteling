@@ -22,7 +22,8 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
     from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-    from custom_components.efteling_park.data import EftelingConfigEntry
+    from custom_components.efteling_park.data import EftelingConfigEntry, EftelingData
+    from custom_components.efteling_park.map import ParkMapMetadata
     from custom_components.efteling_park.models import Poi
 
 PARALLEL_UPDATES = 0
@@ -42,6 +43,38 @@ def _update_poi_metadata(
 
 
 @callback
+def _update_map_metadata(
+    entities: dict[str, list[EftelingAttractionSensor | EftelingShowSensor]],
+    metadata: ParkMapMetadata | None,
+) -> None:
+    """Recalculate map-derived attributes for all POI sensor entities."""
+    for related_entities in entities.values():
+        for entity in related_entities:
+            entity.update_map_metadata(metadata)
+
+
+def _register_map_metadata_listener(
+    entry: EftelingConfigEntry,
+    runtime_data: EftelingData,
+    entities: dict[str, list[EftelingAttractionSensor | EftelingShowSensor]],
+) -> None:
+    """Register and clean up map metadata updates for POI sensors."""
+
+    @callback
+    def update_map_metadata(metadata: ParkMapMetadata | None) -> None:
+        _update_map_metadata(entities, metadata)
+
+    runtime_data.map_metadata_listeners.append(update_map_metadata)
+    entry.async_on_unload(
+        lambda: (
+            runtime_data.map_metadata_listeners.remove(update_map_metadata)
+            if update_map_metadata in runtime_data.map_metadata_listeners
+            else None
+        )
+    )
+
+
+@callback
 def _remove_status_sensors(hass: HomeAssistant, entry: EftelingConfigEntry) -> None:
     """Remove registered status sensors when status sensors are disabled."""
     registry = er.async_get(hass)
@@ -51,7 +84,7 @@ def _remove_status_sensors(hass: HomeAssistant, entry: EftelingConfigEntry) -> N
             registry.async_remove(entity.entity_id)
 
 
-async def async_setup_entry(
+async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration together.
     hass: HomeAssistant,
     entry: EftelingConfigEntry,
     async_add_entities: AddEntitiesCallback,
@@ -155,3 +188,5 @@ async def async_setup_entry(
     entry.async_on_unload(
         runtime_data.poi_coordinator.async_add_listener(add_new_entities)
     )
+
+    _register_map_metadata_listener(entry, runtime_data, entities)

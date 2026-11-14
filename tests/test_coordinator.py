@@ -18,10 +18,12 @@ from custom_components.efteling_park.const import DOMAIN
 from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
     EftelingCoordinator,
+    EftelingMapMetadataCoordinator,
     EftelingParkInfoCoordinator,
     EftelingPoiCoordinator,
     EftelingWaitTimesCoordinator,
 )
+from custom_components.efteling_park.map import ParkMapMetadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -228,6 +230,28 @@ async def test_park_month_refresh_uses_local_month_and_cleans_timer(
         )
         cleanup()
     unsubscribe.assert_called_once()
+
+
+async def test_map_metadata_refresh_preserves_existing_metadata(
+    hass: HomeAssistant,
+) -> None:
+    """Keep the last valid map metadata when no update is available."""
+    entry = _entry()
+    metadata = ParkMapMetadata(manifest={}, bounds=None, rotation_degrees=90)
+    coordinator = EftelingMapMetadataCoordinator(
+        hass,
+        entry,
+        metadata,
+        name="map_metadata",
+        update_interval=timedelta(days=1),
+    )
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        return_value=None,
+    ):
+        await coordinator.async_refresh()
+
+    assert coordinator.data is metadata
 
 
 async def test_park_month_refresh_rolls_over_year_and_refreshes(

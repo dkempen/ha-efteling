@@ -29,11 +29,13 @@ async def test_setup_and_unload(
     loaded_entry: MockConfigEntry,
 ) -> None:
     """Forward platforms, load entities, and unload their listeners cleanly."""
+    runtime_data = loaded_entry.runtime_data
     assert loaded_entry.state is ConfigEntryState.LOADED
     assert hass.states.async_entity_ids("sensor")
     assert await hass.config_entries.async_unload(loaded_entry.entry_id)
     await hass.async_block_till_done()
     assert loaded_entry.state is ConfigEntryState.NOT_LOADED
+    assert not runtime_data.map_metadata_listeners
 
 
 async def test_changed_map_metadata_notifies_listeners(
@@ -50,6 +52,24 @@ async def test_changed_map_metadata_notifies_listeners(
 
     assert runtime_data.park_map is updated_metadata
     listener.assert_called_once_with(updated_metadata)
+
+
+async def test_map_metadata_refresh_retains_last_successful_value(
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Keep the last valid map metadata when a refresh cannot parse a manifest."""
+    coordinator = loaded_entry.runtime_data.map_metadata_coordinator
+    previous_metadata = coordinator.data
+    assert previous_metadata is not None
+
+    with patch(
+        "custom_components.efteling_park.map.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        await coordinator.async_refresh()
+
+    assert coordinator.data is previous_metadata
 
 
 async def test_unload_entry_returns_platform_unload_result(

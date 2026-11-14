@@ -86,6 +86,19 @@ class EftelingAttractionSensor(
         )
         self.async_write_ha_state()
 
+    def update_map_metadata(self, metadata: ParkMapMetadata | None) -> None:
+        """Recalculate cached POI coordinates when map metadata changes."""
+        if metadata == self._map_metadata:
+            return
+
+        self._map_metadata = metadata
+        self._metadata = parse_poi_metadata(
+            self._poi,
+            metadata,
+            poi_id=self._attraction_id,
+        )
+        self.async_write_ha_state()
+
     @property
     def native_value(self) -> int | str | None:
         """Return wait time if attraction is open."""
