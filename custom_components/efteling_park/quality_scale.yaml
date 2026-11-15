@@ -112,10 +112,12 @@ rules:
   log-when-unavailable:
     status: done
     comment: >
-      Each coordinator raises UpdateFailed only when its prior successful
-      update transitions to failure; Home Assistant logs that transition and
-      logs recovery once. Transport errors have a dedicated client exception;
-      response and semantic validation errors remain generic API failures.
+      The primary API coordinators raise UpdateFailed when their source
+      transitions to failure, allowing Home Assistant to log the transition
+      and recovery. The supplementary map metadata coordinator intentionally
+      retains its last valid data instead of marking the map unavailable.
+      It tracks metadata-fetch failures itself and logs one INFO message on
+      the first failure and one when fetching recovers.
 
   # Every entity platform sets PARALLEL_UPDATES.
   parallel-updates: done
