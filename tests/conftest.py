@@ -11,6 +11,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 from homeassistant.const import CONF_LANGUAGE
+from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
 from custom_components.efteling_park.api import EftelingApiClient
@@ -18,9 +19,9 @@ from custom_components.efteling_park.const import DOMAIN, PARK_TIME_ZONE
 from custom_components.efteling_park.map import ParkMapMetadata
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
 
-    from homeassistant.core import HomeAssistant
+    from homeassistant.core import HomeAssistant, State
     from pytest_homeassistant.common import MockConfigEntry
 
     LEGACY_TEST_FRAMEWORK = False
@@ -164,3 +165,36 @@ def enable_custom_integrations_compat(request: pytest.FixtureRequest) -> None:
     """Enable custom integrations when using the legacy test framework."""
     if LEGACY_TEST_FRAMEWORK:
         request.getfixturevalue("enable_custom_integrations")
+
+
+@pytest.fixture
+def entity_registry_entry(
+    hass: HomeAssistant,
+) -> Callable[[MockConfigEntry, str], er.RegistryEntry]:
+    """Return an entity registry entry by config entry and unique ID."""
+
+    def get_entry(
+        config_entry: MockConfigEntry,
+        unique_id: str,
+    ) -> er.RegistryEntry:
+        registry = er.async_get(hass)
+        return next(
+            entity
+            for entity in registry.entities.values()
+            if entity.config_entry_id == config_entry.entry_id
+            and entity.unique_id == unique_id
+        )
+
+    return get_entry
+
+
+@pytest.fixture
+def entity_state(hass: HomeAssistant) -> Callable[[str], State]:
+    """Return the state of an existing entity."""
+
+    def get_state(entity_id: str) -> State:
+        state = hass.states.get(entity_id)
+        assert state is not None, f"Entity {entity_id} does not exist"
+        return state
+
+    return get_state
