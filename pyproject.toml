@@ -1,4 +1,3 @@
-
 [project]
 name = "ha-efteling"
 version = "0.6.0"
@@ -68,6 +67,9 @@ max-complexity = 25
 addopts = "-p no:respx"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-filterwarnings = ["ignore::DeprecationWarning"]
+filterwarnings = [
+    "ignore:Inheritance class HomeAssistantApplication:DeprecationWarning",
+    "ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning",
+]
 pythonpath = ["."]
 testpaths = ["tests"]

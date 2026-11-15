@@ -79,18 +79,12 @@ def _register_map_metadata_listener(
 def _remove_status_sensors(
     hass: HomeAssistant,
     entry: EftelingConfigEntry,
-    poi_map: dict[str, Poi],
 ) -> None:
-    """Remove registered status sensors when status sensors are disabled."""
+    """Remove all registered attraction status sensors for this config entry."""
     registry = er.async_get(hass)
-    status_ids = {
-        f"{poi_id}_status"
-        for poi_id, poi in poi_map.items()
-        if poi["category"] == "attraction"
-    }
 
     for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
-        if entity.domain == "sensor" and entity.unique_id in status_ids:
+        if entity.domain == "sensor" and entity.translation_key == "attraction_status":
             registry.async_remove(entity.entity_id)
 
 
@@ -110,7 +104,7 @@ async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration
         DEFAULT_CREATE_ATTRACTION_STATUS_SENSORS,
     )
     if not create_status_sensors:
-        _remove_status_sensors(hass, entry, runtime_data.poi_coordinator.data)
+        _remove_status_sensors(hass, entry)
 
     async def reconcile_entities() -> None:
         async with reconcile_lock:

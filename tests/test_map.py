@@ -155,6 +155,14 @@ def test_parse_map_manifest_accepts_supported_rotation(rotation: int) -> None:
             ValueError,
             "Invalid map update timestamp for summer",
         ),
+        (
+            {
+                "summer": {"updated_at": "2026-11-06T22:22:12"},
+                "winter": {"updated_at": "2026-11-06T22:22:18Z"},
+            },
+            ValueError,
+            "Map update timestamp for summer must include a timezone",
+        ),
     ],
 )
 def test_parse_map_manifest_rejects_invalid_manifest(

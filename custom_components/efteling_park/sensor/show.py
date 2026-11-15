@@ -120,7 +120,7 @@ class EftelingShowSensor(
 
     def update_poi(self, poi: Poi) -> None:
         """Refresh POI metadata and its map position."""
-        if poi is self._poi:
+        if poi == self._poi:
             return
 
         self._poi = poi

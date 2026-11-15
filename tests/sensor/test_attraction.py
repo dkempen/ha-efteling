@@ -3,18 +3,22 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+from unittest.mock import patch
 
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.efteling_park.api import (
     EftelingApiClientCommunicationError,
 )
+from custom_components.efteling_park.sensor.attraction import EftelingAttractionSensor
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from homeassistant.core import HomeAssistant, State
     from pytest_homeassistant.common import MockConfigEntry
+
+    from custom_components.efteling_park.models import Poi
 
 
 async def test_new_and_disappearing_poi_entities(
@@ -175,6 +179,31 @@ async def test_attraction_state_metadata_and_wait_failure_recovery(
     await coordinator.async_refresh()
     await hass.async_block_till_done()
     assert entity_state(entity.entity_id).state == "0"
+
+
+async def test_attraction_ignores_equivalent_poi_replacements(
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Avoid rewriting the entity when a refreshed POI has equal content."""
+    runtime_data = loaded_entry.runtime_data
+    poi: Poi = runtime_data.poi_coordinator.data["python"]
+    sensor = EftelingAttractionSensor(
+        coordinator=runtime_data.wait_times_coordinator,
+        attraction_id="python",
+        attraction_name="Python",
+        poi=poi,
+        map_metadata=runtime_data.park_map,
+    )
+
+    equivalent_poi: Poi = {**poi}
+    changed_poi: Poi = {**poi, "detail_text": "Updated description"}
+
+    with patch.object(sensor, "async_write_ha_state") as write_state:
+        sensor.update_poi(equivalent_poi)
+        write_state.assert_not_called()
+
+        sensor.update_poi(changed_poi)
+        write_state.assert_called_once()
 
 
 async def test_attraction_closed_state_is_unknown_not_unavailable(

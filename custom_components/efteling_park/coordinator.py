@@ -59,6 +59,7 @@ class EftelingCoordinator[DataT](DataUpdateCoordinator[DataT]):
             config_entry=config_entry,
             name=f"{DOMAIN}_{name}",
             update_interval=update_interval,
+            always_update=False,
         )
         self.client = client
 
@@ -192,24 +193,13 @@ class EftelingMapMetadataCoordinator(DataUpdateCoordinator[ParkMapMetadata | Non
             update_interval=update_interval,
             always_update=False,
         )
-        self._metadata_fetch_failed = False
 
-    async def _async_update_data(self) -> ParkMapMetadata | None:
-        """Fetch updated metadata, retaining the last valid value on failures."""
+    async def _async_update_data(self) -> ParkMapMetadata:
+        """Fetch updated metadata or signal a failed refresh."""
         metadata = await async_get_park_map_metadata(self.hass)
 
         if metadata is None:
-            if not self._metadata_fetch_failed:
-                LOGGER.info(
-                    "Unable to refresh Efteling map metadata; "
-                    "retaining the last valid metadata"
-                )
-                self._metadata_fetch_failed = True
-
-            return self.data
-
-        if self._metadata_fetch_failed:
-            LOGGER.info("Efteling map metadata refresh recovered")
-            self._metadata_fetch_failed = False
+            msg = "Unable to refresh Efteling map metadata"
+            raise UpdateFailed(msg)
 
         return metadata

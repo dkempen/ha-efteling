@@ -19,6 +19,10 @@ TO_REDACT = frozenset(
         "longitude",
         "Latitude",
         "Longitude",
+        "min_latitude",
+        "max_latitude",
+        "min_longitude",
+        "max_longitude",
     }
 )
 
@@ -31,6 +35,19 @@ async def async_get_config_entry_diagnostics(
     del hass
 
     runtime_data = entry.runtime_data
+    map_metadata = runtime_data.map_metadata_coordinator.data
+    map_diagnostics = (
+        {
+            "manifest": {
+                season: updated_at.isoformat()
+                for season, updated_at in map_metadata.manifest.items()
+            },
+            "bounds": map_metadata.bounds,
+            "rotation_degrees": map_metadata.rotation_degrees,
+        }
+        if map_metadata is not None
+        else None
+    )
 
     return {
         "config_entry": {
@@ -51,9 +68,6 @@ async def async_get_config_entry_diagnostics(
                 runtime_data.annual_passes_coordinator.data,
                 TO_REDACT,
             ),
-            "map": async_redact_data(
-                runtime_data.map_metadata_coordinator.data,
-                TO_REDACT,
-            ),
+            "map": async_redact_data(map_diagnostics, TO_REDACT),
         },
     }

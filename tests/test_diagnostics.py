@@ -73,10 +73,18 @@ async def test_diagnostics_include_config_and_coordinator_data(
     assert map_metadata is not None
 
     map_diagnostics = diagnostics["data"]["coordinators"]["map"]
-    map_type = f"{type(map_metadata).__module__}.{type(map_metadata).__name__}"
     assert map_diagnostics == {
-        "__type": f"<class '{map_type}'>",
-        "repr": repr(map_metadata),
+        "manifest": {
+            "summer": "2026-11-06T22:22:12+00:00",
+            "winter": "2026-11-06T22:22:18+00:00",
+        },
+        "bounds": {
+            "min_latitude": "**REDACTED**",
+            "max_latitude": "**REDACTED**",
+            "min_longitude": "**REDACTED**",
+            "max_longitude": "**REDACTED**",
+        },
+        "rotation_degrees": 90,
     }
 
 
@@ -94,6 +102,10 @@ async def test_diagnostics_redact_coordinates_recursively(
                 "latlon": "51.647575,5.053534",
                 "latitude": 51.647575,
                 "longitude": 5.053534,
+                "min_latitude": 51.64599309,
+                "max_latitude": 51.65379826,
+                "min_longitude": 5.04264951,
+                "max_longitude": 5.05522907,
                 "location": {"Latitude": 51.647575, "Longitude": 5.053534},
                 "history": [{"latitude": 51.647575, "longitude": 5.053534}],
                 "safe_field": "retained",
@@ -105,6 +117,10 @@ async def test_diagnostics_redact_coordinates_recursively(
     assert poi["latlon"] == "**REDACTED**"
     assert poi["latitude"] == "**REDACTED**"
     assert poi["longitude"] == "**REDACTED**"
+    assert poi["min_latitude"] == "**REDACTED**"
+    assert poi["max_latitude"] == "**REDACTED**"
+    assert poi["min_longitude"] == "**REDACTED**"
+    assert poi["max_longitude"] == "**REDACTED**"
     assert poi["location"]["Latitude"] == "**REDACTED**"
     assert poi["location"]["Longitude"] == "**REDACTED**"
     assert poi["history"][0]["latitude"] == "**REDACTED**"

@@ -275,9 +275,9 @@ async def test_map_metadata_failure_logs_once_and_recovery_logs_once(
     caplog.set_level(logging.INFO, logger=LOGGER.name)
 
     unavailable_message = (
-        "Unable to refresh Efteling map metadata; retaining the last valid metadata"
+        "Error fetching efteling_park_map data: Unable to refresh Efteling map metadata"
     )
-    recovered_message = "Efteling map metadata refresh recovered"
+    recovered_message = "Fetching efteling_park_map data recovered"
 
     with patch(
         "custom_components.efteling_park.coordinator.async_get_park_map_metadata",

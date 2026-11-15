@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from copy import deepcopy
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -20,7 +21,9 @@ from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
 )
+from custom_components.efteling_park.const import DOMAIN
 from custom_components.efteling_park.map import ParkMapMetadata
+from custom_components.efteling_park.sensor import _remove_status_sensors
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -191,6 +194,87 @@ async def test_map_metadata_refresh_retains_last_successful_value(
         await coordinator.async_refresh()
 
     assert coordinator.data is previous_metadata
+    assert coordinator.last_update_success is False
+
+    updated_metadata = replace(previous_metadata, rotation_degrees=180)
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=updated_metadata,
+    ):
+        await coordinator.async_refresh()
+
+    assert coordinator.data is updated_metadata
+    assert coordinator.last_update_success is True
+
+
+async def test_coordinators_do_not_notify_listeners_for_unchanged_data(
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Skip listener updates when a refreshed coordinator value is equal."""
+    runtime_data = loaded_entry.runtime_data
+
+    coordinators = (
+        runtime_data.poi_coordinator,
+        runtime_data.wait_times_coordinator,
+        runtime_data.park_info_coordinator,
+        runtime_data.annual_passes_coordinator,
+    )
+
+    for coordinator in coordinators:
+        listener = MagicMock()
+        remove_listener = coordinator.async_add_listener(listener)
+
+        with patch.object(
+            coordinator,
+            "_async_update_data",
+            new_callable=AsyncMock,
+            return_value=deepcopy(coordinator.data),
+        ):
+            await coordinator.async_refresh()
+
+        listener.assert_not_called()
+        remove_listener()
+
+
+async def test_status_sensor_cleanup_includes_attractions_missing_from_poi_data(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Remove historical status entities even after their POIs disappear."""
+    registry = er.async_get(hass)
+    stale_status = registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        "removed_attraction_status",
+        config_entry=loaded_entry,
+        translation_key="attraction_status",
+    )
+    unrelated_status = registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        "park_status",
+        config_entry=loaded_entry,
+    )
+    unrelated_sensor = registry.async_get_or_create(
+        "sensor",
+        DOMAIN,
+        "park_average_wait_time",
+        config_entry=loaded_entry,
+    )
+    unrelated_binary_sensor = registry.async_get_or_create(
+        "binary_sensor",
+        DOMAIN,
+        "park_status",
+        config_entry=loaded_entry,
+    )
+
+    _remove_status_sensors(hass, loaded_entry)
+
+    assert registry.async_get(stale_status.entity_id) is None
+    assert registry.async_get(unrelated_status.entity_id) is not None
+    assert registry.async_get(unrelated_sensor.entity_id) is not None
+    assert registry.async_get(unrelated_binary_sensor.entity_id) is not None
 
 
 async def test_unload_entry_returns_platform_unload_result(
@@ -368,3 +452,4 @@ async def test_map_metadata_refresh_handles_missing_initial_metadata(
         await coordinator.async_refresh()
 
     assert coordinator.data is None
+    assert coordinator.last_update_success is False

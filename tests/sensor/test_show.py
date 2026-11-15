@@ -11,6 +11,7 @@ import pytest
 from homeassistant.util import dt as dt_util
 
 from custom_components.efteling_park.sensor import show as show_module
+from custom_components.efteling_park.sensor.show import EftelingShowSensor
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -18,6 +19,33 @@ if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant, State
     from homeassistant.helpers.entity_registry import RegistryEntry
     from pytest_homeassistant.common import MockConfigEntry
+
+    from custom_components.efteling_park.models import Poi
+
+
+async def test_show_ignores_equivalent_poi_replacements(
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Avoid rewriting the entity when a refreshed POI has equal content."""
+    runtime_data = loaded_entry.runtime_data
+    poi: Poi = runtime_data.poi_coordinator.data["aquanura"]
+    sensor = EftelingShowSensor(
+        coordinator=runtime_data.wait_times_coordinator,
+        show_id="aquanura",
+        show_name="Aquanura",
+        poi=poi,
+        map_metadata=runtime_data.park_map,
+    )
+
+    equivalent_poi: Poi = {**poi}
+    changed_poi: Poi = {**poi, "detail_text": "Updated show description"}
+
+    with patch.object(sensor, "async_write_ha_state") as write_state:
+        sensor.update_poi(equivalent_poi)
+        write_state.assert_not_called()
+
+        sensor.update_poi(changed_poi)
+        write_state.assert_called_once()
 
 
 async def test_show_has_stable_identity_and_empty_schedule_is_unknown(

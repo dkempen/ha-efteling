@@ -12,6 +12,8 @@ import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import dt as dt_util
 
+from custom_components.efteling_park.const import LOGGER
+
 if TYPE_CHECKING:
     from datetime import datetime
 
@@ -179,6 +181,10 @@ def parse_map_manifest(raw_manifest: object) -> ParkMapMetadata:
             msg = f"Invalid map update timestamp for {season}."
             raise ValueError(msg)
 
+        if updated_at.tzinfo is None or updated_at.utcoffset() is None:
+            msg = f"Map update timestamp for {season} must include a timezone."
+            raise ValueError(msg)
+
         manifest[season] = updated_at
 
     return ParkMapMetadata(
@@ -205,11 +211,6 @@ async def async_get_park_map_metadata(
 
         return parse_map_manifest(raw_manifest)
 
-    except aiohttp.ClientError:
-        return None
-    except TimeoutError:
-        return None
-    except TypeError:
-        return None
-    except ValueError:
+    except (aiohttp.ClientError, TimeoutError, TypeError, ValueError) as exception:
+        LOGGER.debug("Unable to retrieve Efteling map metadata: %s", exception)
         return None
