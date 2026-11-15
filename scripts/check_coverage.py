@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enforce at least 95% coverage for every Efteling integration module."""
+"""Enforce more than 95% coverage for every Efteling integration module."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ MINIMUM_COVERAGE = 95.0
 
 
 def main() -> int:
-    """Check that every integration Python file meets the requested threshold."""
+    """Check that every integration Python file exceeds the coverage threshold."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--minimum-coverage",
@@ -38,19 +38,30 @@ def main() -> int:
             continue
         coverage_files[relative_path] = details
 
+    complete_coverage = 100
+    comparison = (
+        "at least" if args.minimum_coverage == complete_coverage else "greater than"
+    )
+
     problems: list[str] = []
     for source_path in sorted(INTEGRATION_ROOT.rglob("*.py")):
         relative_path = source_path.relative_to(ROOT).as_posix()
         details = coverage_files.get(relative_path)
+
         if details is None:
             problems.append(f"{relative_path}: missing from coverage report")
             continue
 
         percent = details["summary"]["percent_covered"]
-        if percent < args.minimum_coverage:
+
+        if (
+            percent < args.minimum_coverage
+            if args.minimum_coverage == complete_coverage
+            else percent <= args.minimum_coverage
+        ):
             problems.append(
                 f"{relative_path}: {percent:.2f}% "
-                f"(must be at least {args.minimum_coverage:g}%)"
+                f"(must be {comparison} {args.minimum_coverage:g}%)"
             )
 
     if problems:
@@ -60,8 +71,8 @@ def main() -> int:
 
     module_count = len(list(INTEGRATION_ROOT.rglob("*.py")))
     sys.stdout.write(
-        f"All {module_count} integration modules meet or exceed "
-        f"{args.minimum_coverage:g}% coverage.\n"
+        f"All {module_count} integration modules have coverage "
+        f"{comparison} {args.minimum_coverage:g}%.\n"
     )
     return 0
 
