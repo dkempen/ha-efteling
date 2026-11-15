@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: HACS validation
-        uses: hacs/action@main
+        uses: hacs/action@main # Keep unpinned to automatically detect breaking changes.
         with:
           category: integration
 
@@ -38,4 +38,4 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Hassfest
-        uses: home-assistant/actions/hassfest@master
+        uses: home-assistant/actions/hassfest@master # Keep unpinned to automatically detect breaking changes.
