@@ -216,21 +216,31 @@ class EftelingShowSensor(
         self._entries = sorted(entries, key=lambda item: item.start)
 
     def _schedule_next_update(self) -> None:
-        """Schedule an update at the next show start or end boundary."""
+        """Schedule the next show, show-end, or Efteling-local midnight update."""
         self._cancel_timer()
+
         now = dt_util.now()
+        park_now = now.astimezone(PARK_TIME_ZONE)
         current = self._current_entry(now)
-        boundaries = sorted({item.start for item in self._entries if item.start > now})
+
+        next_midnight = park_now.replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        ) + timedelta(days=1)
+
+        boundaries = {item.start for item in self._entries if item.start > now}
+        boundaries.add(next_midnight)
 
         if current is not None:
-            boundaries.append(current.end)
+            boundaries.add(current.end)
 
-        if boundaries:
-            self._unsub_timer = async_track_point_in_time(
-                self.hass,
-                self._handle_scheduled_update,
-                min(boundaries),
-            )
+        self._unsub_timer = async_track_point_in_time(
+            self.hass,
+            self._handle_scheduled_update,
+            min(boundaries),
+        )
 
     @callback
     def _handle_scheduled_update(self, _: datetime) -> None:

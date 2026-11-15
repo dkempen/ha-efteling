@@ -7,12 +7,14 @@ from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 from zoneinfo import ZoneInfo
 
+import pytest
 from homeassistant.util import dt as dt_util
+
+from custom_components.efteling_park.sensor import show as show_module
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    import pytest
     from homeassistant.core import HomeAssistant, State
     from homeassistant.helpers.entity_registry import RegistryEntry
     from pytest_homeassistant.common import MockConfigEntry
@@ -233,6 +235,105 @@ async def test_show_status_uses_park_date_and_next_timestamp_spans_dates(
     next_show = dt_util.parse_datetime(state.state)
     assert next_show is not None
     assert next_show.astimezone(park_timezone).date().isoformat() == "2026-10-24"
+
+
+@pytest.fixture
+def show_helpers(
+    entity_registry_entry: Callable[[MockConfigEntry, str], RegistryEntry],
+    entity_state: Callable[[str], State],
+) -> tuple[
+    Callable[[MockConfigEntry, str], RegistryEntry],
+    Callable[[str], State],
+]:
+    """Provide entity registry and state helpers for show tests."""
+    return entity_registry_entry, entity_state
+
+
+@pytest.mark.parametrize(
+    "dates",
+    [
+        ("2026-03-28", "2026-03-29"),
+        ("2026-10-24", "2026-10-25"),
+        ("2026-11-15", "2026-11-16"),
+    ],
+)
+async def test_show_status_updates_at_park_midnight(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+    monkeypatch: pytest.MonkeyPatch,
+    show_helpers: tuple[
+        Callable[[MockConfigEntry, str], RegistryEntry],
+        Callable[[str], State],
+    ],
+    dates: tuple[str, str],
+) -> None:
+    """Update show status at local midnight, including across DST changes."""
+    entity_registry_entry, entity_state = show_helpers
+    today, tomorrow = dates
+    """Update show status at local midnight, including across DST changes."""
+    today, tomorrow = dates
+    """Update show status at local midnight, including across DST changes."""
+    park_timezone = ZoneInfo("Europe/Amsterdam")
+    now = datetime.fromisoformat(f"{today}T23:30:00").replace(tzinfo=park_timezone)
+    expected_midnight = datetime.fromisoformat(f"{tomorrow}T00:00:00").replace(
+        tzinfo=park_timezone
+    )
+
+    monkeypatch.setattr(
+        show_module.dt_util,
+        "now",
+        lambda _tz=None: now,
+    )
+
+    show = entity_registry_entry(loaded_entry, "aquanura")
+    wait_times = dict(loaded_entry.runtime_data.wait_times_coordinator.data)
+    wait_times["aquanura"] = {
+        "Id": "aquanura",
+        "Name": "Aquanura",
+        "State": "open",
+        "ShowTimes": [
+            {
+                "StartDateTime": f"{tomorrow}T00:15:00",
+                "EndDateTime": f"{tomorrow}T00:45:00",
+            }
+        ],
+    }
+
+    with patch(
+        "custom_components.efteling_park.sensor.show.async_track_point_in_time",
+        return_value=MagicMock(),
+    ) as schedule_update:
+        loaded_entry.runtime_data.wait_times_coordinator.async_set_updated_data(
+            wait_times
+        )
+        await hass.async_block_till_done()
+
+        aquanura_calls = [
+            call
+            for call in schedule_update.call_args_list
+            if getattr(call.args[1].__self__, "_show_id", None) == "aquanura"
+        ]
+        assert aquanura_calls
+
+        midnight_call = next(
+            call for call in aquanura_calls if call.args[2] == expected_midnight
+        )
+
+        assert entity_state(show.entity_id).attributes["status"] == (
+            "no_more_shows_today"
+        )
+
+        now = expected_midnight
+        midnight_call.args[1](expected_midnight)
+        await hass.async_block_till_done()
+
+        assert entity_state(show.entity_id).attributes["status"] == "upcoming"
+
+        next_show_start = datetime.fromisoformat(f"{tomorrow}T00:15:00").replace(
+            tzinfo=park_timezone
+        )
+
+        assert schedule_update.call_args.args[2] == next_show_start
 
 
 async def test_show_without_end_or_duration_is_ignored(
