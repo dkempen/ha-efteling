@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import replace
-from datetime import UTC, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -11,6 +12,7 @@ import pytest
 from homeassistant.config_entries import SOURCE_RECONFIGURE, ConfigEntryState
 from homeassistant.const import CONF_LANGUAGE
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import entity_registry as er
 from homeassistant.util import dt as dt_util
 
 from custom_components.efteling_park import PLATFORMS, async_unload_entry
@@ -18,6 +20,7 @@ from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
 )
+from custom_components.efteling_park.map import ParkMapMetadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -88,6 +91,74 @@ async def test_setup_with_empty_feeds(
     await hass.async_block_till_done()
 
 
+async def test_map_metadata_refresh_does_not_block_entry_setup(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    api_responses: None,
+) -> None:
+    """Finish entry setup while the optional map metadata request is pending."""
+    del api_responses
+
+    started = asyncio.Event()
+    release = asyncio.Event()
+    metadata = ParkMapMetadata(
+        manifest={
+            "summer": datetime(2026, 11, 6, 22, 22, 12, tzinfo=UTC),
+            "winter": datetime(2026, 11, 6, 22, 22, 18, tzinfo=UTC),
+        },
+        bounds={
+            "min_latitude": 51.64599309,
+            "max_latitude": 51.65379826,
+            "min_longitude": 5.04264951,
+            "max_longitude": 5.05522907,
+        },
+        rotation_degrees=90,
+    )
+
+    async def fetch_metadata(_: HomeAssistant) -> ParkMapMetadata:
+        started.set()
+        await release.wait()
+        return metadata
+
+    config_entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        side_effect=fetch_metadata,
+    ) as fetch:
+        assert await asyncio.wait_for(
+            hass.config_entries.async_setup(config_entry.entry_id),
+            timeout=1,
+        )
+        await asyncio.wait_for(started.wait(), timeout=1)
+
+        runtime_data = config_entry.runtime_data
+        assert config_entry.state is ConfigEntryState.LOADED
+        assert runtime_data.map_metadata_coordinator.data is None
+
+        registry = er.async_get(hass)
+        assert not any(
+            entity.config_entry_id == config_entry.entry_id
+            and entity.unique_id == "park_map"
+            for entity in registry.entities.values()
+        )
+
+        release.set()
+        await hass.async_block_till_done()
+
+    fetch.assert_awaited_once()
+    assert runtime_data.park_map is metadata
+    assert any(
+        entity.config_entry_id == config_entry.entry_id
+        and entity.unique_id == "park_map"
+        for entity in registry.entities.values()
+    )
+
+    assert await hass.config_entries.async_unload(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+
 async def test_changed_map_metadata_notifies_listeners(
     loaded_entry: MockConfigEntry,
 ) -> None:
@@ -113,7 +184,7 @@ async def test_map_metadata_refresh_retains_last_successful_value(
     assert previous_metadata is not None
 
     with patch(
-        "custom_components.efteling_park.map.async_get_park_map_metadata",
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
         new_callable=AsyncMock,
         return_value=None,
     ):
@@ -286,3 +357,20 @@ async def test_reconfigure_reloads_loaded_entry_with_new_language(
     assert validation_client.call_args.kwargs["language"] == "en"
     assert setup_client.call_count == 1
     assert setup_client.call_args.kwargs["language"] == "en"
+
+
+async def test_map_metadata_refresh_handles_missing_initial_metadata(
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Keep map metadata unavailable until a successful refresh is possible."""
+    coordinator = loaded_entry.runtime_data.map_metadata_coordinator
+    coordinator.data = None
+
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        await coordinator.async_refresh()
+
+    assert coordinator.data is None

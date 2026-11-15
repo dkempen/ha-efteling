@@ -28,7 +28,6 @@ from custom_components.efteling_park.coordinator import (
 
 from .api import EftelingApiClient
 from .data import EftelingData
-from .map import async_get_park_map_metadata
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -83,11 +82,9 @@ async def async_setup_entry(
         name="annual_passes",
         update_interval=timedelta(days=1),
     )
-    park_map = await async_get_park_map_metadata(hass)
     map_metadata_coordinator = EftelingMapMetadataCoordinator(
         hass,
         entry,
-        park_map,
         name="map",
         update_interval=timedelta(days=1),
     )
@@ -116,9 +113,14 @@ async def async_setup_entry(
     entry.async_on_unload(entry.add_update_listener(async_update_options))
 
     entry.async_on_unload(park_info_coordinator.start_monthly_refresh())
-    map_metadata_coordinator.async_set_updated_data(park_map)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    entry.async_create_task(
+        hass,
+        map_metadata_coordinator.async_refresh(),
+        "efteling_map_metadata_refresh",
+    )
 
     return True
 

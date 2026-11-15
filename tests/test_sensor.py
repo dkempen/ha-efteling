@@ -193,7 +193,7 @@ async def test_attraction_status_sensor_handles_missing_wait_data(
     config_entry: MockConfigEntry,
     api_responses: None,
 ) -> None:
-    """Expose an unknown status when a successful update omits the attraction."""
+    """Mark the status unavailable when an update omits the attraction."""
     del api_responses
     config_entry.add_to_hass(hass)
     hass.config_entries.async_update_entry(
@@ -207,7 +207,7 @@ async def test_attraction_status_sensor_handles_missing_wait_data(
     config_entry.runtime_data.wait_times_coordinator.async_set_updated_data({})
     await hass.async_block_till_done()
 
-    assert hass.states.get(status_entity.entity_id) is None
+    assert _state(hass, status_entity.entity_id).state == "unavailable"
     assert _entity_for_unique_id(hass, config_entry, "python_status")
 
 
@@ -215,7 +215,7 @@ async def test_new_and_disappearing_poi_entities(
     hass: HomeAssistant,
     loaded_entry: MockConfigEntry,
 ) -> None:
-    """Create newly discovered entities and handle records disappearing."""
+    """Create new entities and retain registry customizations across removal."""
     runtime_data = loaded_entry.runtime_data
     new_poi = {
         "id": "new_ride",
@@ -239,34 +239,88 @@ async def test_new_and_disappearing_poi_entities(
     runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
     await hass.async_block_till_done()
 
+    registry = er.async_get(hass)
     entity = _entity_for_unique_id(hass, loaded_entry, "new_ride")
-    assert _state(hass, entity.entity_id).state == "10"
+    registry.async_update_entity(
+        entity.entity_id,
+        new_entity_id="sensor.custom_new_ride",
+    )
+    entity_id = "sensor.custom_new_ride"
+
+    assert _state(hass, entity_id).state == "10"
 
     poi_data.pop("new_ride")
     runtime_data.poi_coordinator.async_set_updated_data(poi_data)
     await hass.async_block_till_done()
-    assert hass.states.get(entity.entity_id) is None
+    assert _state(hass, entity_id).state == "unavailable"
+
+    registered_entity = registry.async_get(entity_id)
+    assert registered_entity is not None
+    assert registered_entity.unique_id == "new_ride"
 
     poi_data["new_ride"] = new_poi
     runtime_data.poi_coordinator.async_set_updated_data(poi_data)
     await hass.async_block_till_done()
-    assert _state(hass, entity.entity_id).state == "10"
+    assert _state(hass, entity_id).state == "10"
 
     wait_times.pop("new_ride")
     runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
     await hass.async_block_till_done()
-    assert hass.states.get(entity.entity_id) is None
+    assert _state(hass, entity_id).state == "unavailable"
+
+    registered_entity = registry.async_get(entity_id)
+    assert registered_entity is not None
+    assert registered_entity.unique_id == "new_ride"
 
     wait_times["new_ride"] = new_wait_time
     runtime_data.wait_times_coordinator.async_set_updated_data(wait_times)
     await hass.async_block_till_done()
-    assert _state(hass, entity.entity_id).state == "10"
+    assert _state(hass, entity_id).state == "10"
 
     poi_data["new_ride"] = {**new_poi, "category": "show"}
     runtime_data.poi_coordinator.async_set_updated_data(poi_data)
     await hass.async_block_till_done()
-    state = _state(hass, entity.entity_id)
+    state = _state(hass, entity_id)
     assert state.state == "unknown"
+
+    registered_entity = registry.async_get(entity_id)
+    assert registered_entity is not None
+    assert registered_entity.unique_id == "new_ride"
+
+
+async def test_user_disabled_entity_stays_disabled_after_poi_reappears(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Retain a user's disabled state when the corresponding POI disappears."""
+    runtime_data = loaded_entry.runtime_data
+    entity = _entity_for_unique_id(hass, loaded_entry, "python")
+    registry = er.async_get(hass)
+
+    registry.async_update_entity(
+        entity.entity_id,
+        disabled_by=er.RegistryEntryDisabler.USER,
+    )
+    await hass.async_block_till_done()
+
+    poi_data = dict(runtime_data.poi_coordinator.data)
+    python_poi = poi_data.pop("python")
+    runtime_data.poi_coordinator.async_set_updated_data(poi_data)
+    await hass.async_block_till_done()
+
+    registered_entity = registry.async_get(entity.entity_id)
+    assert registered_entity is not None
+    assert registered_entity.disabled_by is er.RegistryEntryDisabler.USER
+
+    poi_data["python"] = python_poi
+    runtime_data.poi_coordinator.async_set_updated_data(poi_data)
+    await hass.async_block_till_done()
+
+    registered_entity = registry.async_get(entity.entity_id)
+    assert registered_entity is not None
+    assert registered_entity.disabled_by is er.RegistryEntryDisabler.USER
+    assert registered_entity.unique_id == "python"
+    assert hass.states.get(entity.entity_id) is None
 
 
 async def test_attraction_state_metadata_and_wait_failure_recovery(

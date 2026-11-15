@@ -8,7 +8,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from custom_components.efteling_park.map import ParkMapMetadata
-from custom_components.efteling_park.sensor.utils import parse_poi_metadata
+from custom_components.efteling_park.sensor.utils import (
+    parse_poi_map_position,
+    parse_poi_metadata,
+)
 
 if TYPE_CHECKING:
     from custom_components.efteling_park.models import Poi
@@ -56,15 +59,18 @@ def test_map_marker_for_primary_and_alternate_poi(
     poi_id: str,
 ) -> None:
     """Only the primary attraction should receive a map marker."""
-    metadata = parse_poi_metadata(
-        python_poi,
+    poi_metadata = parse_poi_metadata(python_poi)
+    position = parse_poi_map_position(
+        poi_metadata.latitude,
+        poi_metadata.longitude,
+        python_poi.get("alternateid"),
         _map_metadata(),
         poi_id=poi_id,
     )
 
-    assert metadata.map_marker is (poi_id == "python")
-    assert metadata.map_x is not None
-    assert metadata.map_y is not None
+    assert position.map_marker is (poi_id == "python")
+    assert position.map_x is not None
+    assert position.map_y is not None
 
 
 def test_show_receives_map_marker() -> None:
@@ -76,15 +82,18 @@ def test_show_receives_map_marker() -> None:
         "latlon": "51.648014,5.045388",
     }
 
-    metadata = parse_poi_metadata(
-        poi,
+    poi_metadata = parse_poi_metadata(poi)
+    position = parse_poi_map_position(
+        poi_metadata.latitude,
+        poi_metadata.longitude,
+        poi.get("alternateid"),
         _map_metadata(),
         poi_id="aquanura",
     )
 
-    assert metadata.map_marker is True
-    assert metadata.map_x is not None
-    assert metadata.map_y is not None
+    assert position.map_marker is True
+    assert position.map_x is not None
+    assert position.map_y is not None
 
 
 @pytest.mark.parametrize(
@@ -108,12 +117,15 @@ def test_map_marker_requires_valid_in_bounds_coordinates(
     if coordinates is not None:
         poi["latlon"] = coordinates
 
-    metadata = parse_poi_metadata(
-        poi,
+    poi_metadata = parse_poi_metadata(poi)
+    position = parse_poi_map_position(
+        poi_metadata.latitude,
+        poi_metadata.longitude,
+        poi.get("alternateid"),
         _map_metadata(),
         poi_id="python",
     )
 
-    assert metadata.map_marker is False
-    assert metadata.map_x is None
-    assert metadata.map_y is None
+    assert position.map_marker is False
+    assert position.map_x is None
+    assert position.map_y is None

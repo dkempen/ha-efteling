@@ -4,29 +4,39 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta
+from importlib import import_module
 from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from homeassistant.components.image import Image, ImageEntity, async_get_image
+from homeassistant.components.image import Image, ImageEntity
 from homeassistant.helpers import entity_registry as er
+from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
-from pytest_homeassistant.common import async_fire_time_changed
+
+if TYPE_CHECKING:
+    from freezegun.api import FrozenDateTimeFactory
+    from homeassistant.core import HomeAssistant
+    from pytest_homeassistant.common import MockConfigEntry, async_fire_time_changed
+    from pytest_homeassistant.typing import ClientSessionGenerator
+
+    from custom_components.efteling_park.image.park_map import (
+        MapSeason,
+    )
+else:
+    try:
+        async_fire_time_changed = import_module(
+            "pytest_homeassistant.common"
+        ).async_fire_time_changed
+    except ModuleNotFoundError:
+        async_fire_time_changed = import_module(
+            "pytest_homeassistant_custom_component.common"
+        ).async_fire_time_changed
 
 from custom_components.efteling_park.const import PARK_TIME_ZONE
 from custom_components.efteling_park.image import async_setup_entry
 from custom_components.efteling_park.image.park_map import MAP_IMAGE_URLS
 from custom_components.efteling_park.map import ParkMapMetadata, _parse_map_bounds
-
-if TYPE_CHECKING:
-    from freezegun.api import FrozenDateTimeFactory
-    from homeassistant.core import HomeAssistant
-    from pytest_homeassistant.common import MockConfigEntry
-
-    from custom_components.efteling_park.image.park_map import (
-        MapSeason,
-    )
-
 
 MAP_BOUNDS = {
     "min_latitude": 51.64599309,
@@ -64,6 +74,23 @@ def _park_info(events: list[dict[str, str]]) -> dict:
     }
 
 
+async def _async_get_image(
+    hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
+    entity_id: str,
+) -> Image:
+    """Fetch an image through Home Assistant's image endpoint."""
+    await async_setup_component(hass, "http", {})
+    state = hass.states.get(entity_id)
+    assert state is not None
+
+    client = await hass_client()
+    response = await client.get(state.attributes["entity_picture"])
+
+    assert response.status == 200
+    return Image(response.headers["Content-Type"], await response.read())
+
+
 async def test_image_setup_entry_parses_manifest(
     hass: HomeAssistant,
     loaded_entry: MockConfigEntry,
@@ -76,17 +103,39 @@ async def test_image_setup_entry_parses_manifest(
     assert len(add_entities.call_args.args[0]) == 1
 
 
-async def test_image_setup_entry_skips_missing_map(
+async def test_image_setup_entry_waits_for_missing_map_metadata(
     hass: HomeAssistant,
     loaded_entry: MockConfigEntry,
 ) -> None:
-    """Skip creating an image entity when map metadata is unavailable."""
-    loaded_entry.runtime_data.map_metadata_coordinator.data = None
+    """Register a listener and create the map image when metadata becomes available."""
+    runtime_data = loaded_entry.runtime_data
+    metadata = runtime_data.park_map
+    assert metadata is not None
+
+    runtime_data.map_metadata_coordinator.data = None
+    listeners_before = tuple(runtime_data.map_metadata_listeners)
     add_entities = MagicMock()
 
     await async_setup_entry(hass, loaded_entry, add_entities)
 
     add_entities.assert_not_called()
+    assert len(runtime_data.map_metadata_listeners) == len(listeners_before) + 1
+
+    listener = next(
+        item
+        for item in runtime_data.map_metadata_listeners
+        if item not in listeners_before
+    )
+
+    listener(None)
+    add_entities.assert_not_called()
+
+    runtime_data.map_metadata_coordinator.async_set_updated_data(metadata)
+    await hass.async_block_till_done()
+
+    add_entities.assert_called_once()
+    assert len(add_entities.call_args.args[0]) == 1
+    assert listener not in runtime_data.map_metadata_listeners
 
 
 def test_parse_map_bounds_accepts_missing_bounds() -> None:
@@ -143,29 +192,25 @@ def test_parse_map_bounds_rejects_inverted_ranges(name: str, value: float) -> No
 )
 async def test_park_map_uses_current_season(
     hass: HomeAssistant,
-    config_entry: MockConfigEntry,
-    api_responses: None,
+    hass_client: ClientSessionGenerator,
+    loaded_entry: MockConfigEntry,
     events: list[dict[str, str]],
     season: MapSeason,
 ) -> None:
     """Fetch the summer or winter map according to today's park events."""
-    del api_responses
-
     load_image = AsyncMock(return_value=Image("image/jpeg", b"map image"))
 
     with patch.object(ImageEntity, "_async_load_image_from_url", load_image):
-        config_entry.add_to_hass(hass)
-        assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
 
-        map_entity_id = _entity_id_for_unique_id(hass, config_entry, "park_map")
+        map_entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
 
-        config_entry.runtime_data.park_info_coordinator.async_set_updated_data(
+        loaded_entry.runtime_data.park_info_coordinator.async_set_updated_data(
             _park_info(events)
         )
         await hass.async_block_till_done()
 
-        image = await async_get_image(hass, map_entity_id)
+        image = await _async_get_image(hass, hass_client, map_entity_id)
 
         assert image.content == b"map image"
         load_image.assert_awaited_once_with(MAP_IMAGE_URLS[season])
@@ -200,6 +245,7 @@ async def test_park_map_reschedules_at_midnight(
 
 async def test_map_image_is_cached_until_the_season_changes(
     hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
     loaded_entry: MockConfigEntry,
 ) -> None:
     """Reuse the map image within a season and reload it after a season change."""
@@ -212,8 +258,8 @@ async def test_map_image_is_cached_until_the_season_changes(
             {"OpeningHours": [], "Maintenance": [], "Events": []}
         )
         await hass.async_block_till_done()
-        await async_get_image(hass, entity_id)
-        await async_get_image(hass, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
         assert load_image.await_count == 1
         assert load_image.await_args_list[0].args[0] == MAP_IMAGE_URLS["summer"]
 
@@ -232,7 +278,7 @@ async def test_map_image_is_cached_until_the_season_changes(
             }
         )
         await hass.async_block_till_done()
-        await async_get_image(hass, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
 
     assert load_image.await_count == 2
     assert load_image.await_args_list[1].args[0] == MAP_IMAGE_URLS["winter"]
@@ -240,6 +286,7 @@ async def test_map_image_is_cached_until_the_season_changes(
 
 async def test_map_image_cache_invalidates_when_manifest_timestamp_changes(
     hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
     loaded_entry: MockConfigEntry,
 ) -> None:
     """Reload the selected image after its manifest timestamp changes."""
@@ -248,7 +295,7 @@ async def test_map_image_cache_invalidates_when_manifest_timestamp_changes(
         entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
         metadata = loaded_entry.runtime_data.park_map
         assert metadata is not None
-        await async_get_image(hass, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
 
         changed_manifest = dict(metadata.manifest)
         changed_manifest["summer"] += timedelta(minutes=1)
@@ -261,13 +308,14 @@ async def test_map_image_cache_invalidates_when_manifest_timestamp_changes(
             updated
         )
         await hass.async_block_till_done()
-        await async_get_image(hass, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
 
     assert load_image.await_count == 2
 
 
 async def test_map_image_updates_bounds_without_reloading_unchanged_image(
     hass: HomeAssistant,
+    hass_client: ClientSessionGenerator,
     loaded_entry: MockConfigEntry,
 ) -> None:
     """Refresh map attributes without invalidating an unchanged image version."""
@@ -276,7 +324,7 @@ async def test_map_image_updates_bounds_without_reloading_unchanged_image(
         entity_id = _entity_id_for_unique_id(hass, loaded_entry, "park_map")
         metadata = loaded_entry.runtime_data.park_map
         assert metadata is not None
-        await async_get_image(hass, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
 
         updated_bounds = dict(metadata.bounds or MAP_BOUNDS)
         updated_bounds["min_latitude"] += 0.0001
@@ -289,7 +337,7 @@ async def test_map_image_updates_bounds_without_reloading_unchanged_image(
             updated
         )
         await hass.async_block_till_done()
-        await async_get_image(hass, entity_id)
+        await _async_get_image(hass, hass_client, entity_id)
 
     assert load_image.await_count == 1
     state = hass.states.get(entity_id)

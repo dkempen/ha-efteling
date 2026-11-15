@@ -59,6 +59,7 @@ async def test_diagnostics_include_config_and_coordinator_data(
         "wait_times",
         "park_info",
         "annual_passes",
+        "map",
     }
 
     poi = diagnostics["data"]["coordinators"]["poi"]["python"]
@@ -67,6 +68,16 @@ async def test_diagnostics_include_config_and_coordinator_data(
     assert poi["latlon"] == "**REDACTED**"
     assert poi["metadata"][0]["latitude"] == "**REDACTED**"
     assert poi["metadata"][0]["longitude"] == "**REDACTED**"
+
+    map_metadata = loaded_entry.runtime_data.park_map
+    assert map_metadata is not None
+
+    map_diagnostics = diagnostics["data"]["coordinators"]["map"]
+    map_type = f"{type(map_metadata).__module__}.{type(map_metadata).__name__}"
+    assert map_diagnostics == {
+        "__type": f"<class '{map_type}'>",
+        "repr": repr(map_metadata),
+    }
 
 
 async def test_diagnostics_redact_coordinates_recursively(
@@ -99,3 +110,14 @@ async def test_diagnostics_redact_coordinates_recursively(
     assert poi["history"][0]["latitude"] == "**REDACTED**"
     assert poi["history"][0]["longitude"] == "**REDACTED**"
     assert poi["safe_field"] == "retained"
+
+
+async def test_diagnostics_report_missing_map_metadata(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Report map metadata as unavailable when no valid manifest is cached."""
+    loaded_entry.runtime_data.map_metadata_coordinator.data = None
+
+    diagnostics = await async_get_config_entry_diagnostics(hass, loaded_entry)
+    assert diagnostics["coordinators"]["map"] is None

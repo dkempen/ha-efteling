@@ -148,10 +148,7 @@ async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration
             for attraction_id in removed_ids:
                 entities_to_remove = entities.pop(attraction_id)
                 await asyncio.gather(
-                    *(
-                        entity.async_remove(force_remove=True)
-                        for entity in entities_to_remove
-                    )
+                    *(entity.async_remove() for entity in entities_to_remove)
                 )
 
             sensors: list[SensorEntity] = []

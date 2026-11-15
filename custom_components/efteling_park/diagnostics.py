@@ -51,5 +51,9 @@ async def async_get_config_entry_diagnostics(
                 runtime_data.annual_passes_coordinator.data,
                 TO_REDACT,
             ),
+            "map": async_redact_data(
+                runtime_data.map_metadata_coordinator.data,
+                TO_REDACT,
+            ),
         },
     }

@@ -16,6 +16,11 @@ from custom_components.efteling_park.map import (
     async_get_park_map_metadata,
     parse_map_manifest,
 )
+from custom_components.efteling_park.sensor.utils import (
+    clean_html,
+    parse_poi_map_position,
+    parse_poi_metadata,
+)
 
 if TYPE_CHECKING:
     from homeassistant.core import HomeAssistant
@@ -283,3 +288,208 @@ async def test_attraction_and_show_expose_map_coordinates(
 
         assert state.attributes["map_x"] == pytest.approx(expected_position[0])
         assert state.attributes["map_y"] == pytest.approx(expected_position[1])
+
+
+def test_clean_html_handles_empty_and_structured_content() -> None:
+    """Remove ignored content and preserve meaningful block boundaries."""
+    assert clean_html(None) == ""
+    assert clean_html("") == ""
+    assert (
+        clean_html(
+            "<p>Ride&nbsp;<strong>description</strong></p>"
+            "<script>ignored script</script>"
+            "<style>ignored style</style>"
+            "<div>Second line</div>"
+        )
+        == "Ride description\nSecond line"
+    )
+
+
+def test_parse_poi_metadata_keeps_api_fields_separate_from_map_fields() -> None:
+    """Parse API metadata without coupling it to map metadata."""
+    metadata = parse_poi_metadata(
+        {
+            "id": "python",
+            "name": "Python",
+            "category": "attraction",
+            "empire": "Fantasierijk",
+            "detail_text": "<p>Ride <strong>description</strong></p>",
+            "subtitle": "Ride subtitle",
+            "latlon": "51.647575,5.043718",
+            "image": "/content/ride.jpg",
+            "image_detailview1": "https://example.com/detail.jpg",
+            "properties": ["indoor"],
+            "properties_entry_requirements": ["minimum_height"],
+            "properties_stimuli": ["darkness"],
+            "targetgroups": ["families"],
+            "type": "Attractie",
+        }
+    )
+
+    assert metadata.empire == "Fantasierijk"
+    assert metadata.description == "Ride description"
+    assert metadata.subtitle == "Ride subtitle"
+    assert metadata.latitude == pytest.approx(51.647575)
+    assert metadata.longitude == pytest.approx(5.043718)
+    assert metadata.image == "https://www.efteling.com/content/ride.jpg"
+    assert metadata.image_detail == "https://example.com/detail.jpg"
+    assert metadata.properties == ["indoor"]
+    assert metadata.entry_requirements == ["minimum_height"]
+    assert metadata.stimuli == ["darkness"]
+    assert metadata.targetgroups == ["families"]
+    assert metadata.type == "Attractie"
+    assert not hasattr(metadata, "map_x")
+    assert not hasattr(metadata, "map_y")
+    assert not hasattr(metadata, "map_marker")
+
+
+@pytest.mark.parametrize(
+    "latlon",
+    [
+        None,
+        "51.647575",
+        "51.647575,5.043718,5.1",
+        "invalid,5.043718",
+        "nan,5.043718",
+        "91,5.043718",
+        "51.647575,181",
+    ],
+)
+def test_parse_poi_metadata_rejects_invalid_coordinates(
+    latlon: str | None,
+) -> None:
+    """Leave coordinates unset when the API provides invalid geographic data."""
+    metadata = parse_poi_metadata(
+        {
+            "id": "python",
+            "name": "Python",
+            "category": "attraction",
+            "latlon": latlon,
+        }
+    )
+
+    assert metadata.latitude is None
+    assert metadata.longitude is None
+
+
+def test_parse_poi_metadata_defaults_missing_optional_fields() -> None:
+    """Provide stable defaults when optional API metadata is missing."""
+    metadata = parse_poi_metadata(
+        {
+            "id": "python",
+            "name": "Python",
+            "category": "attraction",
+        }
+    )
+
+    assert metadata.empire == ""
+    assert metadata.description == ""
+    assert metadata.subtitle is None
+    assert metadata.latitude is None
+    assert metadata.longitude is None
+    assert metadata.image == ""
+    assert metadata.image_detail == ""
+    assert metadata.properties is None
+    assert metadata.entry_requirements is None
+    assert metadata.stimuli is None
+    assert metadata.targetgroups is None
+    assert metadata.type == ""
+
+
+def test_parse_poi_map_position_uses_map_metadata() -> None:
+    """Calculate coordinates independently from API metadata parsing."""
+    map_metadata = _map_metadata()
+    position = parse_poi_map_position(
+        51.647575,
+        5.043718,
+        None,
+        map_metadata,
+        poi_id="python",
+    )
+
+    expected = map_metadata.map_position(51.647575, 5.043718)
+    assert expected is not None
+    assert position.map_x == pytest.approx(expected[0])
+    assert position.map_y == pytest.approx(expected[1])
+    assert position.map_marker is True
+
+
+def test_parse_poi_map_position_suppresses_alternate_poi_marker() -> None:
+    """Retain coordinates but hide the map marker for an alternate POI."""
+    position = parse_poi_map_position(
+        51.647575,
+        5.043718,
+        "single_rider",
+        _map_metadata(),
+        poi_id="single_rider",
+    )
+
+    assert position.map_x is not None
+    assert position.map_y is not None
+    assert position.map_marker is False
+
+
+def test_parse_poi_map_position_handles_missing_inputs() -> None:
+    """Return an empty position when coordinates or map metadata are unavailable."""
+    no_metadata = parse_poi_map_position(
+        51.647575,
+        5.043718,
+        None,
+        None,
+        poi_id="python",
+    )
+    no_coordinates = parse_poi_map_position(
+        None,
+        5.043718,
+        None,
+        _map_metadata(),
+        poi_id="python",
+    )
+
+    assert no_metadata.map_x is None
+    assert no_metadata.map_y is None
+    assert no_metadata.map_marker is False
+    assert no_coordinates.map_x is None
+    assert no_coordinates.map_y is None
+    assert no_coordinates.map_marker is False
+
+
+async def test_attraction_and_show_recalculate_map_coordinates(
+    hass: HomeAssistant,
+    loaded_entry: MockConfigEntry,
+) -> None:
+    """Recalculate map positions without changing API-derived POI metadata."""
+    runtime_data = loaded_entry.runtime_data
+    previous_metadata = runtime_data.park_map
+    assert previous_metadata is not None
+
+    updated_metadata = ParkMapMetadata(
+        manifest=previous_metadata.manifest,
+        bounds=previous_metadata.bounds,
+        rotation_degrees=0,
+    )
+    runtime_data.map_metadata_coordinator.async_set_updated_data(updated_metadata)
+    await hass.async_block_till_done()
+
+    for entity_id in (
+        "sensor.efteling_attractions_python",
+        "sensor.efteling_shows_aquanura",
+    ):
+        state = hass.states.get(entity_id)
+        assert state is not None
+
+        expected = updated_metadata.map_position(
+            state.attributes["latitude"],
+            state.attributes["longitude"],
+        )
+        assert expected is not None
+        assert state.attributes["map_x"] == pytest.approx(expected[0])
+        assert state.attributes["map_y"] == pytest.approx(expected[1])
+
+    attraction = hass.states.get("sensor.efteling_attractions_python")
+    assert attraction is not None
+    assert attraction.attributes["description"].startswith("Zet je wereld")
+
+    show = hass.states.get("sensor.efteling_shows_aquanura")
+    assert show is not None
+    assert show.attributes["description"].startswith("Sluit je dag in de Efteling af")

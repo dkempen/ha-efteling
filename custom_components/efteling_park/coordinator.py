@@ -179,7 +179,6 @@ class EftelingMapMetadataCoordinator(DataUpdateCoordinator[ParkMapMetadata | Non
         self,
         hass: HomeAssistant,
         config_entry: EftelingConfigEntry,
-        initial_metadata: ParkMapMetadata | None,
         *,
         name: str,
         update_interval: timedelta,
@@ -193,7 +192,6 @@ class EftelingMapMetadataCoordinator(DataUpdateCoordinator[ParkMapMetadata | Non
             update_interval=update_interval,
             always_update=False,
         )
-        self.data = initial_metadata
 
     async def _async_update_data(self) -> ParkMapMetadata | None:
         """Fetch updated metadata, preserving the last successful value on failure."""

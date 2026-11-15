@@ -19,10 +19,14 @@ from custom_components.efteling_park.coordinator import (
 from custom_components.efteling_park.entity import EftelingEntity
 from custom_components.efteling_park.models import ATTRACTION_STATUS_MAP, Poi
 
-from .utils import parse_poi_metadata
+from .utils import parse_poi_map_position, parse_poi_metadata
 
 if TYPE_CHECKING:
     from custom_components.efteling_park.map import ParkMapMetadata
+    from custom_components.efteling_park.sensor.utils import (
+        PoiMapPosition,
+        PoiMetadata,
+    )
 
 ENTITY_DESCRIPTION_ATTRACTION_WAIT_TIME = SensorEntityDescription(
     key="attraction_wait_time",
@@ -67,36 +71,36 @@ class EftelingAttractionSensor(
         self._attr_name = attraction_name
         self._poi = poi
         self._map_metadata = map_metadata
-        self._metadata = parse_poi_metadata(
-            poi,
-            map_metadata,
-            poi_id=attraction_id,
+        self._metadata: PoiMetadata = parse_poi_metadata(poi)
+        self._map_position: PoiMapPosition = self._parse_map_position()
+
+    def _parse_map_position(self) -> PoiMapPosition:
+        """Calculate map coordinates from the cached POI coordinates."""
+        return parse_poi_map_position(
+            self._metadata.latitude,
+            self._metadata.longitude,
+            self._poi.get("alternateid"),
+            self._map_metadata,
+            poi_id=self._attraction_id,
         )
 
     def update_poi(self, poi: Poi) -> None:
-        """Refresh cached metadata when the POI coordinator updates."""
+        """Refresh POI metadata and its map position."""
         if poi is self._poi:
             return
 
         self._poi = poi
-        self._metadata = parse_poi_metadata(
-            poi,
-            self._map_metadata,
-            poi_id=self._attraction_id,
-        )
+        self._metadata = parse_poi_metadata(poi)
+        self._map_position = self._parse_map_position()
         self.async_write_ha_state()
 
     def update_map_metadata(self, metadata: ParkMapMetadata | None) -> None:
-        """Recalculate cached POI coordinates when map metadata changes."""
+        """Recalculate only map-derived coordinates when map metadata changes."""
         if metadata == self._map_metadata:
             return
 
         self._map_metadata = metadata
-        self._metadata = parse_poi_metadata(
-            self._poi,
-            metadata,
-            poi_id=self._attraction_id,
-        )
+        self._map_position = self._parse_map_position()
         self.async_write_ha_state()
 
     @property
@@ -128,6 +132,7 @@ class EftelingAttractionSensor(
     def _metadata_attributes(self) -> dict[str, Any]:
         """Return the cached metadata shared by an attraction's sensors."""
         metadata = self._metadata
+        map_position = self._map_position
         return {
             "id": self._attraction_id,
             "empire": metadata.empire,
@@ -135,9 +140,9 @@ class EftelingAttractionSensor(
             "subtitle": metadata.subtitle,
             "latitude": metadata.latitude,
             "longitude": metadata.longitude,
-            "map_x": metadata.map_x,
-            "map_y": metadata.map_y,
-            "map_marker": metadata.map_marker,
+            "map_x": map_position.map_x,
+            "map_y": map_position.map_y,
+            "map_marker": map_position.map_marker,
             "image": metadata.image,
             "image_detail": metadata.image_detail,
             "properties": metadata.properties,

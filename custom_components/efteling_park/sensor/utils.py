@@ -20,16 +20,13 @@ MAX_LONGITUDE = 180.0
 
 @dataclass(frozen=True)
 class PoiMetadata:
-    """Normalized values shared by POI-backed sensors."""
+    """Normalized values derived from a POI record."""
 
     empire: str
     description: str
     subtitle: str | None
     latitude: float | None
     longitude: float | None
-    map_x: float | None
-    map_y: float | None
-    map_marker: bool
     image: str
     image_detail: str
     properties: list[str] | None
@@ -37,6 +34,15 @@ class PoiMetadata:
     stimuli: list[str] | None
     targetgroups: list[str] | None
     type: str
+
+
+@dataclass(frozen=True)
+class PoiMapPosition:
+    """Map position derived from POI coordinates and map metadata."""
+
+    map_x: float | None
+    map_y: float | None
+    map_marker: bool
 
 
 def _as_string(value: str | None) -> str:
@@ -56,39 +62,16 @@ def _string_list(value: list[str] | None) -> list[str] | None:
     return value
 
 
-def parse_poi_metadata(
-    poi: Poi,
-    map_metadata: ParkMapMetadata | None = None,
-    *,
-    poi_id: str,
-) -> PoiMetadata:
-    """Normalize API-supplied POI metadata once for an entity update."""
+def parse_poi_metadata(poi: Poi) -> PoiMetadata:
+    """Normalize API-supplied POI metadata independently of map metadata."""
     latitude, longitude = _parse_coordinates(poi.get("latlon"))
-
-    position = (
-        map_metadata.map_position(latitude, longitude)
-        if map_metadata is not None
-        else None
-    )
-
-    map_x = position[0] if position is not None else None
-    map_y = position[1] if position is not None else None
-
-    # Alternate POI IDs represent alternate queues for the same attraction.
-    is_alternate_poi = poi.get("alternateid") == poi_id
-    map_marker = position is not None and not is_alternate_poi
-
-    subtitle = poi.get("subtitle")
 
     return PoiMetadata(
         empire=_as_string(poi.get("empire")),
         description=clean_html(poi.get("detail_text")),
-        subtitle=subtitle,
+        subtitle=poi.get("subtitle"),
         latitude=latitude,
         longitude=longitude,
-        map_x=map_x,
-        map_y=map_y,
-        map_marker=map_marker,
         image=_image_url(poi.get("image")),
         image_detail=_image_url(poi.get("image_detailview1")),
         properties=_string_list(poi.get("properties")),
@@ -96,6 +79,28 @@ def parse_poi_metadata(
         stimuli=_string_list(poi.get("properties_stimuli")),
         targetgroups=_string_list(poi.get("targetgroups")),
         type=_as_string(poi.get("type")),
+    )
+
+
+def parse_poi_map_position(
+    latitude: float | None,
+    longitude: float | None,
+    alternate_id: str | None,
+    map_metadata: ParkMapMetadata | None,
+    *,
+    poi_id: str,
+) -> PoiMapPosition:
+    """Calculate map coordinates independently of other POI metadata."""
+    position = (
+        map_metadata.map_position(latitude, longitude)
+        if map_metadata is not None
+        else None
+    )
+
+    return PoiMapPosition(
+        map_x=position[0] if position is not None else None,
+        map_y=position[1] if position is not None else None,
+        map_marker=position is not None and alternate_id != poi_id,
     )
 
 

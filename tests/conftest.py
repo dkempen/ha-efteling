@@ -66,7 +66,7 @@ def mock_park_map_metadata() -> Generator[None]:
     )
 
     with patch(
-        "custom_components.efteling_park.async_get_park_map_metadata",
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
         new_callable=AsyncMock,
         return_value=map_metadata,
     ):

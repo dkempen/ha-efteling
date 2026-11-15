@@ -249,10 +249,10 @@ async def test_map_metadata_refresh_preserves_existing_metadata(
     coordinator = EftelingMapMetadataCoordinator(
         hass,
         entry,
-        metadata,
         name="map_metadata",
         update_interval=timedelta(days=1),
     )
+    coordinator.data = metadata
     with patch(
         "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
         return_value=None,

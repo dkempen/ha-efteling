@@ -25,13 +25,17 @@ from custom_components.efteling_park.coordinator import (
 )
 from custom_components.efteling_park.entity import EftelingEntity
 
-from .utils import parse_poi_metadata
+from .utils import parse_poi_map_position, parse_poi_metadata
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from custom_components.efteling_park.map import ParkMapMetadata
     from custom_components.efteling_park.models import Poi
+    from custom_components.efteling_park.sensor.utils import (
+        PoiMapPosition,
+        PoiMetadata,
+    )
 
 
 @dataclass(frozen=True)
@@ -79,14 +83,21 @@ class EftelingShowSensor(
         self.async_on_remove(self._cancel_timer)
         self._poi = poi
         self._map_metadata = map_metadata
-        self._metadata = parse_poi_metadata(
-            poi,
-            map_metadata,
-            poi_id=show_id,
-        )
+        self._metadata: PoiMetadata = parse_poi_metadata(poi)
+        self._map_position: PoiMapPosition = self._parse_map_position()
         self._poi_duration = self._parse_duration(poi.get("showduration"))
         self._entries: list[ParsedShowTime] = []
         self._refresh_entries()
+
+    def _parse_map_position(self) -> PoiMapPosition:
+        """Calculate map coordinates from the cached POI coordinates."""
+        return parse_poi_map_position(
+            self._metadata.latitude,
+            self._metadata.longitude,
+            self._poi.get("alternateid"),
+            self._map_metadata,
+            poi_id=self._show_id,
+        )
 
     async def async_added_to_hass(self) -> None:
         """Run when entity is added to Home Assistant."""
@@ -108,30 +119,23 @@ class EftelingShowSensor(
         self._schedule_next_update()
 
     def update_poi(self, poi: Poi) -> None:
-        """Refresh cached metadata when the POI coordinator updates."""
+        """Refresh POI metadata and its map position."""
         if poi is self._poi:
             return
 
         self._poi = poi
-        self._metadata = parse_poi_metadata(
-            poi,
-            self._map_metadata,
-            poi_id=self._show_id,
-        )
+        self._metadata = parse_poi_metadata(poi)
+        self._map_position = self._parse_map_position()
         self._poi_duration = self._parse_duration(poi.get("showduration"))
         self.async_write_ha_state()
 
     def update_map_metadata(self, metadata: ParkMapMetadata | None) -> None:
-        """Recalculate cached POI coordinates when map metadata changes."""
+        """Recalculate only map-derived coordinates when map metadata changes."""
         if metadata == self._map_metadata:
             return
 
         self._map_metadata = metadata
-        self._metadata = parse_poi_metadata(
-            self._poi,
-            metadata,
-            poi_id=self._show_id,
-        )
+        self._map_position = self._parse_map_position()
         self.async_write_ha_state()
 
     @staticmethod
@@ -280,6 +284,7 @@ class EftelingShowSensor(
         )
 
         metadata = self._metadata
+        map_position = self._map_position
 
         duration = (
             source.duration
@@ -300,9 +305,9 @@ class EftelingShowSensor(
             "subtitle": metadata.subtitle,
             "latitude": metadata.latitude,
             "longitude": metadata.longitude,
-            "map_x": metadata.map_x,
-            "map_y": metadata.map_y,
-            "map_marker": metadata.map_marker,
+            "map_x": map_position.map_x,
+            "map_y": map_position.map_y,
+            "map_marker": map_position.map_marker,
             "image": metadata.image,
             "image_detail": metadata.image_detail,
             "properties": metadata.properties,

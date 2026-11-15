@@ -22,8 +22,7 @@ def test_parse_poi_metadata_normalizes_coordinates_and_urls() -> None:
             "properties_stimuli": ["height"],
             "targetgroups": ["families"],
             "type": "rollercoaster",
-        },
-        poi_id="python",
+        }
     )
     assert result.empire == "Anderrijk"
     assert result.description == "A & B\nCoaster"
@@ -47,8 +46,7 @@ def test_parse_poi_metadata_handles_empty_and_invalid_metadata() -> None:
             "image": "  ",
             "image_detailview1": None,
             "detail_text": None,
-        },
-        poi_id="python",
+        }
     )
     assert result.empire == ""
     assert result.description == ""
@@ -68,8 +66,7 @@ def test_parse_poi_metadata_handles_invalid_coordinate_pair() -> None:
             "name": "Python",
             "category": "attraction",
             "latlon": "51.65, west",
-        },
-        poi_id="python",
+        }
     )
     assert result.latitude is None
     assert result.longitude is None
@@ -89,8 +86,7 @@ def test_parse_poi_metadata_rejects_invalid_geographic_coordinates(
             "name": "Python",
             "category": "attraction",
             "latlon": coordinates,
-        },
-        poi_id="python",
+        }
     )
 
     assert (result.latitude, result.longitude) == (None, None)
