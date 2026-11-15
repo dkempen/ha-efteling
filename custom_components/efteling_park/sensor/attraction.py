@@ -12,12 +12,20 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.const import UnitOfTime
 
-from custom_components.efteling_park.const import ATTRACTIONS, CUSTOM_ATTRACTION_ICONS
+from custom_components.efteling_park.const import (
+    ATTRACTIONS,
+    CUSTOM_ATTRACTION_ICONS,
+    USE_ATTRACTION_INFO_NAME,
+)
 from custom_components.efteling_park.coordinator import (
     EftelingWaitTimesCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
-from custom_components.efteling_park.models import ATTRACTION_STATUS_MAP, Poi
+from custom_components.efteling_park.models import (
+    ATTRACTION_STATUS_MAP,
+    AttractionInfo,
+    Poi,
+)
 
 from .utils import parse_poi_map_position, parse_poi_metadata
 
@@ -27,6 +35,7 @@ if TYPE_CHECKING:
         PoiMapPosition,
         PoiMetadata,
     )
+
 
 ENTITY_DESCRIPTION_ATTRACTION_WAIT_TIME = SensorEntityDescription(
     key="attraction_wait_time",
@@ -43,6 +52,31 @@ ENTITY_DESCRIPTION_STATUS = SensorEntityDescription(
     device_class=SensorDeviceClass.ENUM,
     options=sorted(set(ATTRACTION_STATUS_MAP.values()) | {"unknown"}),
 )
+
+
+def get_attraction_name(
+    attraction_id: str,
+    attraction: AttractionInfo | None,
+    poi: Poi,
+) -> str:
+    """Return the preferred name for an attraction."""
+    name = (
+        poi["name"]
+        or (attraction["Name"] if attraction is not None else None)
+        or (attraction["Id"] if attraction is not None else attraction_id)
+    )
+
+    if attraction_id in USE_ATTRACTION_INFO_NAME:
+        wis_info = poi.get("wis_info")
+        wis_info_name = wis_info.get("Name") if wis_info else None
+        if wis_info_name and wis_info_name.strip():
+            name = wis_info_name.strip()
+
+    alternate_id = poi.get("alternateid")
+    if alternate_id and attraction_id == alternate_id:
+        name = f"{name} {poi.get('alternatelabel') or ''}".strip()
+
+    return name
 
 
 class EftelingAttractionSensor(
@@ -84,14 +118,22 @@ class EftelingAttractionSensor(
             poi_id=self._attraction_id,
         )
 
+    def _update_name(self, attraction_name: str) -> None:
+        """Update the attraction name."""
+        self._attr_name = attraction_name
+
     def update_poi(self, poi: Poi) -> None:
-        """Refresh POI metadata and its map position."""
+        """Refresh POI metadata, name, and map position."""
         if poi == self._poi:
             return
 
         self._poi = poi
         self._metadata = parse_poi_metadata(poi)
         self._map_position = self._parse_map_position()
+
+        attraction = self.coordinator.data.get(self._attraction_id)
+        self._update_name(get_attraction_name(self._attraction_id, attraction, poi))
+
         self.async_write_ha_state()
 
     def update_map_metadata(self, metadata: ParkMapMetadata | None) -> None:
@@ -180,22 +222,26 @@ class EftelingAttractionStatusSensor(EftelingAttractionSensor):
 
         # Use the translated entity name instead of the inherited attraction name.
         del self._attr_name
-        self._attr_translation_placeholders = {
-            "attraction_name": attraction_name,
-        }
+        self._update_name(attraction_name)
 
         self.entity_description = ENTITY_DESCRIPTION_STATUS
         self._attr_unique_id = f"{attraction_id}_status"
 
-    @property
-    def icon(self) -> str | None:
-        """Return an attraction-specific icon when configured."""
-        return CUSTOM_ATTRACTION_ICONS.get(self._attraction_id)
+    def _update_name(self, attraction_name: str) -> None:
+        """Update the translated attraction name placeholder."""
+        self._attr_translation_placeholders = {
+            "attraction_name": attraction_name,
+        }
+
+        # Invalidate Home Assistant's cached name while retaining translation.
+        self._attr_name = attraction_name
+        del self._attr_name
 
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         """Return attraction metadata and its current wait time."""
         attraction = self.coordinator.data.get(self._attraction_id)
+
         if attraction is None:
             return None
 

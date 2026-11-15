@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+from importlib import import_module
 from typing import TYPE_CHECKING
 from unittest.mock import patch
 
+import pytest
 from homeassistant.helpers import entity_registry as er
 
 from custom_components.efteling_park.api import (
     EftelingApiClientCommunicationError,
+)
+from custom_components.efteling_park.const import (
+    CONF_CREATE_ATTRACTION_STATUS_SENSORS,
 )
 from custom_components.efteling_park.sensor.attraction import EftelingAttractionSensor
 
@@ -19,6 +24,13 @@ if TYPE_CHECKING:
     from pytest_homeassistant.common import MockConfigEntry
 
     from custom_components.efteling_park.models import Poi
+else:
+    try:
+        MockConfigEntry = import_module("pytest_homeassistant.common").MockConfigEntry
+    except ModuleNotFoundError:
+        MockConfigEntry = import_module(
+            "pytest_homeassistant_custom_component.common"
+        ).MockConfigEntry
 
 
 async def test_new_and_disappearing_poi_entities(
@@ -143,32 +155,34 @@ async def test_attraction_state_metadata_and_wait_failure_recovery(
     entity_state: Callable[[str], State],
 ) -> None:
     """Expose live wait and metadata, then become unavailable and recover."""
+    runtime_data = loaded_entry.runtime_data
     entity = entity_registry_entry(loaded_entry, "python")
     state = entity_state(entity.entity_id)
+
     assert state.state == "5"
     assert state.attributes["description"].startswith("Zet je wereld")
     assert state.attributes["latitude"] == 51.647575
 
-    updated_poi = {
-        "id": "python",
-        "name": "Python",
-        "category": "attraction",
-        "detail_text": "Updated <b>description</b>",
-        "latlon": "51.66,5.06",
-    }
-    loaded_entry.runtime_data.poi_coordinator.async_set_updated_data(
-        {"python": updated_poi}
-    )
+    updated_poi: Poi = runtime_data.poi_coordinator.data["python"].copy()
+    updated_poi["name"] = "New Python"
+    updated_poi["detail_text"] = "Updated <b>description</b>"
+    updated_poi["latlon"] = "51.66,5.06"
+
+    runtime_data.poi_coordinator.async_set_updated_data({"python": updated_poi})
     await hass.async_block_till_done()
+
     state = entity_state(entity.entity_id)
+    assert state.attributes["friendly_name"].endswith("New Python")
     assert state.attributes["description"] == "Updated description"
     assert state.attributes["latitude"] == 51.66
 
-    coordinator = loaded_entry.runtime_data.wait_times_coordinator
-    client_method = loaded_entry.runtime_data.client.async_get_wait_times
+    coordinator = runtime_data.wait_times_coordinator
+    client_method = runtime_data.client.async_get_wait_times
     client_method.side_effect = EftelingApiClientCommunicationError("offline")
+
     await coordinator.async_refresh()
     await hass.async_block_till_done()
+
     assert entity_state(entity.entity_id).state == "unavailable"
 
     client_method.side_effect = None
@@ -176,9 +190,48 @@ async def test_attraction_state_metadata_and_wait_failure_recovery(
         {"Id": "python", "Name": "Python", "State": "open", "WaitingTime": 0},
         {"Id": "aquanura", "Name": "Aquanura", "State": "open", "ShowTimes": []},
     ]
+
     await coordinator.async_refresh()
     await hass.async_block_till_done()
-    assert entity_state(entity.entity_id).state == "0"
+
+    state = entity_state(entity.entity_id)
+    assert state.state == "0"
+    assert state.attributes["friendly_name"].endswith("New Python")
+
+
+@pytest.mark.usefixtures("api_responses")
+async def test_attraction_status_name_updates_with_poi(
+    hass: HomeAssistant,
+    config_entry: MockConfigEntry,
+    entity_registry_entry: Callable[[MockConfigEntry, str], er.RegistryEntry],
+    entity_state: Callable[[str], State],
+) -> None:
+    """Update the translated status sensor name when its POI name changes."""
+    config_entry = MockConfigEntry(
+        domain=config_entry.domain,
+        title=config_entry.title,
+        data=dict(config_entry.data),
+        options={CONF_CREATE_ATTRACTION_STATUS_SENSORS: True},
+        unique_id=config_entry.unique_id,
+    )
+    config_entry.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    runtime_data = config_entry.runtime_data
+    entity = entity_registry_entry(config_entry, "python_status")
+
+    state = entity_state(entity.entity_id)
+    assert state.attributes["friendly_name"].endswith("Python Status")
+
+    updated_poi: Poi = runtime_data.poi_coordinator.data["python"].copy()
+    updated_poi["name"] = "New Python"
+
+    runtime_data.poi_coordinator.async_set_updated_data({"python": updated_poi})
+    await hass.async_block_till_done()
+
+    state = entity_state(entity.entity_id)
+    assert state.attributes["friendly_name"].endswith("New Python Status")
 
 
 async def test_attraction_ignores_equivalent_poi_replacements(

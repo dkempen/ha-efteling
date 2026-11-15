@@ -263,11 +263,11 @@ async def test_map_metadata_refresh_preserves_existing_metadata(
     assert coordinator.data is metadata
 
 
-async def test_map_metadata_failure_logs_once_and_recovery_logs_once(
+async def test_map_metadata_failure_and_recovery_logging(
     loaded_entry: MockConfigEntry,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Log map metadata failures and recovery without discarding valid data."""
+    """Log repeated map metadata failures and recovery without losing valid data."""
     coordinator = loaded_entry.runtime_data.map_metadata_coordinator
     previous_metadata = coordinator.data
     assert previous_metadata is not None

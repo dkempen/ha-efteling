@@ -187,15 +187,17 @@ async def test_showtime_transitions_and_metadata_updates(
         {
             "aquanura": {
                 "id": "aquanura",
-                "name": "Aquanura",
+                "name": "New Aquanura",
                 "category": "show",
                 "detail_text": "Updated show details",
             }
         }
     )
     await hass.async_block_till_done()
+
     state = entity_state(show.entity_id)
     assert state.attributes["description"] == "Updated show details"
+    assert state.attributes["friendly_name"] == "Efteling shows New Aquanura"
     future_unsubscribe.assert_not_called()
 
 

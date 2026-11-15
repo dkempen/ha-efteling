@@ -119,7 +119,7 @@ class EftelingShowSensor(
         self._schedule_next_update()
 
     def update_poi(self, poi: Poi) -> None:
-        """Refresh POI metadata and its map position."""
+        """Refresh POI metadata, entity name, and map position."""
         if poi == self._poi:
             return
 
@@ -127,6 +127,14 @@ class EftelingShowSensor(
         self._metadata = parse_poi_metadata(poi)
         self._map_position = self._parse_map_position()
         self._poi_duration = self._parse_duration(poi.get("showduration"))
+
+        show = self.coordinator.data.get(self._show_id)
+        self._attr_name = str(
+            poi.get("name")
+            or (show.get("Name") if show is not None else None)
+            or self._show_id
+        )
+
         self.async_write_ha_state()
 
     def update_map_metadata(self, metadata: ParkMapMetadata | None) -> None:

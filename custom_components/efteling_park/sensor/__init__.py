@@ -11,10 +11,13 @@ from homeassistant.helpers import entity_registry as er
 from custom_components.efteling_park.const import (
     CONF_CREATE_ATTRACTION_STATUS_SENSORS,
     DEFAULT_CREATE_ATTRACTION_STATUS_SENSORS,
-    USE_ATTRACTION_INFO_NAME,
 )
 
-from .attraction import EftelingAttractionSensor, EftelingAttractionStatusSensor
+from .attraction import (
+    EftelingAttractionSensor,
+    EftelingAttractionStatusSensor,
+    get_attraction_name,
+)
 from .park import create_park_sensors
 from .show import EftelingShowSensor
 
@@ -88,7 +91,7 @@ def _remove_status_sensors(
             registry.async_remove(entity.entity_id)
 
 
-async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration together.
+async def async_setup_entry(
     hass: HomeAssistant,
     entry: EftelingConfigEntry,
     async_add_entities: AddEntitiesCallback,
@@ -158,24 +161,12 @@ async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration
                 entity: EftelingAttractionSensor | EftelingShowSensor
 
                 if category == "attraction":
-                    name = poi["name"] or attraction["Name"] or attraction["Id"]
-
-                    if attraction_id in USE_ATTRACTION_INFO_NAME:
-                        wis_info = poi.get("wis_info")
-                        wis_info_name = wis_info.get("Name") if wis_info else None
-
-                        if wis_info_name and wis_info_name.strip():
-                            name = wis_info_name.strip()
-
-                    alternate_id = poi.get("alternateid")
-
-                    if alternate_id and attraction_id == alternate_id:
-                        name = f"{name} {poi.get('alternatelabel') or ''}".strip()
+                    name = get_attraction_name(attraction_id, attraction, poi)
 
                     entity = EftelingAttractionSensor(
                         coordinator=wait_times_coordinator,
                         attraction_id=attraction_id,
-                        attraction_name=str(name),
+                        attraction_name=name,
                         poi=poi,
                         map_metadata=runtime_data.park_map,
                     )
@@ -186,7 +177,7 @@ async def async_setup_entry(  # noqa: PLR0915 - Keep dynamic entity registration
                         status_sensor = EftelingAttractionStatusSensor(
                             coordinator=wait_times_coordinator,
                             attraction_id=attraction_id,
-                            attraction_name=str(name),
+                            attraction_name=name,
                             poi=poi,
                             map_metadata=runtime_data.park_map,
                         )
