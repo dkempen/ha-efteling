@@ -12,8 +12,6 @@ import aiohttp
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import dt as dt_util
 
-from .const import LOGGER
-
 if TYPE_CHECKING:
     from datetime import datetime
 
@@ -207,10 +205,5 @@ async def async_get_park_map_metadata(
 
         return parse_map_manifest(raw_manifest)
 
-    except (aiohttp.ClientError, TimeoutError, TypeError, ValueError) as err:
-        LOGGER.warning(
-            "Unable to load the Efteling park map manifest; "
-            "map positioning will be unavailable: %s",
-            err,
-        )
+    except aiohttp.ClientError, TimeoutError, TypeError, ValueError:
         return None

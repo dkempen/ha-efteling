@@ -243,7 +243,7 @@ async def test_reconfigure_flow_prefills_and_updates_language(
     hass: HomeAssistant,
     api_responses: None,
 ) -> None:
-    """Preserve the current language and update it after endpoint validation."""
+    """Update the language without requiring the API to be available."""
     entry = MockConfigEntry(
         domain=DOMAIN,
         title="Efteling",
@@ -252,96 +252,54 @@ async def test_reconfigure_flow_prefills_and_updates_language(
     )
     entry.add_to_hass(hass)
     del api_responses
-    result = await hass.config_entries.flow.async_init(
-        DOMAIN,
-        context={"source": SOURCE_RECONFIGURE, "entry_id": entry.entry_id},
-    )
-    assert result.get("type") == FlowResultType.FORM
-    result = await hass.config_entries.flow.async_configure(
-        result["flow_id"],
-        user_input={CONF_LANGUAGE: "en"},
-    )
-    assert result.get("type") == FlowResultType.ABORT
-    assert result.get("reason") == "reconfigure_successful"
-    assert entry.data[CONF_LANGUAGE] == "nl"
-    assert entry.options[CONF_LANGUAGE] == "en"
-    assert entry.options[CONF_CREATE_ATTRACTION_STATUS_SENSORS] is False
 
-
-@pytest.mark.parametrize(
-    ("method_name", "error", "expected"),
-    [
-        (method_name, error, expected)
-        for method_name in (
+    with (
+        patch.object(
+            EftelingApiClient,
             "async_get_poi_list",
+            new_callable=AsyncMock,
+            side_effect=EftelingApiClientCommunicationError("offline"),
+        ) as poi_mock,
+        patch.object(
+            EftelingApiClient,
             "async_get_wait_times",
+            new_callable=AsyncMock,
+            side_effect=EftelingApiClientCommunicationError("offline"),
+        ) as wait_times_mock,
+        patch.object(
+            EftelingApiClient,
             "async_get_park_info",
+            new_callable=AsyncMock,
+            side_effect=EftelingApiClientCommunicationError("offline"),
+        ) as park_info_mock,
+        patch.object(
+            EftelingApiClient,
             "async_get_annual_passes",
-        )
-        for error, expected in (
-            (EftelingApiClientCommunicationError, "cannot_connect"),
-            (EftelingApiClientError, "invalid_response"),
-        )
-    ],
-)
-@pytest.mark.usefixtures("unload_reconfigured_entry")
-async def test_reconfigure_flow_reports_validation_errors(
-    hass: HomeAssistant,
-    api_responses: None,
-    method_name: str,
-    error: type[Exception],
-    expected: str,
-) -> None:
-    """Recover from each endpoint error in the same reconfiguration flow."""
-    entry = MockConfigEntry(
-        domain=DOMAIN,
-        title="Efteling",
-        data={CONF_LANGUAGE: "nl"},
-        unique_id=DOMAIN,
-    )
-    entry.add_to_hass(hass)
-    del api_responses
-    successful_response = {
-        "async_get_poi_list": [],
-        "async_get_wait_times": [],
-        "async_get_park_info": {
-            "OpeningHours": [],
-            "Maintenance": [],
-            "Events": [],
-        },
-        "async_get_annual_passes": {},
-    }[method_name]
-    with patch.object(
-        EftelingApiClient,
-        method_name,
-        new_callable=AsyncMock,
-        side_effect=[
-            error("validation failed"),
-            successful_response,
-            successful_response,
-        ],
-    ) as endpoint_mock:
+            new_callable=AsyncMock,
+            side_effect=EftelingApiClientCommunicationError("offline"),
+        ) as annual_passes_mock,
+    ):
         result = await hass.config_entries.flow.async_init(
             DOMAIN,
             context={"source": SOURCE_RECONFIGURE, "entry_id": entry.entry_id},
         )
-        flow_id = result["flow_id"]
-        result = await hass.config_entries.flow.async_configure(
-            flow_id,
-            user_input={CONF_LANGUAGE: "nl"},
-        )
         assert result.get("type") == FlowResultType.FORM
-        assert result.get("errors") == {"base": expected}
+
         result = await hass.config_entries.flow.async_configure(
-            flow_id,
+            result["flow_id"],
             user_input={CONF_LANGUAGE: "en"},
         )
+
     assert result.get("type") == FlowResultType.ABORT
     assert result.get("reason") == "reconfigure_successful"
     assert entry.data[CONF_LANGUAGE] == "nl"
     assert entry.options[CONF_LANGUAGE] == "en"
     assert entry.options[CONF_CREATE_ATTRACTION_STATUS_SENSORS] is False
-    assert endpoint_mock.await_count >= 2
+
+    poi_mock.assert_not_awaited()
+    wait_times_mock.assert_not_awaited()
+    park_info_mock.assert_not_awaited()
+    annual_passes_mock.assert_not_awaited()
 
 
 async def test_user_flow_reraises_unexpected_validation_error(
@@ -365,52 +323,3 @@ async def test_user_flow_reraises_unexpected_validation_error(
                 result["flow_id"],
                 user_input={CONF_LANGUAGE: "nl"},
             )
-
-
-@pytest.mark.usefixtures("unload_reconfigured_entry")
-@pytest.mark.parametrize(
-    ("error_type", "expected_error"),
-    [
-        (EftelingApiClientCommunicationError, "cannot_connect"),
-        (EftelingApiClientError, "invalid_response"),
-    ],
-)
-async def test_failed_reconfiguration_preserves_existing_options(
-    hass: HomeAssistant,
-    config_entry: MockConfigEntry,
-    api_responses: None,
-    error_type: type[EftelingApiClientError],
-    expected_error: str,
-) -> None:
-    """Keep saved config unchanged when reconfiguration validation fails."""
-    del api_responses
-    config_entry.add_to_hass(hass)
-    original_data = dict(config_entry.data)
-    original_options = {
-        CONF_LANGUAGE: "nl",
-        CONF_CREATE_ATTRACTION_STATUS_SENSORS: True,
-    }
-    hass.config_entries.async_update_entry(config_entry, options=original_options)
-
-    with patch.object(
-        EftelingApiClient,
-        "async_get_poi_list",
-        new_callable=AsyncMock,
-        side_effect=error_type("validation failed"),
-    ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": SOURCE_RECONFIGURE, "entry_id": config_entry.entry_id},
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            user_input={
-                CONF_LANGUAGE: "en",
-                CONF_CREATE_ATTRACTION_STATUS_SENSORS: False,
-            },
-        )
-
-    assert result.get("type") is FlowResultType.FORM
-    assert result.get("errors") == {"base": expected_error}
-    assert config_entry.data == original_data
-    assert dict(config_entry.options) == original_options

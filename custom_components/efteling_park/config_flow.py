@@ -125,27 +125,19 @@ class EftelingFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         await self.async_set_unique_id(entry.unique_id)
         self._abort_if_unique_id_mismatch()
 
-        errors: dict[str, str] = {}
-
         if user_input is not None:
-            error = await self._async_validate_input(user_input)
-
-            if error is None:
-                self.hass.config_entries.async_update_entry(
-                    entry,
-                    options=user_input,
-                )
-                return self.async_abort(reason="reconfigure_successful")
-
-            errors["base"] = error
+            self.hass.config_entries.async_update_entry(
+                entry,
+                options=user_input,
+            )
+            return self.async_abort(reason="reconfigure_successful")
 
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=_get_options_schema(
-                options=user_input if user_input is not None else entry.options,
+                options=entry.options,
                 data=entry.data,
             ),
-            errors=errors,
         )
 
     async def _async_validate_input(

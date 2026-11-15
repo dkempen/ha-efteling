@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from datetime import datetime, timedelta
 from importlib import import_module
 from typing import TYPE_CHECKING, Any
@@ -14,7 +15,7 @@ from custom_components.efteling_park.api import (
     EftelingApiClient,
     EftelingApiClientCommunicationError,
 )
-from custom_components.efteling_park.const import DOMAIN
+from custom_components.efteling_park.const import DOMAIN, LOGGER
 from custom_components.efteling_park.coordinator import (
     EftelingAnnualPassesCoordinator,
     EftelingCoordinator,
@@ -260,6 +261,55 @@ async def test_map_metadata_refresh_preserves_existing_metadata(
         await coordinator.async_refresh()
 
     assert coordinator.data is metadata
+
+
+async def test_map_metadata_failure_logs_once_and_recovery_logs_once(
+    loaded_entry: MockConfigEntry,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """Log map metadata failures and recovery without discarding valid data."""
+    coordinator = loaded_entry.runtime_data.map_metadata_coordinator
+    previous_metadata = coordinator.data
+    assert previous_metadata is not None
+
+    caplog.set_level(logging.INFO, logger=LOGGER.name)
+
+    unavailable_message = (
+        "Unable to refresh Efteling map metadata; retaining the last valid metadata"
+    )
+    recovered_message = "Efteling map metadata refresh recovered"
+
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        await coordinator.async_refresh()
+        await coordinator.async_refresh()
+
+    assert coordinator.data is previous_metadata
+
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=previous_metadata,
+    ):
+        await coordinator.async_refresh()
+
+    assert coordinator.data is previous_metadata
+
+    with patch(
+        "custom_components.efteling_park.coordinator.async_get_park_map_metadata",
+        new_callable=AsyncMock,
+        return_value=None,
+    ):
+        await coordinator.async_refresh()
+
+    messages = [record.getMessage() for record in caplog.records]
+
+    assert messages.count(unavailable_message) == 2
+    assert messages.count(recovered_message) == 1
+    assert coordinator.data is previous_metadata
 
 
 async def test_park_month_refresh_rolls_over_year_and_refreshes(
