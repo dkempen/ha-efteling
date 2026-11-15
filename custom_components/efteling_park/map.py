@@ -205,5 +205,11 @@ async def async_get_park_map_metadata(
 
         return parse_map_manifest(raw_manifest)
 
-    except aiohttp.ClientError, TimeoutError, TypeError, ValueError:
+    except aiohttp.ClientError:
+        return None
+    except TimeoutError:
+        return None
+    except TypeError:
+        return None
+    except ValueError:
         return None

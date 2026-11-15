@@ -270,9 +270,6 @@ async def test_show_status_updates_at_park_midnight(
     """Update show status at local midnight, including across DST changes."""
     entity_registry_entry, entity_state = show_helpers
     today, tomorrow = dates
-    """Update show status at local midnight, including across DST changes."""
-    today, tomorrow = dates
-    """Update show status at local midnight, including across DST changes."""
     park_timezone = ZoneInfo("Europe/Amsterdam")
     now = datetime.fromisoformat(f"{today}T23:30:00").replace(tzinfo=park_timezone)
     expected_midnight = datetime.fromisoformat(f"{tomorrow}T00:00:00").replace(
