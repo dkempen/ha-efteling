@@ -35,7 +35,7 @@
           "unknown": "mdi:help-circle-outline"
         }
       },
-      "show_start_time": { "default": "mdi:calendar-clock" }
+      "show_start_time": { "default": "mdi:drama-masks" }
     },
     "binary_sensor": {
       "park_status": {
