@@ -206,8 +206,10 @@ async def test_map_image_cache_invalidates_when_manifest_timestamp_changes(
         assert metadata is not None
         await _async_get_image(hass, hass_client, entity_id)
 
-        changed_manifest = dict(metadata.manifest)
-        changed_manifest["summer"] += timedelta(minutes=1)
+        changed_manifest = {
+            season: updated_at + timedelta(minutes=1)
+            for season, updated_at in metadata.manifest.items()
+        }
         updated = ParkMapMetadata(
             manifest=changed_manifest,
             bounds=metadata.bounds,
