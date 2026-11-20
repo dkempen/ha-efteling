@@ -57,6 +57,36 @@
     "efteling_park": { "name": "Efteling park" }
   },
   "entity": {
+    "calendar": {
+      "opening_hours": {
+        "name": "Openingstijden",
+        "state": { "on": "Open", "off": "Gesloten" }
+      },
+      "events": {
+        "name": "Evenementen",
+        "state": { "on": "Evenement actief", "off": "Geen actief evenement" }
+      },
+      "maintenance": {
+        "name": "Onderhoud",
+        "state": { "on": "In onderhoud", "off": "Geen actief onderhoud" }
+      },
+      "shows": {
+        "name": "Shows",
+        "state": { "on": "Show bezig", "off": "Geen show bezig" }
+      },
+      "annual_pass_classic_blackout_dates": {
+        "name": "Classic abonnement blokdagen",
+        "state": { "on": "Niet geldig", "off": "Geldig" }
+      },
+      "annual_pass_plus_blackout_dates": {
+        "name": "Plus abonnement blokdagen",
+        "state": { "on": "Niet geldig", "off": "Geldig" }
+      },
+      "annual_pass_premium_blackout_dates": {
+        "name": "Premium abonnement blokdagen",
+        "state": { "on": "Niet geldig", "off": "Geldig" }
+      }
+    },
     "binary_sensor": {
       "park_status": {
         "state": { "on": "Open", "off": "Gesloten" },
@@ -83,21 +113,21 @@
         }
       },
       "annual_pass_classic": {
-        "name": "Jaarabonnement Classic",
+        "name": "Classic abonnement",
         "state": { "on": "Geldig", "off": "Niet geldig" },
         "state_attributes": {
           "annual_passes": { "name": "Jaarabonnementen" }
         }
       },
       "annual_pass_plus": {
-        "name": "Jaarabonnement Plus",
+        "name": "Plus abonnement",
         "state": { "on": "Geldig", "off": "Niet geldig" },
         "state_attributes": {
           "annual_passes": { "name": "Jaarabonnementen" }
         }
       },
       "annual_pass_premium": {
-        "name": "Jaarabonnement Premium",
+        "name": "Premium abonnement",
         "state": { "on": "Geldig", "off": "Niet geldig" },
         "state_attributes": {
           "annual_passes": { "name": "Jaarabonnementen" }

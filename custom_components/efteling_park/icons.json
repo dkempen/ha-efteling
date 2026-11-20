@@ -40,45 +40,27 @@
     "binary_sensor": {
       "park_status": {
         "default": "mdi:gate",
-        "state": {
-          "on": "mdi:gate-open",
-          "off": "mdi:gate"
-        }
+        "state": { "on": "mdi:gate-open", "off": "mdi:gate" }
       },
       "winter_efteling": {
         "default": "mdi:snowflake",
-        "state": {
-          "on": "mdi:snowflake",
-          "off": "mdi:calendar-blank"
-        }
+        "state": { "on": "mdi:snowflake", "off": "mdi:calendar-blank" }
       },
       "business_event": {
         "default": "mdi:briefcase",
-        "state": {
-          "on": "mdi:briefcase",
-          "off": "mdi:calendar-blank"
-        }
+        "state": { "on": "mdi:briefcase", "off": "mdi:calendar-blank" }
       },
       "annual_pass_classic": {
         "default": "mdi:ticket",
-        "state": {
-          "on": "mdi:ticket-confirmation",
-          "off": "mdi:close-circle"
-        }
+        "state": { "on": "mdi:ticket-confirmation", "off": "mdi:close-circle" }
       },
       "annual_pass_plus": {
         "default": "mdi:ticket",
-        "state": {
-          "on": "mdi:ticket-confirmation",
-          "off": "mdi:close-circle"
-        }
+        "state": { "on": "mdi:ticket-confirmation", "off": "mdi:close-circle" }
       },
       "annual_pass_premium": {
         "default": "mdi:ticket",
-        "state": {
-          "on": "mdi:ticket-confirmation",
-          "off": "mdi:close-circle"
-        }
+        "state": { "on": "mdi:ticket-confirmation", "off": "mdi:close-circle" }
       }
     }
   }

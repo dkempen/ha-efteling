@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from .data import EftelingConfigEntry
 
 PLATFORMS: list[Platform] = [
+    Platform.CALENDAR,
     Platform.SENSOR,
     Platform.BINARY_SENSOR,
     Platform.IMAGE,
@@ -53,7 +54,6 @@ async def async_setup_entry(
             entry.data.get(CONF_LANGUAGE, DEFAULT_LANGUAGE),
         ),
     )
-
     poi_coordinator = EftelingPoiCoordinator(
         hass=hass,
         client=client,

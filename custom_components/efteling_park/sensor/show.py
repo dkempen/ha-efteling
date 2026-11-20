@@ -24,6 +24,10 @@ from custom_components.efteling_park.coordinator import (
     EftelingWaitTimesCoordinator,
 )
 from custom_components.efteling_park.entity import EftelingEntity
+from custom_components.efteling_park.show_utils import (
+    parse_show_datetime,
+    parse_show_duration,
+)
 
 from .utils import parse_poi_map_position, parse_poi_metadata
 
@@ -85,7 +89,7 @@ class EftelingShowSensor(
         self._map_metadata = map_metadata
         self._metadata: PoiMetadata = parse_poi_metadata(poi)
         self._map_position: PoiMapPosition = self._parse_map_position()
-        self._poi_duration = self._parse_duration(poi.get("showduration"))
+        self._poi_duration = parse_show_duration(poi.get("showduration"))
         self._entries: list[ParsedShowTime] = []
         self._refresh_entries()
 
@@ -126,7 +130,7 @@ class EftelingShowSensor(
         self._poi = poi
         self._metadata = parse_poi_metadata(poi)
         self._map_position = self._parse_map_position()
-        self._poi_duration = self._parse_duration(poi.get("showduration"))
+        self._poi_duration = parse_show_duration(poi.get("showduration"))
 
         show = self.coordinator.data.get(self._show_id)
         self._attr_name = str(
@@ -146,41 +150,12 @@ class EftelingShowSensor(
         self._map_position = self._parse_map_position()
         self.async_write_ha_state()
 
-    @staticmethod
-    def _parse_show_datetime(value: str | None) -> datetime | None:
-        """Parse a show timestamp, assuming Efteling local time if no zone exists."""
-        if value is None:
-            return None
-
-        parsed = dt_util.parse_datetime(value)
-
-        if parsed is None:
-            return None
-
-        if parsed.tzinfo is None:
-            parsed = parsed.replace(tzinfo=PARK_TIME_ZONE)
-
-        return dt_util.as_utc(parsed)
-
     def _current_entry(self, now: datetime) -> ParsedShowTime | None:
         """Return the latest-starting show that is active at the given time."""
         return next(
             (item for item in reversed(self._entries) if item.start <= now < item.end),
             None,
         )
-
-    @staticmethod
-    def _parse_duration(value: int | str | None) -> int | None:
-        """Return a positive integer duration when the API value is valid."""
-        if value is None:
-            return None
-
-        try:
-            duration = int(value)
-        except ValueError:
-            return None
-
-        return duration if duration > 0 else None
 
     def _refresh_entries(self) -> None:
         """Parse and sort show entries after coordinator data changes."""
@@ -197,14 +172,14 @@ class EftelingShowSensor(
                 continue
 
             for item in items:
-                start = self._parse_show_datetime(item.get("StartDateTime"))
+                start = parse_show_datetime(item.get("StartDateTime"))
 
                 if start is None:
                     continue
 
                 end_raw = item.get("EndDateTime")
-                end = self._parse_show_datetime(end_raw)
-                duration = self._parse_duration(item.get("Duration"))
+                end = parse_show_datetime(end_raw)
+                duration = parse_show_duration(item.get("Duration"))
 
                 if end is None and duration is not None:
                     end = start + timedelta(minutes=duration)

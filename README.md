@@ -18,6 +18,7 @@ Bring Efteling's live attraction, show, and park information into Home Assistant
 - **Crowd levels** - Live crowd levels based on average attraction wait times, and crowd and occupancy forecasts
 - **Events and maintenance** - Winter Efteling, business events, and planned attraction maintenance
 - **Annual passes** - Annual pass validity information for Classic, Plus, and Premium
+- **Calendars** - Opening hours, show schedules, park events, maintenance periods, and annual-pass blackout dates
 - **Devices and entities** - Dedicated devices, custom icons, and data for dashboards and automations
 - **Localization** - Dutch or English information, with translated entity names and states
 - **Easy setup** - One-click installation and configuration through the Home Assistant UI
@@ -110,20 +111,37 @@ The Efteling park device includes the following entities:
 | Occupancy forecast            | Efteling's forecast park occupancy percentage for today.           |
 | Business event                | Whether a business event is scheduled for today.                   |
 | Winter Efteling               | Whether Winter Efteling is active today.                           |
-| Annual pass Classic           | Whether a Classic annual pass is valid for entry today.            |
-| Annual pass Plus              | Whether a Plus annual pass is valid for entry today.               |
-| Annual pass Premium           | Whether a Premium annual pass is valid for entry today.            |
+| Classic annual pass           | Whether a Classic annual pass is valid for entry today.            |
+| Plus annual pass              | Whether a Plus annual pass is valid for entry today.               |
+| Premium annual pass           | Whether a Premium annual pass is valid for entry today.            |
 | Map                           | Current park map with easy location support to use in dashboards.  |
+| Calendars                     | Opening hours, events, maintenance, shows, and pass restrictions.  |
 
 Most entities expose additional attributes, including operating schedules, forecasts, event schedules, validity schedules, and upcoming maintenance information.
 
 **Crowd forecast** and **crowd level** are different measurements. The forecast comes from Efteling's park information, while the integration calculates the crowd level from current attraction wait times. The average only includes attractions reported as open with a valid wait time.
 Crowd-level thresholds are integration-derived: below 5 minutes is very quiet, 5–9 quiet, 10–14 fairly quiet, 15–19 fairly busy, 20–24 busy, 25–29 very busy, and 30 minutes or more extremely busy.
 
+#### Map
+
 The park map image entity updates automatically, and it switches between the summer and winter Efteling maps.
 Its state attributes provide the map's minimum and maximum latitude and longitude, and rotation, which can be used to position attraction locations on the image.
 All attractions and shows also have an `map_x` and `map_y` attribute (in percentages of the current map) to be easily displayed.
 Map metadata is refreshed every 24 hours. It includes image update timestamps, geographic bounds, and rotation; attraction and show map coordinates are recalculated when it changes. If fetching or validating new metadata fails, the integration keeps the last valid metadata.
+
+#### Calendars
+
+The Efteling park device also includes calendars for opening hours, park events, attraction maintenance, show performances, and annual-pass restrictions:
+
+| Calendar            | Events                                                                     |
+| ------------------- | -------------------------------------------------------------------------- |
+| Opening hours       | Timed intervals when the park is open, with crowd and occupancy forecasts. |
+| Events              | Dates for Winter Efteling and business events.                             |
+| Maintenance         | Dates when attractions are planned to be under maintenance.                |
+| Shows               | Timed performances from the show schedule.                                 |
+| Classic annual pass | Dates when a Classic annual pass is not valid.                             |
+| Plus annual pass    | Dates when a Plus annual pass is not valid.                                |
+| Premium annual pass | Dates when a Premium annual pass is not valid.                             |
 
 ### Attractions
 

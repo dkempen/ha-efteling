@@ -16,6 +16,7 @@ from custom_components.efteling_park.binary_sensor.park_event import (
 from custom_components.efteling_park.binary_sensor.park_status import (
     PARK_STATUS_BINARY_SENSOR_DESCRIPTION,
 )
+from custom_components.efteling_park.calendar import CALENDAR_ENTITY_DESCRIPTIONS
 from custom_components.efteling_park.sensor.attraction import (
     ENTITY_DESCRIPTION_ATTRACTION_WAIT_TIME,
     ENTITY_DESCRIPTION_STATUS,
@@ -117,12 +118,14 @@ def test_all_entity_translation_keys_exist_in_both_languages() -> None:
             *PARK_EVENT_BINARY_SENSOR_DESCRIPTIONS,
             PARK_STATUS_BINARY_SENSOR_DESCRIPTION,
         ),
+        "calendar": CALENDAR_ENTITY_DESCRIPTIONS,
         "image": (),
     }
 
     required_keys = {
         "sensor": _translation_keys(descriptions["sensor"]),
         "binary_sensor": _translation_keys(descriptions["binary_sensor"]),
+        "calendar": _translation_keys(descriptions["calendar"]),
         "image": {_image_translation_key()},
     }
 

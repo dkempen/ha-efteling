@@ -55,6 +55,36 @@
     "efteling_park": { "name": "Efteling park" }
   },
   "entity": {
+    "calendar": {
+      "opening_hours": {
+        "name": "Opening hours",
+        "state": { "on": "Open", "off": "Closed" }
+      },
+      "events": {
+        "name": "Events",
+        "state": { "on": "Event active", "off": "No active event" }
+      },
+      "maintenance": {
+        "name": "Maintenance",
+        "state": { "on": "Under maintenance", "off": "No active maintenance" }
+      },
+      "shows": {
+        "name": "Shows",
+        "state": { "on": "Show in progress", "off": "No show in progress" }
+      },
+      "annual_pass_classic_blackout_dates": {
+        "name": "Classic annual pass blackout dates",
+        "state": { "on": "Not valid", "off": "Valid" }
+      },
+      "annual_pass_plus_blackout_dates": {
+        "name": "Plus annual pass blackout dates",
+        "state": { "on": "Not valid", "off": "Valid" }
+      },
+      "annual_pass_premium_blackout_dates": {
+        "name": "Premium annual pass blackout dates",
+        "state": { "on": "Not valid", "off": "Valid" }
+      }
+    },
     "binary_sensor": {
       "park_status": {
         "state": { "on": "Open", "off": "Closed" },
@@ -79,21 +109,21 @@
         }
       },
       "annual_pass_classic": {
-        "name": "Annual pass Classic",
+        "name": "Classic annual pass",
         "state": { "on": "Valid", "off": "Not valid" },
         "state_attributes": {
           "annual_passes": { "name": "Annual passes" }
         }
       },
       "annual_pass_plus": {
-        "name": "Annual pass Plus",
+        "name": "Plus annual pass",
         "state": { "on": "Valid", "off": "Not valid" },
         "state_attributes": {
           "annual_passes": { "name": "Annual passes" }
         }
       },
       "annual_pass_premium": {
-        "name": "Annual pass Premium",
+        "name": "Premium annual pass",
         "state": { "on": "Valid", "off": "Not valid" },
         "state_attributes": {
           "annual_passes": { "name": "Annual passes" }
